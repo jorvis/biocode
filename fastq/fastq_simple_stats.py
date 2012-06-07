@@ -10,7 +10,11 @@ def main():
 
     ## output file to be written
     parser.add_argument('input_files', metavar='N', type=str, nargs='+', help='Path to one or more input files, separated by spaces' )
+    parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
+
+    ## open the output file
+    fout = open(args.output_file, "w")
 
     ## values that will be reported
     entry_count = 0
@@ -34,10 +38,10 @@ def main():
 
 
     avg_entry_length = total_bases / entry_count
-    
-    print("Total sequence entries: {0}".format(entry_count))
-    print("Total bases: {0}".format(total_bases))
-    print("Avg sequence length: {0:.1f}".format(avg_entry_length))
+
+    fout.write("Total sequence entries: {0}".format(entry_count))
+    fout.write("Total bases: {0}".format(total_bases))
+    fout.write("Avg sequence length: {0:.1f}".format(avg_entry_length))
 
 if __name__ == '__main__':
     main()
