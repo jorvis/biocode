@@ -34,7 +34,7 @@ def process_reads(args):
 	else:
 		left = open(args.left_input,'rU')
 		right = open(args.right_input,'rU')
-		fout = open(args.output,'wb')
+		fout = open(args.output,'w')
 
 
 	# USING A WHILE LOOP MAKE THIS SUPER FAST
