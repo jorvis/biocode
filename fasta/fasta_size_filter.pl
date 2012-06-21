@@ -13,6 +13,7 @@ USAGE: fasta_size_filter.pl
           [ --input_file=/path/to/some_file.fsa
             --max_size_cutoff=100
             --output_file=/path/to/some_file.fsa 
+            --limit_count=1000
           ]
 
 =head1 OPTIONS
@@ -37,6 +38,10 @@ B<--output_directory,-o>
 B<--output_file,-u>
     Optional.  If used instead of the output_directory option all output will be
     written to this single file.
+
+B<--limit_count,-l>
+    Optional.  Limit the result file to the first N sequences within the size cutoff.
+    (Default = 0 [unlimited])
 
 B<--log,-l> 
     Log file
@@ -81,6 +86,7 @@ my $results = GetOptions (\%options,
                           'max_size_cutoff|x=i',
                           'output_directory|o=s',
                           'output_file|u=s',
+                          'limit_count|l=i',
                           'log|l=s',
                           'help|h') || pod2usage();
 
@@ -128,25 +134,25 @@ foreach my $input_file_path ( @input_seqs ) {
         if ( /\>/ ) {
             ## if we hit a new header (not the first one) print the current sequence
             if ($header) {
-		## check that sequence meets both min and max criteria (as defined)
-		my $has_valid_seq_length = 0;
+                ## check that sequence meets both min and max criteria (as defined)
+                my $has_valid_seq_length = 0;
 
-		## check min requirement
+                ## check min requirement
                 if ( $seq_length >= $options{min_size_cutoff} ) {
-		    $has_valid_seq_length = 1;
+                    $has_valid_seq_length = 1;
                 } 
 
-		## check max requirement
-                if ( $has_valid_seq_length && defined($options{max_size_cutoff}) ){
-		    if( $seq_length > $options{max_size_cutoff} ) {
-			$has_valid_seq_length = 0;
-		    }
+                 ## check max requirement
+                if ( $has_valid_seq_length && defined($options{max_size_cutoff}) ) {
+                    if ( $seq_length > $options{max_size_cutoff} ) {
+                        $has_valid_seq_length = 0;
+                    }
                 }
-		
-		## print output or log statement
-		if($has_valid_seq_length == 1){
+        
+                ## print output or log statement
+                if ($has_valid_seq_length == 1) {
                     print $ofh "$header$seq";
-		} else {
+                } else {
                     _log("skipping the following sequence because its length is not within ".
                          "range (${seq_length}bp):\n$header$seq");
                 }
@@ -165,28 +171,28 @@ foreach my $input_file_path ( @input_seqs ) {
     
     ## purge the last sequence of the file
     if ($header) {
-	## check that sequence meets both min and max criteria (as defined)
-	my $has_valid_seq_length = 0;
-	
-	## check min requirement
-	if ( $seq_length >= $options{min_size_cutoff} ) {
-	    $has_valid_seq_length = 1;
-	} 
-	
-	## check max requirement
-	if ( $has_valid_seq_length && defined($options{max_size_cutoff}) ){
-	    if( $seq_length > $options{max_size_cutoff} ) {
-		$has_valid_seq_length = 0;
-	    }
-	}
-	
-	## print output or log statement
-	if($has_valid_seq_length == 1){
-	    print $ofh "$header$seq";
-	} else {
-	    _log("skipping the following sequence because its length is not within ".
-		 "range (${seq_length}bp):\n$header$seq");
-	}
+    ## check that sequence meets both min and max criteria (as defined)
+    my $has_valid_seq_length = 0;
+    
+    ## check min requirement
+    if ( $seq_length >= $options{min_size_cutoff} ) {
+        $has_valid_seq_length = 1;
+    } 
+    
+    ## check max requirement
+    if ( $has_valid_seq_length && defined($options{max_size_cutoff}) ){
+        if( $seq_length > $options{max_size_cutoff} ) {
+        $has_valid_seq_length = 0;
+        }
+    }
+    
+    ## print output or log statement
+    if($has_valid_seq_length == 1){
+        print $ofh "$header$seq";
+    } else {
+        _log("skipping the following sequence because its length is not within ".
+         "range (${seq_length}bp):\n$header$seq");
+    }
     }
     
     ## if the user specified an output directory we need to close
@@ -313,7 +319,7 @@ sub check_parameters {
     }  
     
     ## handle some defaults
-    # $options{complete_orfs_only} = 0  unless (defined $options{complete_orfs_only});
+    $options{limit_count} = 0  unless (defined $options{limit_count});
 }
 
 
