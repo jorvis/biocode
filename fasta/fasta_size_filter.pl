@@ -29,7 +29,7 @@ B<--min_size_cutoff,-s>
     Sequences smaller than this will not be reported to the output file(s).
 
 B<--max_size_cutoff,-s>
-    Sequences greater than this will not be reported to the output file(s).
+    Optional. Sequences greater than this will not be reported to the output file(s).
 
 B<--output_directory,-o>
     Directory used to write output files.  Files will contain the same name as the
@@ -68,7 +68,7 @@ meeting the size cutoff omitted.
 
 =head1  CONTACT
 
-    Joshua Orvis
+    Joshua Orvis (and others)
     jorvis@gmail.com
 
 =cut
@@ -86,7 +86,7 @@ my $results = GetOptions (\%options,
                           'max_size_cutoff|x=i',
                           'output_directory|o=s',
                           'output_file|u=s',
-                          'limit_count|l=i',
+                          'limit_count|m=i',
                           'log|l=s',
                           'help|h') || pod2usage();
 
@@ -112,6 +112,7 @@ if ( defined $options{output_file} ) {
     $ofh = get_conditional_write_fh( $options{output_file} );
 }
 
+my $c_seqs_exported = 0;
 
 foreach my $input_file_path ( @input_seqs ) {
     _log("processing $input_file_path");
@@ -151,9 +152,14 @@ foreach my $input_file_path ( @input_seqs ) {
         
                 ## print output or log statement
                 if ($has_valid_seq_length == 1) {
-                    print $ofh "$header$seq";
+                    if ( $options{limit_count} && $c_seqs_exported >= $options{limit_count} ) {
+                        _log("skipping the follow sequence because the limit_count has been reached:\n$header$seq");
+                    } else {
+                        print $ofh "$header$seq";
+                        $c_seqs_exported++;
+                    }
                 } else {
-                    _log("skipping the following sequence because its length is not within ".
+                    _log("skipping the following sequence because its length is not within " .
                          "range (${seq_length}bp):\n$header$seq");
                 }
             }
@@ -171,28 +177,33 @@ foreach my $input_file_path ( @input_seqs ) {
     
     ## purge the last sequence of the file
     if ($header) {
-    ## check that sequence meets both min and max criteria (as defined)
-    my $has_valid_seq_length = 0;
+        ## check that sequence meets both min and max criteria (as defined)
+        my $has_valid_seq_length = 0;
     
-    ## check min requirement
-    if ( $seq_length >= $options{min_size_cutoff} ) {
-        $has_valid_seq_length = 1;
-    } 
+        ## check min requirement
+        if ( $seq_length >= $options{min_size_cutoff} ) {
+            $has_valid_seq_length = 1;
+        } 
     
-    ## check max requirement
-    if ( $has_valid_seq_length && defined($options{max_size_cutoff}) ){
-        if( $seq_length > $options{max_size_cutoff} ) {
-        $has_valid_seq_length = 0;
+        ## check max requirement
+        if ( $has_valid_seq_length && defined($options{max_size_cutoff}) ){
+            if ( $seq_length > $options{max_size_cutoff} ) {
+                $has_valid_seq_length = 0;
+            }
         }
-    }
-    
-    ## print output or log statement
-    if($has_valid_seq_length == 1){
-        print $ofh "$header$seq";
-    } else {
-        _log("skipping the following sequence because its length is not within ".
-         "range (${seq_length}bp):\n$header$seq");
-    }
+
+        ## print output or log statement
+        if ($has_valid_seq_length == 1) {
+            if ( $options{limit_count} && $c_seqs_exported >= $options{limit_count} ) {
+                _log("skipping the follow sequence because the limit_count has been reached:\n$header$seq");
+            } else {
+                print $ofh "$header$seq";
+                $c_seqs_exported++;
+            }
+        } else {
+            _log("skipping the following sequence because its length is not within " .
+                 "range (${seq_length}bp):\n$header$seq");
+        }
     }
     
     ## if the user specified an output directory we need to close
@@ -217,7 +228,7 @@ sub _log {
 sub get_conditional_write_fh {
     my $path = shift;
     my $fh;
-    
+
     if ( $path =~ /\.gz$/ ) {
         open( $fh, ">:gzip", "$path" ) || die "failed to create output file: $!";
     } else {
