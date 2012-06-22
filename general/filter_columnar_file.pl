@@ -49,6 +49,7 @@ if ( scalar(@ARGV) < 3 ) {
 
 my $tab_file = shift @ARGV;
 my %patterns = ();
+my $max_column_number = 0;
 
 ## load any argument pairs
 while ( scalar @ARGV >= 2 ) {
@@ -60,11 +61,10 @@ while ( scalar @ARGV >= 2 ) {
         die "Option parsing error.  Expected ($col) to be an integer describing a column.";
     }
     
+    $max_column_number = $col if $col > $max_column_number;
     my @regexes = split('\|', $value);
-    
     $patterns{$col} = \@regexes;
 }
-
 
 open(my $ifh, $tab_file) || die "ERROR: failed to read input file: $!";
 
@@ -73,7 +73,10 @@ while (my $line = <$ifh>) {
     
     my $valid_line = 1;
     
-    
+    if ( scalar(@cols) - 1 < $max_column_number ) {
+        $valid_line = 0;
+        next;
+    }
     
     for my $col ( keys %patterns ) {
         
@@ -82,11 +85,6 @@ while (my $line = <$ifh>) {
         for my $pattern ( @{$patterns{$col}} ) {
             if ( $cols[$col] =~ /$pattern/ ) {
                 $matched_one_pattern++;
-                #print "matched pattern ($pattern)\n";
-            } else {
-                if ( $col == 21 ) {
-                    #print "NO match to column with value: ($cols[$col])\n";
-                }
             }
         }
         
