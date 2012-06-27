@@ -105,8 +105,6 @@ open(my $gff_fh, $options{gff_file}) || die "failed to open GFF3 file: $!";
 
 ## each type here will have 3 values, feat_count, length, gc_count
 my %features = ();
-my $last_exon_coords = undef;
-
 my %last_feat_fmax_by_type = ();
 
 while (my $line = <$gff_fh>) {
@@ -122,22 +120,26 @@ while (my $line = <$gff_fh>) {
     my $fmin    = $cols[3] - 1;
     my $fmax    = $cols[4];
     
+    $cols[8] =~ /ID\=(.+?)\;/;
+    my $feat_id = $1 || $cols[8];
+    
+    ## quick sanity check
+    if ($fmin > $fmax) {
+        die "Error: on the following line, the stop coordinate is less than the start coordinate:\n$line";
+    }
+
     next unless $mol_id eq $options{molecule_id};
     
     ## when we hit an exon, we need to calculate the previous intron and, if this
     #   is the first exon, the telomeric region
     if ( $type eq 'exon' ) {
-        my $overlapping_exon = 0;
-    
-        if ( defined $last_exon_coords ) {
-            
+        if ( defined $last_feat_fmax_by_type{exon} ) {
             ## it's possible to have overlapping exons on opposite strands
             ## if so, there's no intron to calculate
-            if ( $fmin < $$last_exon_coords[1] ) {
-                print STDERR "Warning, overlapping exon at coordinates (${fmin}-$fmax)\n";
-                $overlapping_exon;
+            if ( $fmin < $last_feat_fmax_by_type{exon} ) {
+                print STDERR "Warning: overlapping exon at coordinates (${fmin}-$fmax)\n";
             } else {
-                my $intron_seq = substr( $molecule_seq, $$last_exon_coords[1], $fmin - $$last_exon_coords[1] );
+                my $intron_seq = substr( $molecule_seq, $last_feat_fmax_by_type{exon}, $fmin - $last_feat_fmax_by_type{exon} );
                 $features{intron}{length} += length $intron_seq;
                 $features{intron}{gc_count} += $intron_seq =~ tr/gcGC//;
                 $features{intron}{feat_count} += 1;
@@ -149,23 +151,25 @@ while (my $line = <$gff_fh>) {
             $features{telomere}{gc_count} += $telomere_seq =~ tr/gcGC//;
             $features{telomere}{feat_count} += 1;
         }
-    
-        $last_exon_coords = [$fmin, $fmax];
     }
     
     my $feat_seq = '';
     
-    ## don't double count if these is a feature of the same type overlapping this one
-    if ( $fmin < $last_feat_fmax_by_type{$type} ) {
-        $feat_seq = substr( $molecule_seq, $last_feat_fmax_by_type{$type}, $fmax - $last_feat_fmax_by_type{$type} );
+    if ( ! exists $last_feat_fmax_by_type{$type} || $fmax > $last_feat_fmax_by_type{$type} ) {
+        ## don't double count if these is a feature of the same type overlapping this one
+        if ( exists $last_feat_fmax_by_type{$type} && $fmin < $last_feat_fmax_by_type{$type} ) {
+            $feat_seq = substr( $molecule_seq, $last_feat_fmax_by_type{$type}, $fmax - $last_feat_fmax_by_type{$type} );
+        } else {
+            $feat_seq = substr( $molecule_seq, $fmin, $fmax - $fmin );
+        }
+
+        $features{$type}{length} += length($feat_seq);
+        $features{$type}{gc_count} += $feat_seq =~ tr/gcGC//;
+        $features{$type}{feat_count} += 1;
+        $last_feat_fmax_by_type{$type} = $fmax;
     } else {
-        $feat_seq = substr( $molecule_seq, $fmin, $fmax - $fmin );
-    }  
-        
-    $features{$type}{length} += length($feat_seq);
-    $features{$type}{gc_count} += $feat_seq =~ tr/gcGC//;
-    $features{$type}{feat_count} += 1;
-    $last_feat_fmax_by_type{$type} = $fmax;
+        print STDERR "Warning: feature ($feat_id) at (${fmin}-$fmax) seems to be contained within previous feature of the same type.\n";
+    }
     
 }
 
@@ -175,7 +179,7 @@ $features{mRNA}{gc_count} = $features{exon}{gc_count};
 $features{mRNA}{length} = $features{exon}{length};
 
 ## calculate the telomeric region after the last exon
-my $last_telomere_seq = substr($molecule_seq, $$last_exon_coords[1], length($molecule_seq) - $$last_exon_coords[1]);
+my $last_telomere_seq = substr($molecule_seq, $last_feat_fmax_by_type{exon}, length($molecule_seq) - $last_feat_fmax_by_type{exon} );
 $features{telomere}{length} += length $last_telomere_seq;
 $features{telomere}{gc_count} += $last_telomere_seq =~ tr/gcGC//;
 $features{telomere}{feat_count} += 1;
