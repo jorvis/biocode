@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-filter_fasta_file_by_ids.pl - extract a subset of sequences from a multi-FASTA 
+filter_fasta_by_ids.pl - extract a subset of sequences from a multi-FASTA 
 file based on an input list of IDs or a comma-separated ID or IDs (no spaces!)
 
 =head1 SYNOPSIS
 
-USAGE:  filter_fasta_file_by_ids.pl
+USAGE:  filter_fasta_by_ids.pl
               --id_list=/path/to/some/file.list OR --id=some_id1,some_id2
 	          --fasta_file=/path/to/input/fasta.file
 	          --output_file=/path/to/output.file
@@ -37,7 +37,7 @@ B<--help, -h>
    
 =head1 EXAMPLES
 
-    ./extract_fasta_list_from_ids.pl --id=1232,1435 --fasta_file=/path/to/file.fasta 
+    ./filter_fasta_by_ids.pl --id=1232,1435 --fasta_file=/path/to/file.fasta 
     --output_file=subset.fasta
  
 =head1  CONTACT

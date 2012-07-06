@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-fasta_size_filter.pl - filter the sequences within a FASTA file or list of FASTA files.
+filter_fasta_by_size.pl - filter the sequences within a FASTA file or list of FASTA files.
 
 =head1 SYNOPSIS
 
-USAGE: fasta_size_filter.pl 
+USAGE: filter_fasta_by_size.pl 
             --input_list=/path/to/some_file.list 
             --min_size_cutoff=50
             --output_directory=/some/dir
