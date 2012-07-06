@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-write_protein_fasta_from_gff.pl - Extracts the protein sequences from a GFF3 file
+write_fasta_from_gff.pl - Extracts the protein or CDS sequences from a GFF3 file
 
 =head1 SYNOPSIS
 
-USAGE: write_protein_fasta_from_gff.pl 
+USAGE: write_fasta_from_gff.pl 
             --gff=/path/to/some_file.gff
             --output=/path/to/somefile.faa
           [ --type=protein|cds
