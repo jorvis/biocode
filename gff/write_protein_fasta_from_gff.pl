@@ -9,7 +9,8 @@ write_protein_fasta_from_gff.pl - Extracts the protein sequences from a GFF3 fil
 USAGE: write_protein_fasta_from_gff.pl 
             --gff=/path/to/some_file.gff
             --output=/path/to/somefile.faa
-          [ --fasta=/path/to/somefile.fna
+          [ --type=protein|cds
+            --fasta=/path/to/somefile.fna
           ]
 
 =head1 OPTIONS
@@ -19,6 +20,10 @@ B<--gff,-g>
 
 B<--output,-o>
     Output FASTA file to be created.
+
+B<--type,-t>
+    Optional.  Should the output records be the CDS nucleotides or translated as
+    proteins?  (values are 'cds' or 'protein', default=protein)
 
 B<--fasta,-f>
     Optional.  If the FASTA file for the underlying assemblies isn't 
@@ -55,12 +60,16 @@ A FASTA file with the CDS entries extracted and translated to polypeptides.
 use strict;
 use Getopt::Long qw(:config no_ignore_case no_auto_abbrev pass_through);
 use Pod::Usage;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use bioUtils;
 
 my %options = ();
 my $results = GetOptions (\%options, 
                           'gff|g=s',
                           'output|o=s',
                           'fasta|f=s',
+                          'type|t=s',
                           'log|l=s',
                           'help|h') || pod2usage();
 
@@ -211,9 +220,12 @@ for my $mol_id ( keys %coords ) {
             $complete_cds =~ tr/ATGC/TACG/;
         }
         
-        my $protein_seq = translate_sequence( $complete_cds, $mrna_id );
-        
-        print $fastaout_fh ">$mrna_id\n$protein_seq\n";
+        if ($options{type} eq 'protein' ) {
+            my $protein_seq = translate_sequence( $complete_cds, $mrna_id );
+            print $fastaout_fh ">$mrna_id\n" . characters_per_line($protein_seq,60) . "\n";
+        } else {
+            print $fastaout_fh ">$mrna_id\n" . characters_per_line($complete_cds,60) . "\n";
+        }
     }
 }
 
@@ -239,77 +251,77 @@ sub translate_sequence {
     return $polypeptide_seq;
 }
 
+## taken from Tisdall's book
 sub codon2aa {
     my($codon) = @_;
 
     $codon = uc $codon;
  
-    my(%genetic_code) = (
-    
-    'TCA' => 'S',    # Serine
-    'TCC' => 'S',    # Serine
-    'TCG' => 'S',    # Serine
-    'TCT' => 'S',    # Serine
-    'TTC' => 'F',    # Phenylalanine
-    'TTT' => 'F',    # Phenylalanine
-    'TTA' => 'L',    # Leucine
-    'TTG' => 'L',    # Leucine
-    'TAC' => 'Y',    # Tyrosine
-    'TAT' => 'Y',    # Tyrosine
-    'TAA' => '*',    # Stop
-    'TAG' => '*',    # Stop
-    'TGC' => 'C',    # Cysteine
-    'TGT' => 'C',    # Cysteine
-    'TGA' => '*',    # Stop
-    'TGG' => 'W',    # Tryptophan
-    'CTA' => 'L',    # Leucine
-    'CTC' => 'L',    # Leucine
-    'CTG' => 'L',    # Leucine
-    'CTT' => 'L',    # Leucine
-    'CCA' => 'P',    # Proline
-    'CCC' => 'P',    # Proline
-    'CCG' => 'P',    # Proline
-    'CCT' => 'P',    # Proline
-    'CAC' => 'H',    # Histidine
-    'CAT' => 'H',    # Histidine
-    'CAA' => 'Q',    # Glutamine
-    'CAG' => 'Q',    # Glutamine
-    'CGA' => 'R',    # Arginine
-    'CGC' => 'R',    # Arginine
-    'CGG' => 'R',    # Arginine
-    'CGT' => 'R',    # Arginine
-    'ATA' => 'I',    # Isoleucine
-    'ATC' => 'I',    # Isoleucine
-    'ATT' => 'I',    # Isoleucine
-    'ATG' => 'M',    # Methionine
-    'ACA' => 'T',    # Threonine
-    'ACC' => 'T',    # Threonine
-    'ACG' => 'T',    # Threonine
-    'ACT' => 'T',    # Threonine
-    'AAC' => 'N',    # Asparagine
-    'AAT' => 'N',    # Asparagine
-    'AAA' => 'K',    # Lysine
-    'AAG' => 'K',    # Lysine
-    'AGC' => 'S',    # Serine
-    'AGT' => 'S',    # Serine
-    'AGA' => 'R',    # Arginine
-    'AGG' => 'R',    # Arginine
-    'GTA' => 'V',    # Valine
-    'GTC' => 'V',    # Valine
-    'GTG' => 'V',    # Valine
-    'GTT' => 'V',    # Valine
-    'GCA' => 'A',    # Alanine
-    'GCC' => 'A',    # Alanine
-    'GCG' => 'A',    # Alanine
-    'GCT' => 'A',    # Alanine
-    'GAC' => 'D',    # Aspartic Acid
-    'GAT' => 'D',    # Aspartic Acid
-    'GAA' => 'E',    # Glutamic Acid
-    'GAG' => 'E',    # Glutamic Acid
-    'GGA' => 'G',    # Glycine
-    'GGC' => 'G',    # Glycine
-    'GGG' => 'G',    # Glycine
-    'GGT' => 'G',    # Glycine
+    my (%genetic_code) = (    
+        'TCA' => 'S',    # Serine
+        'TCC' => 'S',    # Serine
+        'TCG' => 'S',    # Serine
+        'TCT' => 'S',    # Serine
+        'TTC' => 'F',    # Phenylalanine
+        'TTT' => 'F',    # Phenylalanine
+        'TTA' => 'L',    # Leucine
+        'TTG' => 'L',    # Leucine
+        'TAC' => 'Y',    # Tyrosine
+        'TAT' => 'Y',    # Tyrosine
+        'TAA' => '*',    # Stop
+        'TAG' => '*',    # Stop
+        'TGC' => 'C',    # Cysteine
+        'TGT' => 'C',    # Cysteine
+        'TGA' => '*',    # Stop
+        'TGG' => 'W',    # Tryptophan
+        'CTA' => 'L',    # Leucine
+        'CTC' => 'L',    # Leucine
+        'CTG' => 'L',    # Leucine
+        'CTT' => 'L',    # Leucine
+        'CCA' => 'P',    # Proline
+        'CCC' => 'P',    # Proline
+        'CCG' => 'P',    # Proline
+        'CCT' => 'P',    # Proline
+        'CAC' => 'H',    # Histidine
+        'CAT' => 'H',    # Histidine
+        'CAA' => 'Q',    # Glutamine
+        'CAG' => 'Q',    # Glutamine
+        'CGA' => 'R',    # Arginine
+        'CGC' => 'R',    # Arginine
+        'CGG' => 'R',    # Arginine
+        'CGT' => 'R',    # Arginine
+        'ATA' => 'I',    # Isoleucine
+        'ATC' => 'I',    # Isoleucine
+        'ATT' => 'I',    # Isoleucine
+        'ATG' => 'M',    # Methionine
+        'ACA' => 'T',    # Threonine
+        'ACC' => 'T',    # Threonine
+        'ACG' => 'T',    # Threonine
+        'ACT' => 'T',    # Threonine
+        'AAC' => 'N',    # Asparagine
+        'AAT' => 'N',    # Asparagine
+        'AAA' => 'K',    # Lysine
+        'AAG' => 'K',    # Lysine
+        'AGC' => 'S',    # Serine
+        'AGT' => 'S',    # Serine
+        'AGA' => 'R',    # Arginine
+        'AGG' => 'R',    # Arginine
+        'GTA' => 'V',    # Valine
+        'GTC' => 'V',    # Valine
+        'GTG' => 'V',    # Valine
+        'GTT' => 'V',    # Valine
+        'GCA' => 'A',    # Alanine
+        'GCC' => 'A',    # Alanine
+        'GCG' => 'A',    # Alanine
+        'GCT' => 'A',    # Alanine
+        'GAC' => 'D',    # Aspartic Acid
+        'GAT' => 'D',    # Aspartic Acid
+        'GAA' => 'E',    # Glutamic Acid
+        'GAG' => 'E',    # Glutamic Acid
+        'GGA' => 'G',    # Glycine
+        'GGC' => 'G',    # Glycine
+        'GGG' => 'G',    # Glycine
+        'GGT' => 'G',    # Glycine
     );
 
     if (exists $genetic_code{$codon}) {
@@ -337,10 +349,26 @@ sub check_parameters {
         }
     }
     
-    ##
-    ## you can do other things here, such as checking that files exist, etc.
-    ##
+    if ( defined $$options{type} ) {
+        $$options{type} = lc $$options{type};
     
-    ## handle some defaults
-    #$options{optional_argument2}   = 'foo'  unless ($options{optional_argument2});
+        if ( $$options{type} ne 'cds' && $$options{type} ne 'protein' ) {
+            die "option --type must have a value of either cds or protein";
+        }
+    } else {
+        $$options{type} = 'protein';
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
