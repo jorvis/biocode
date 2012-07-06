@@ -74,7 +74,7 @@ def main():
     parser.add_argument('-f', '--fasta_file', type=str, required=True, help='The FASTA file to be filtered' )
     parser.add_argument('-m', '--mode', type=str, required=True, choices=['include','exclude'], help='Enter either "include" or "exclude" based on the mode of filtering you want based on the blast hits.')
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
-    parser.add_argument('-e', '--eval_cutoff', type=str, help='Optional.  Filter entries with an E-value lower than this' )
+    parser.add_argument('-e', '--eval_cutoff', type=str, required=True, help='Filter entries with an E-value lower than this' )
     args = parser.parse_args()
 
     ## 3 different options for each accession in the fasta_file
