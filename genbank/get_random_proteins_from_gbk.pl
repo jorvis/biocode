@@ -73,7 +73,7 @@ use Pod::Usage;
 use Bio::SeqIO;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use BioUtils;
+use bioUtils;
 
 my %options = ();
 my $results = GetOptions (\%options, 
