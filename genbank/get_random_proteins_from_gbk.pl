@@ -71,6 +71,9 @@ use strict;
 use Getopt::Long qw(:config no_ignore_case no_auto_abbrev pass_through);
 use Pod::Usage;
 use Bio::SeqIO;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use BioUtils;
 
 my %options = ();
 my $results = GetOptions (\%options, 
@@ -141,7 +144,7 @@ while ( my $entry = $seqio->next_seq ) {
             die "failed to get a translation for CDS $feature_id\n";
         }
         
-        push @proteins, ">$feature_id $product\n" . chars_per_line($translation, 60);
+        push @proteins, ">$feature_id $product\n" . characters_per_line($translation, 60);
     }
     
 }
@@ -179,19 +182,6 @@ sub _log {
     print $logfh "$msg\n" if $logfh;
 }
 
-sub chars_per_line {
-    my ($string, $char_count) = @_;
-    
-    $string =~ s/\s//g;
-    
-    my @new_string_parts  = ();
-    
-    while ( $string =~ /(.{1,60})/g ) {
-        push @new_string_parts, $1;
-    }
-
-    return join("\n", @new_string_parts);
-}
 
 
 sub check_parameters {

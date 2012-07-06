@@ -37,7 +37,24 @@ sub read_list_file {
 
 
 
+sub characters_per_line {
+    my ($string, $char_count) = @_;
+    
+    $string =~ s/\s//g;
+    
+    ## set a default if needed
+    if (! defined $char_count ) {
+        $char_count = 60;   ## accepted FASTA default
+    }
+    
+    my @new_string_parts  = ();
+    
+    while ( $string =~ /(.{1,$char_count})/g ) {
+        push @new_string_parts, $1;
+    }
 
+    return join("\n", @new_string_parts);
+}
 
 
 
