@@ -154,7 +154,10 @@ while (my $line = <$ifh>) {
     
     } elsif ( $feat_type eq 'contig' ) {
         push @other_feats, $line;
-        
+    
+    } elsif ( $feat_type eq 'region' ) {
+        push @other_feats, $line;
+    
     } else {
         die("panic!  don't know what to do with feat type: $feat_type");
     }
