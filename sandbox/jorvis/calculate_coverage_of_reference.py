@@ -7,6 +7,76 @@ import re
 
 from operator import itemgetter
 
+"""
+========
+OVERVIEW
+========
+
+This reads nucmer output and an annotated GFF3 to provide a lot of statistics and lists
+related to coverage of a reference genome.
+
+=====
+INPUT
+=====
+
+Options
+-------
+-c, --coords_file         required
+    Path to a nucmer coords file with non-overlapping results (requires -l -r -T options
+    of show-coords)
+
+-o, --output_prefix       required
+    This script creates several output files.  The string specified here will be the first
+    part of the name for each of them.  This is especially helpful when pooling the results
+    of runs on different alignment files.  See the OUTPUT section for more details.
+
+-a, --annotation_file     required
+    Path to a coordinate-sorted GFF3 annotation file.  Follow the spec.
+
+
+======
+OUTPUT
+======
+
+The script creates 5 files, named using the prefix specified by the -o option:
+
+    $prefix.list.genes_missing
+        A list of the genes completely missing from the mapping process.  This will not
+        include those partically covered.  The columns of the file are:
+
+            reference_id | gene_id | gene_fmin | gene_fmax
+    
+    $prefix.stats.gene_coverage
+        Summary statistics for gene coverage in stat\tvalue format.  Example:
+
+            Total molecule count            9
+            Total gene count                4172
+            Genes not covered at all        35
+            Genes covered (partially)       169
+            Genes covered (completely)      3968
+    
+    $prefix.stats.refmol_coverage
+        Summary statistics for reference molecule coverage in stat\tvalue format.  Example:
+
+            Total bases in reference molecules	        8347606
+            Ref bases covered by query fragments	8181412
+            Ref % covered by query fragments	        98.01
+
+    $prefix.tab.refmol_coverage
+        Here each reference molecule is listed along with its coverage statistics. The
+        columns are:
+
+            reference_id | reference_length | reference_bases_covered | percent_coverage
+    
+    $prefix.tab.extensions
+        If the fragment alignments show evidence of extension on the ends of the reference
+        molecule, these data are listed here.  The columns of the file are:
+
+            reference_id | ref_fmin | ref_fmax | ref_strand | qry_id | qry_fmin | qry_fmax | qry_strand | qry_length
+
+"""
+
+
 ## If a query molecule aligns to the reference at the end, this defines
 #   the cutoff for the percentage of that fragment (that isn't hanging
 #   off the end) that must align with the reference.  This should be
