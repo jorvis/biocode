@@ -38,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser( description='Parses a nucmer coords file and reports a summary of the reference genome coverage')
 
     ## output file to be written
-    parser.add_argument('-c', '--coords_file', type=str, required=True, help='Nucmer alignment coords file' )
+    parser.add_argument('-c', '--coords_file', type=str, required=True, help='Nucmer alignment coords file, run with the -r, -c and -l options' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-p', '--pct_id_cutoff', type=float, required=False, default=0.0, help='Only consider alignment ranges with a percent identity higher than this value' )
     args = parser.parse_args()
