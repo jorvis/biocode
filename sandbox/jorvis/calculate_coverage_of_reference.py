@@ -33,6 +33,11 @@ Options
 -a, --annotation_file     required
     Path to a coordinate-sorted GFF3 annotation file.  Follow the spec.
 
+-k, --annotation_key      optional
+    There is no standard place in the 9th column of GFF3 where an annotation string like
+    a gene product name should be kept.  The most consistent is probably 'Note'.  This
+    is a key=value pair column, so if you specify the key this script will find the values
+    for each gene and include those in the analysis output.
 
 ======
 OUTPUT
@@ -44,7 +49,7 @@ The script creates 5 files, named using the prefix specified by the -o option:
         A list of the genes completely missing from the mapping process.  This will not
         include those partically covered.  The columns of the file are:
 
-            reference_id | gene_id | gene_fmin | gene_fmax
+            reference_id | gene_id | gene_fmin | gene_fmax | gene product
     
     $prefix.stats.gene_coverage
         Summary statistics for gene coverage in stat\tvalue format.  Example:
@@ -83,7 +88,7 @@ The script creates 5 files, named using the prefix specified by the -o option:
 #   set pretty high.
 fragment_overlap_perc_cutoff = 90
 
-def parse_annotation(gff3_file):
+def parse_annotation(gff3_file, product_key):
     annotation = {}
 
     for line in open(gff3_file, 'r'):
@@ -98,18 +103,10 @@ def parse_annotation(gff3_file):
         if asm_id not in annotation:
             annotation[asm_id] = []
 
-        m = re.match( 'ID=(.+?)\;', cols[8] )
-        gene_id = None
+        gene_id = get_last_column_value( 'ID', cols[8] )
 
-        if m:
-            gene_id = m.group(1)
-        else:
-            m = re.match( 'ID=(.+)', cols[8] )
-
-            if m:
-                gene_id = m.group(1)
-            else:
-                print("ERROR: failed to get a gene ID for the following line: " + line)
+        if gene_id is None:
+            print("ERROR: failed to get a gene ID for the following line: " + line)
 
         gene = {}
         gene['id'] = gene_id
@@ -117,6 +114,12 @@ def parse_annotation(gff3_file):
         gene['fmax'] = int(cols[4])
         gene['cov'] = None
 
+        ## grab the annotation, if a key was specified
+        if product_key:
+            gene['prod'] = get_last_column_value( product_key, cols[8] )
+        else:
+            gene['prod'] = None
+        
         annotation[asm_id].append( gene )
     
     ## if debugging, report how many genes were found on each assembly
@@ -125,6 +128,23 @@ def parse_annotation(gff3_file):
 
     return annotation
 
+
+def get_last_column_value( key, colstring ):
+    ## first check if there's a version that ends with the ';' symbol
+    re_str = "{0}=(.+?)\;".format(key)
+    m = re.match( re_str, colstring )
+    key_value = None
+
+    if m:
+        key_value = m.group(1)
+    else:
+        re_str = "{0}=(.+?)".format(key)
+        m = re.match( re_str, colstring )
+
+        if m:
+            key_value = m.group(1)
+
+    return key_value
 
 
 def calculate_gene_coverage( annot, frags ):
@@ -175,8 +195,8 @@ def report_gene_coverage_results( annot, stats_ofh, missing_ofh ):
                 completely_covered_gene_count += 1
             else:
                 completely_missed_gene_count += 1
-                missing_ofh.write("assembly:{0}\t{1}\t{2}\t{3}\n".format( \
-                        assembly_id, gene['id'], gene['fmin'],gene['fmax']) )
+                missing_ofh.write("assembly:{0}\t{1}\t{2}\t{3}\t{4}\n".format( \
+                        assembly_id, gene['id'], gene['fmin'], gene['fmax'], gene['prod']) )
 
     stats_ofh.write("Total molecule count\t{0}\n".format(total_molecule_count) )
     stats_ofh.write("Total gene count\t{0}\n".format(total_gene_count) )
@@ -273,10 +293,11 @@ def main():
                             help='Path to a nucmer coords file with non-overlapping results (requires -l -r -T options of show-coords)' )
     parser.add_argument('-o', '--output_prefix', type=str, required=True, help='Several output files will be created with this prefix.' )
     parser.add_argument('-a', '--annotation_file', type=str, required=True, help='Path to a sorted GFF3 annotation file' )
+    parser.add_argument('-k', '--annotation_key', type=str, required=False, help='Optional.  Key string to look for in the 9th column of the GFF3 file for an annotation string.' )
     args = parser.parse_args()
 
     ## like: h[$assem] = [ {id=?,fmin=?,fmax=?}, ...  ]
-    annot = parse_annotation( args.annotation_file )
+    annot = parse_annotation( args.annotation_file, args.annotation_key )
 
     ## like: [ {id=?,qfmin=?,qfmax=?,rfmin=?,rfmax=?} ]
     query_fragments = []
