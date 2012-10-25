@@ -220,10 +220,13 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
 
         ## does the aligned query fragment overlap the fmin of the reference?  (suggesting extension?)
         possible_rfmin_ext = 0
+        possible_rfmax_ext = 0
         if frag['qstrand'] == 1:
             possible_rfmin_ext = frag['qfmin'] - frag['rfmin']
+            possible_rfmax_ext = (frag['rlen'] - frag['rfmax']) + (frag['qlen'] - frag['qfmax'])
         else:
             possible_rfmin_ext = frag['qlen'] - frag['qfmax'] - frag['rfmin']
+            possible_rfmax_ext = frag['qfmax'] - (frag['rlen'] - frag['rfmin'])
 
         if possible_rfmin_ext > 0:
             #print("DEBUG: apparent 5' overhang between {0} and {1} at frag position {2}-{3}".format(ref_id, frag['id'], frag['qfmin'], frag['qfmax']))
@@ -235,11 +238,8 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
                 ext_ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
                         ref_id, frag['rfmin'], frag['rfmax'], 1,\
                         frag['id'], frag['qfmin'], frag['qfmax'], frag['qstrand'], frag['qlen']))
-                #print("DEBUG: apparent 5' overhang between {0} and {1} at frag position {2}-{3}".format(ref_id, frag['id'], frag['qfmin'], frag['qfmax']))
+                print("DEBUG: apparent 5' overhang ({4}bp) between {0} and {1} at frag position {2}-{3}".format(ref_id, frag['id'], frag['qfmin'], frag['qfmax'], possible_rfmin_ext))
         
-        ## does the aligned query fragment overlap the fmax of the reference? (suggesting extension?)
-        possible_rfmax_ext = frag['qlen'] - (frag['rlen'] - frag['rfmin'])
-
         if possible_rfmax_ext > 0:
             bp_aligned = frag['qfmax'] - frag['qfmin']
             bp_unaligned_and_not_overhang = frag['qfmin'] + (frag['rlen'] - frag['rfmax'])
@@ -249,7 +249,7 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
                 ext_ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
                         ref_id, frag['rfmin'], frag['rfmax'], 1,\
                         frag['id'], frag['qfmin'], frag['qfmax'], frag['qstrand'], frag['qlen']))
-                #print("DEBUG: apparent 3' overhang between {0} and {1} at frag position {2}-{3}".format(ref_id, frag['id'], frag['qfmin'], frag['qfmax']))
+                print("DEBUG: apparent 3' overhang ({4}bp) between {0} and {1} at frag position {2}-{3}".format(ref_id, frag['id'], frag['qfmin'], frag['qfmax'], possible_rfmax_ext))
         
 
 
