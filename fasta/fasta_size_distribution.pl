@@ -110,6 +110,7 @@ allowing parsers to skip blank and commented lines.  Here's an example:
 
     # total seqs analyzed: 495040
     # total seqs skipped: 0
+    # total seqs skipped: 98067424
     # smallest sequence length: 24
     # largest sequence length: 362
     # overall average length: 198.1
@@ -236,6 +237,7 @@ for my $min_gc_bound ( sort {$a<=>$b} keys %$sizes ) {
 
 print "\n# total seqs analyzed: $total_count\n";
 print "# total seqs skipped: $seq_skipped_count\n";
+print "# sum sequence length: $total_sum\n";
 print "# smallest sequence length: $smallest\n";
 print "# largest sequence length: $largest\n";
 print "# overall average length: ", sprintf("%.1f", $total_sum / $total_count), "\n";
