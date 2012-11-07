@@ -66,6 +66,7 @@ The script creates 5 files, named using the prefix specified by the -o option:
             Total bases in reference molecules	        8347606
             Ref bases covered by query fragments	8181412
             Ref % covered by query fragments	        98.01
+            Ref % identity by query fragments    	98.49
 
     $prefix.tab.refmol_coverage
         Here each reference molecule is listed along with its coverage statistics. The
@@ -214,11 +215,14 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
     #   the reference sequence based on the fragments aligned.
     base_extension_fmin = 0
     base_extension_fmax = 0
+    ## for calculating summary percent identity, taking into account overlaps
+    #last_frag_pctid = 0
+    pctid_base_score = 0
 
     ## iterate through the fragments sorted by fmin coordinate on the reference
     for frag in sorted(frags, key=itemgetter('rfmin')):
 
-        ## does the aligned query fragment overlap the fmin of the reference?  (suggesting extension?)
+        ## does the aligned query fragment overlap either end of the reference?  (suggesting extension?)
         possible_rfmin_ext = 0
         possible_rfmax_ext = 0
         if frag['qstrand'] == 1:
@@ -234,6 +238,7 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
             bp_aligned = frag['qfmax'] - frag['qfmin']
             bp_unaligned_and_not_overhang = frag['qlen'] - bp_aligned - possible_rfmin_ext
             perc_unaligned_and_not_overhang = (bp_unaligned_and_not_overhang / frag['qlen']) * 100;
+            
             if perc_unaligned_and_not_overhang <= (100 - fragment_overlap_perc_cutoff):
                 ext_ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
                         ref_id, frag['rfmin'], frag['rfmax'], 1,\
@@ -254,21 +259,27 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
 
 
         ## for fragments contained within a previous fragment (ex: 0-10, then 3-5)
+        #   i'm actually not sure if nucmer lets this happen, but it's caught anyway
         if frag['rfmax'] <= last_ref_coord:
             pass
         ## for fragments starting after or even with the last fragment end (ex: 1-3, then 5-10 or 3-10)
         elif frag['rfmin'] >= last_ref_coord:
-            bases_covered += (frag['rfmax'] - frag['rfmin'])
+            bases_covered_by_this_frag = frag['rfmax'] - frag['rfmin']
+            bases_covered += bases_covered_by_this_frag
             bases_uncovered += (frag['rfmin'] - last_ref_coord)
             last_ref_coord = frag['rfmax']
+            pctid_base_score += (bases_covered_by_this_frag * frag['pctid'])
         ## for a new fragment overlapping the previous (ex: 1-5, then 3-8)
         elif frag['rfmin'] < last_ref_coord:
-            bases_covered += (frag['rfmax'] - last_ref_coord)
+            bases_covered_by_this_frag = frag['rfmax'] - last_ref_coord
+            bases_covered += bases_covered_by_this_frag
             last_ref_coord = frag['rfmax']
+            pctid_base_score += (bases_covered_by_this_frag * frag['pctid'])
         else:
             raise Exception("ERROR: unhandled fragment overlap: [{0}-{1} and {2}-{3}]".format(frag['rfmin'], frag['rfmax'], frag['qfmin'], frag['qfmax']) )
 
         last_frag_fmax = frag['rfmax']
+        #last_frag_pctid = frag['pctid']
 
     ## then, finally, see if there's a region from the end of the last fragment to the end
     #   of the reference
@@ -283,6 +294,7 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
     cov_stats['n_total'] += ref_length
     cov_stats['n_cov'] += bases_covered
     cov_stats['n_uncov'] += bases_uncovered
+    cov_stats['sum_pct_id'] = pctid_base_score / ref_length
     
 
 def main():
@@ -354,6 +366,7 @@ def main():
         fragment['rfmin']   = min(cols[0], cols[1]) - 1
         fragment['rfmax']   = max(cols[0], cols[1])
         fragment['rlen']    = int(cols[7])
+        fragment['pctid']   = float(cols[6])
         query_fragments.append(fragment)
 
     ## don't forget the last one
@@ -371,7 +384,7 @@ def main():
     refmol_stats_ofh.write("Total bases in reference molecules\t{0}\n".format(ref_cov_stats['n_total']) )
     refmol_stats_ofh.write("Ref bases covered by query fragments\t{0}\n".format(ref_cov_stats['n_cov']) )
     refmol_stats_ofh.write("Ref % covered by query fragments\t{0:.2f}\n".format(cov_perc))
-
+    refmol_stats_ofh.write("Ref % identity by query fragments\t{0:.2f}\n".format(ref_cov_stats['sum_pct_id']))
 
 
 if __name__ == '__main__':
