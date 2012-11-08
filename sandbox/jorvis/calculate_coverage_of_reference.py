@@ -208,15 +208,16 @@ def report_gene_coverage_results( annot, stats_ofh, missing_ofh ):
 
 def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_ofh, ext_ofh ):
     last_ref_coord = 0
-    last_frag_fmax = 0
+    last_frag_rfmax = 0
     bases_covered = 0
     bases_uncovered = 0
+    
     ## these are the possible number of bases that might be extended off the end of
     #   the reference sequence based on the fragments aligned.
     base_extension_fmin = 0
     base_extension_fmax = 0
     ## for calculating summary percent identity, taking into account overlaps
-    #last_frag_pctid = 0
+    last_frag_pctid = 0
     pctid_base_score = 0
 
     ## iterate through the fragments sorted by fmin coordinate on the reference
@@ -262,6 +263,7 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
         #   i'm actually not sure if nucmer lets this happen, but it's caught anyway
         if frag['rfmax'] <= last_ref_coord:
             pass
+        
         ## for fragments starting after or even with the last fragment end (ex: 1-3, then 5-10 or 3-10)
         elif frag['rfmin'] >= last_ref_coord:
             bases_covered_by_this_frag = frag['rfmax'] - frag['rfmin']
@@ -269,23 +271,35 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
             bases_uncovered += (frag['rfmin'] - last_ref_coord)
             last_ref_coord = frag['rfmax']
             pctid_base_score += (bases_covered_by_this_frag * frag['pctid'])
+            last_frag_rfmax = frag['rfmax']
+            last_frag_pctid = frag['pctid']
+            
         ## for a new fragment overlapping the previous (ex: 1-5, then 3-8)
         elif frag['rfmin'] < last_ref_coord:
             bases_covered_by_this_frag = frag['rfmax'] - last_ref_coord
             bases_covered += bases_covered_by_this_frag
-            last_ref_coord = frag['rfmax']
             pctid_base_score += (bases_covered_by_this_frag * frag['pctid'])
+
+            ## if this fragment has a higher percent identity than the previous one
+            #  pct_id score needs to be corrected/increased
+            if frag['pctid'] > last_frag_pctid:
+                adjustment = (last_frag_rfmax - frag['rfmin']) * (frag['pctid'] - last_frag_pctid)
+                print("adjustment:{0} because {4} < {5}: ({3} - {4}) * ({1} - {2})".format( \
+                       adjustment, frag['pctid'], last_frag_pctid, last_frag_rfmax, frag['rfmin'], \
+                       last_ref_coord))
+                pctid_base_score += adjustment
+            
+            last_ref_coord = frag['rfmax']
+            last_frag_rfmax = frag['rfmax']
+            last_frag_pctid = frag['pctid']
         else:
             raise Exception("ERROR: unhandled fragment overlap: [{0}-{1} and {2}-{3}]".format(frag['rfmin'], frag['rfmax'], frag['qfmin'], frag['qfmax']) )
 
-        last_frag_fmax = frag['rfmax']
-        #last_frag_pctid = frag['pctid']
-
     ## then, finally, see if there's a region from the end of the last fragment to the end
     #   of the reference
-    if last_frag_fmax < ref_length:
-        bases_uncovered += ref_length - last_frag_fmax
-
+    if last_frag_rfmax < ref_length:
+        bases_uncovered += ref_length - last_frag_rfmax
+        
     perc_cov = (bases_covered / ref_length) * 100
     ## output: reference mol, ref mol size, # bases covered, percent coverage
     covinfo_ofh.write("{0}\t{1}\t{2}\t{3}\n".format(ref_id, ref_length, bases_covered, perc_cov))
