@@ -58,7 +58,19 @@ sub characters_per_line {
 
 
 
+sub gff3_get_column_9_value {
+    my ($col9_str, $key) = @_;
+    my $value = undef;
 
+    ## have to check for versions with and without a closing semi-colon
+    if ( $col9_str =~ /${key}\=(.+?)\;/ ) {
+        $value = $1;
+    } elsif ( $col9_str =~ /${key}\=(.+)/ ) {
+        $value = $1;
+    }
+
+    return $value;
+}
 
 
 

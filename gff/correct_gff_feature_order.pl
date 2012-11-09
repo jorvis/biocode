@@ -41,7 +41,7 @@ columns are used for the final ordering (and applied in this order:)
     3 - feature type
     4 - min location (of gene feature in each group)
 
-Parental relationships assumed:
+Parental relationships assumed/supported:
 
     mRNA parent of exon
     mRNA parent of CDS
@@ -66,6 +66,9 @@ Any other FASTA or non-columnar lines will be placed at the end of the output fi
 use strict;
 use Getopt::Long qw(:config no_ignore_case no_auto_abbrev pass_through);
 use Pod::Usage;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use bioUtils;
 
 my %options = ();
 my $results = GetOptions (\%options, 
@@ -128,8 +131,9 @@ while (my $line = <$ifh>) {
     }
     
     my $feat_type = $cols[2];
-    my ($id) = $cols[8] =~ /^ID\=(.+?)\;/;
-    my ($parent) = $cols[8] =~ /Parent\=(.+?)\;/;
+    my $id = gff3_get_column_9_value( $cols[8], 'ID' );
+    #my ($parent) = $cols[8] =~ /Parent\=(.+?)\;/;
+    my $parent = gff3_get_column_9_value( $cols[8], 'Parent' );
     
     $features{$id} = {
         type => $feat_type,
@@ -142,20 +146,22 @@ while (my $line = <$ifh>) {
         if ( exists $molecules{$cols[0]} && $molecules{$cols[0]}{$cols[3]} ) {
             die "found more than one gene at position $cols[3] on molecule $cols[0]\n";
         } else {
-            $molecules{$cols[0]}{$cols[3]} = $id ;
+            $molecules{$cols[0]}{$cols[3]} = $id;
         }
     
     } elsif ( $feat_type eq 'mRNA' ||
-        $feat_type eq 'CDS' || 
-        $feat_type eq 'exon' ) {
+              $feat_type eq 'CDS' || 
+              $feat_type eq 'exon' || 
+              $feat_type eq 'polypeptide' ||
+              $feat_type eq 'tRNA' ||
+              $feat_type eq 'rRNA' ) {
     
         ## nothing to see here, carry on
         
     
-    } elsif ( $feat_type eq 'contig' ) {
-        push @other_feats, $line;
-    
-    } elsif ( $feat_type eq 'region' ) {
+    } elsif ( $feat_type eq 'contig' ||
+              $feat_type eq 'region' ) {
+        
         push @other_feats, $line;
     
     } else {
@@ -186,12 +192,15 @@ for my $feat_id ( keys %features ) {
     }
     
     if ( $features{$feat_id}{type} ne 'gene' ) {
-        #print STDERR "adding: features{$parent_id}{children}{$type} }, $feat_id;\n";
+        #print "adding: features{$parent_id}{children}{$type} }, $feat_id;\n";
         push @{ $features{$parent_id}{children}{$type} }, $feat_id;
     }
 }
 
 for my $molecule_id ( sort keys %molecules ) {
+
+    #print "DEBUG: Found " . scalar(keys %{$molecules{$molecule_id}}) . " genes to export on molecule $molecule_id\n";
+    
     for my $start ( sort { $a<=>$b } keys %{$molecules{$molecule_id}} ) {
         my $feat_id = $molecules{$molecule_id}{$start};
         
@@ -203,15 +212,26 @@ for my $molecule_id ( sort keys %molecules ) {
             #print STDERR "found an mRNA\n";
             print $ofh join("\t", @{$features{$mRNA_id}{cols}}), "\n";
         }
-        
-        ## now the exons
-        for my $exon_id ( sort { $features{$a}{cols}[3] <=> $features{$b}{cols}[3] } @{$features{$feat_id}{children}{exon}} ) {
-            print $ofh join("\t", @{$features{$exon_id}{cols}}), "\n";
+
+        ## then the rRNAs
+        for my $rRNA_id ( @{$features{$feat_id}{children}{rRNA}} ) {
+            #print STDERR "found an rRNA\n";
+            print $ofh join("\t", @{$features{$rRNA_id}{cols}}), "\n";
+        }
+
+        ## then the tRNAs
+        for my $tRNA_id ( @{$features{$feat_id}{children}{tRNA}} ) {
+            #print STDERR "found an tRNA\n";
+            print $ofh join("\t", @{$features{$tRNA_id}{cols}}), "\n";
         }
         
-        ## finally the CDS
-        for my $cds_id ( sort { $features{$a}{cols}[3] <=> $features{$b}{cols}[3] } @{$features{$feat_id}{children}{CDS}} ) {
-            print $ofh join("\t", @{$features{$cds_id}{cols}}), "\n";
+
+        for my $child_type ( qw(exon CDS polypeptide ) ) {
+            if ( exists $features{$feat_id}{children}{$child_type} ) {
+                for my $child_id ( sort { $features{$a}{cols}[3] <=> $features{$b}{cols}[3] } @{$features{$feat_id}{children}{$child_type}} ) {
+                    print $ofh join("\t", @{$features{$child_id}{cols}}), "\n";
+                }
+            }
         }
     }
 }
