@@ -16,3 +16,4 @@ def read_list_file( file ):
             files.append(line)
 
     return files
+

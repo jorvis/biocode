@@ -6,7 +6,7 @@ import re
 import sqlite3
 
 from collections import OrderedDict
-from bioUtils import read_list_file
+from biocodeutils import read_list_file
 
 def main():
     """This is the second script I've written in Python.  I'm sure it shows."""

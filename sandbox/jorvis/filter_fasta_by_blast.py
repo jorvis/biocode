@@ -4,7 +4,7 @@ import argparse
 import os
 import re
 
-from bioUtils import read_list_file
+from biocodeutils import read_list_file
 
 def process_blast_file( file, ids, args ):
     ''' Parses through a tab-delimited BLAST file and saves all IDs matching 
