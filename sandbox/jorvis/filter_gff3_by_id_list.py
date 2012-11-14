@@ -40,7 +40,7 @@ def main():
 
     for mol_id in molgraph:
         mol = molgraph[mol_id]
-        for feat in sorted(mol.items(), key=lambda mol: mol['fmin']):
+        for (feat_id, feat) in sorted(mol.items(), key=lambda mol: mol[1]['fmin']):
             row = '\t'.join(feat['cols'])
             fout.write( row )
             fout.write( '\n' )

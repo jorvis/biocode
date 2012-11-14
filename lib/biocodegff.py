@@ -64,6 +64,7 @@ def parse_gff3_by_relationship( gff3_file ):
     This will currently fail on any GFF that allows the same IDs on multiple lines, such as those for
     discontiguous features, as is allowed by the GFF3 spec
     '''
+    ## might try turning this into a defaultdict at a later point: http://ohuiginn.net/mt/2010/07/nested_dictionaries_in_python.html
     fgraph = dict()
     current_molecule_id = None
     ## key = id, value = parent_id
