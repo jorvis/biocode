@@ -41,7 +41,7 @@ def parse_gff3_by_relationship( gff3_file ):
     they keys are the feature IDs and the values are an dict of dicts.   The depth of this depends
     on the depth of parent/child relationships, but every node looks like this:
 
-    { id: 'foo', children: [], fmin: 30, cols: [] }
+    $feat_id = { children: [], fmin: 30, cols: [] }
 
     Every feature must have either and ID or Parent defined, else an error will be thrown.
     
@@ -49,7 +49,6 @@ def parse_gff3_by_relationship( gff3_file ):
     {
     $molecule_id = { 
                          fmin: 30,
-                         id: 'foo',
                          cols: [...],
                          children: {
                              same as this structure

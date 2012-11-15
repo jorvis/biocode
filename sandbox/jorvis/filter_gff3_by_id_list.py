@@ -35,19 +35,46 @@ def main():
     args = parser.parse_args()
 
     molgraph = biocodegff.parse_gff3_by_relationship( args.input_file )
+    id_list  = parse_id_list( args.list_file )
 
     fout = open(args.output_file, mode='wt', encoding='utf-8')
 
     for mol_id in molgraph:
         mol = molgraph[mol_id]
-        for (feat_id, feat) in sorted(mol.items(), key=lambda mol: mol[1]['fmin']):
-            row = '\t'.join(feat['cols'])
-            fout.write( row )
-            fout.write( '\n' )
+
+        for (feat_id, feat) in sorted(mol.items(), key=lambda mol: int(mol[1]['fmin'])):
+            ## used to filter whether this one is exported
+            buffer = list()
+            keep = False
+            
+            buffer.append( feat['cols'] )
+            if feat_id in id_list:
+                keep = True
+
+            for child in feat['children']:
+                buffer.append( child['cols'] )
+                ## TODO: add child ID filtering here
+
+            if keep:
+                for cols in buffer:
+                    row = '\t'.join(cols)
+                    fout.write( row )
+                    fout.write( '\n' )
+
+
+
+def parse_id_list(file):
+    ids = dict()
+
+    for line in open(file):
+        ids[line.rstrip()] = 1
+
+    return ids
+
+        
 
 if __name__ == '__main__':
     main()
-
 
 
 
