@@ -50,10 +50,13 @@ def main():
             buffer.append( feat['cols'] )
             if feat_id in id_list:
                 keep = True
+                id_list[feat_id] = True
 
             for child in feat['children']:
                 buffer.append( child['cols'] )
-                ## TODO: add child ID filtering here
+                if child['id'] is not None and child['id'] in id_list:
+                    keep = True
+                    id_list[ child['id'] ] = True
 
             if keep:
                 for cols in buffer:
@@ -67,7 +70,8 @@ def parse_id_list(file):
     ids = dict()
 
     for line in open(file):
-        ids[line.rstrip()] = 1
+        ## value initialized to False, later set True if the script actually finds it
+        ids[line.rstrip()] = False
 
     return ids
 

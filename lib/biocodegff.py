@@ -101,7 +101,7 @@ def parse_gff3_by_relationship( gff3_file ):
 
         if parent:
             uparent = _get_ultimate_parent( parentage, parent )
-            molecule[uparent]['children'].append( {'cols': cols} )
+            molecule[uparent]['children'].append( {'id': id, 'cols': cols} )
         else:
             if id is None:
                 raise Exception("ERROR: Encountered a line without a Parent or ID assigned: {0}".format(line))
