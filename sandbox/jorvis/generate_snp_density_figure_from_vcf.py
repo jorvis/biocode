@@ -19,6 +19,11 @@ The input VCF file is filtered on the following conditions:
     - The sample name is value in the 10th column (of the line starting with '#CHROM')
 
 Will NOT currently work with merged sample files.
+
+Plot improvements:
+http://matplotlib.org/users/pyplot_tutorial.html
+http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D
+http://jira.igs.umaryland.edu/browse/EUK-279
 '''
 
 
@@ -86,7 +91,11 @@ def plot_vcf_file( file ):
 
         phred_score = get_scaled_phred_quality_score(cols[8], cols[9])
         snp_scores.append(phred_score)
-        
+
+    ## sanity check
+    if total_seq_length < 1:
+        raise Exception("ERROR: no sequence length lines found (like ##contig=) in file {0}".format(file))
+    
     snps_per_kb = len(snp_scores) / (total_seq_length / 1000)
     print("INFO: Sample {3}, refsequence length is {0} and SNP count is {1} ({2} SNPs/kb)".format(total_seq_length, len(snp_scores), snps_per_kb, sample_id) )
 
@@ -103,7 +112,8 @@ def plot_vcf_file( file ):
             pcounts.append( snps_scoring_this_high / (total_seq_length / 1000) )
             last_score = score
 
-    plt.plot(pscores, pcounts, label=sample_id)
+    this_line = plt.plot(pscores, pcounts, label=sample_id, linewidth=2.0)
+    plt.gca().get_frame().set_linewidth(10).draw()
     
 
     
