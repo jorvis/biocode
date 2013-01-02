@@ -26,7 +26,7 @@ from operator import itemgetter
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Filters the features of a GFF3 file by IDs while keeping related features.')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to the input GFF3' )
