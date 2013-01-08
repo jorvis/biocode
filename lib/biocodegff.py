@@ -30,6 +30,7 @@ def column_9_value(value, key):
         c9[n] = v
 
     if key in c9:
+        # this is a list if there were comma-separated values
         return c9[key]
     else:
         return None
@@ -60,8 +61,11 @@ def parse_gff3_by_relationship( gff3_file ):
     }
 
     WARNING:
-    This will currently fail on any GFF that allows the same IDs on multiple lines, such as those for
-    discontiguous features, as is allowed by the GFF3 spec
+    This will currently fail on any GFF that:
+       - allows the same IDs on multiple lines, such as those for  discontiguous features (allowed in spec)
+       - features with shared parents
+
+
     '''
     ## might try turning this into a defaultdict at a later point: http://ohuiginn.net/mt/2010/07/nested_dictionaries_in_python.html
     fgraph = dict()
@@ -81,6 +85,7 @@ def parse_gff3_by_relationship( gff3_file ):
 
         mol_id = cols[0]
         id = column_9_value(cols[8], 'ID')
+        # shared parents will cause failure here
         parent = column_9_value(cols[8], 'Parent')
 
         if id:
