@@ -1,6 +1,9 @@
 
 print("The biothings.py is still under testing and development.  Please feel free to try using it, though the API is in flux.")
 
+## Yes, there's a lot of abstraction that could happen here still but I'm trying to allow for
+##  special consideration to be allowed for each feature type.  For now, this is just the skeleton.
+
 class LocatableThing:
     '''
     Base class for any Things that are locatable on other Things, such as genes on contigs.
@@ -42,56 +45,96 @@ class Location:
         self.strand = strand
 
 class Assembly:
-    def __init__( self, id=None, length=None, children=list() ):
+    def __init__( self, id=None, length=None, children=dict() ):
         self.id = id
         self.length = length
 
+        ## initialize any types needed
+        _initialize_type_list(children, 'gene')
+        
+        self.children = children
+
     def add_gene( self, gene ):
-        self.children.append(gene)
+        self.children['gene'].append(gene)
+
+    def genes(self):
+        '''
+        Returns all Gene objects which are children of this Assembly
+        '''
+        return self.children['gene']
+
 
 class CDS( LocatableThing ):
     def __init__( self, id=None, locations=list(), parent=None, length=None ):
         super().__init__(locations)
         self.id = id
+        self.parent = parent
         self.length = length
 
 class Exon( LocatableThing ):
     def __init__( self, id=None, locations=list(), parent=None, length=None ):
         super().__init__(locations)
         self.id = id
+        self.parent = parent
         self.length = length
 
 class Gene( LocatableThing ):
-    def __init__( self, id=None, locations=list(), children=list() ):
+    def __init__( self, id=None, locations=list(), children=dict() ):
         super().__init__(locations)
         self.id = id
+
+        ## initialize any types needed
+        _initialize_type_list(children, 'mRNA')
+        _initialize_type_list(children, 'rRNA')
+        _initialize_type_list(children, 'tRNA')
         self.children = children
 
     def add_mRNA(self, rna):
-        self.children.append(rna)
+        self.children['mRNA'].append(rna)
+    
+    def add_rRNA(self, rna):
+        self.children['rRNA'].append(rna)
 
-class mRNA( LocatableThing ):
-    def __init__( self, id=None, locations=list(), parent=None, children=list() ):
+    def add_tRNA(self, rna):
+        self.children['tRNA'].append(rna)
+
+
+class RNA( LocatableThing ):
+    def __init__( self, id=None, locations=list(), parent=None, children=dict() ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
+
+        ## initialize any types needed
+        _initialize_type_list(children, 'exon')
+        _initialize_type_list(children, 'CDS')
+        
         self.children = children
 
     def add_exon(self, exon):
-        self.children.append(exon)
+        self.children['exon'].append(exon)
 
     def add_CDS(self, cds):
-        self.children.append(cds)
+        self.children['CDS'].append(cds)  
+        
+class mRNA( RNA ):
+    def __init__( self, id=None, locations=list(), parent=None, children=dict() ):
+        super().__init__(id, locations, parent, children)
 
-class tRNA( LocatableThing ):
-    def __init__( self, id=None, locations=list(), parent=None, children=list() ):
-        super().__init__(locations)
-        self.id = id
-        self.parent = parent
-        self.children = children
+class rRNA( RNA ):
+    def __init__( self, id=None, locations=list(), parent=None, children=dict() ):
+        super().__init__(id, locations, parent, children)
 
-    def add_exon(self, exon):
-        self.children.append(exon)
+class tRNA( RNA ):
+    def __init__( self, id=None, locations=list(), parent=None, children=dict() ):
+        super().__init__(id, locations, parent, children)
 
-    def add_CDS(self, cds):
-        self.children.append(cds)
+
+#############################
+## Private help functions
+##   Hopefully this isn't to un-pythonic.  These were to aide in abstraction within classes
+#############################
+
+def _initialize_type_list( children, feattype ):
+    if feattype not in children:
+        children[feattype] = list()

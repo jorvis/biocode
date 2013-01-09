@@ -31,11 +31,17 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-    (ref_assemblies, ref_genes) = parse_gff3( args.reference_file )
-    (qry_assemblies, qry_genes) = parse_gff3( args.alignment_file )
+    (ref_assemblies, ref_features) = parse_gff3( args.reference_file )
+    (qry_assemblies, qry_features) = parse_gff3( args.alignment_file )
 
-    for ref_gene_id in ref_genes:
-        ref_gene = ref_genes[ref_gene_id]
+    for asm_id in ref_assemblies:
+        ref_assembly = ref_assemblies[asm_id]
+
+        
+        
+        for gene in ref_assembly.genes():
+            print("Got a GENE")
+            #LEFT OFF HERE
 
         for qry_gene_id in qry_genes:
             qry_gene = qry_genes[qry_gene_id]
@@ -70,6 +76,15 @@ def parse_gff3(gff3_file):
         rfmax = int(cols[4])
         rstrand = None
         feat_id = biocodegff.column_9_value(cols[8], 'ID')
+        parent_id = biocodegff.column_9_value(cols[8], 'Parent')
+        parent_feat = None
+        
+        if parent_id is not None:
+            if parent_id in features:
+                parent_feat = features[parent_id]
+            else:
+                raise Exception("Error in GFF3: Parent {0} referenced by a child feature before it was defined".format(parent_id) )
+
         #print("Processing feature: ({0})".format(feat_id))
 
         if cols[6] == '-':
@@ -83,31 +98,39 @@ def parse_gff3(gff3_file):
             gene = biothings.Gene(id=feat_id)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             features[feat_id] = gene
+            current_assembly.add_gene(gene)
         
         elif cols[2] == 'mRNA':
-            mRNA = biothings.mRNA(id=feat_id)
+            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat)
             mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_id = biocodegff.column_9_value(cols[8], 'Parent')
-            features[parent_id].add_mRNA( mRNA )
+            parent_feat.add_mRNA(mRNA)
             features[feat_id] = mRNA
 
+        elif cols[2] == 'rRNA':
+            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat)
+            rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            parent_feat.add_rRNA(rRNA)
+            features[feat_id] = rRNA
+            
         elif cols[2] == 'tRNA':
-            tRNA = biothings.tRNA(id=feat_id)
-            LEFT OFF HERE
+            tRNA = biothings.tRNA(id=feat_id, parent=parent_feat)
+            tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            parent_feat.add_tRNA(tRNA)
+            features[feat_id] = tRNA
 
         elif cols[2] == 'exon':
-            exon = biothings.Exon(id=feat_id)
+            exon = biothings.Exon(id=feat_id, parent=parent_feat)
             exon.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_id = biocodegff.column_9_value(cols[8], 'Parent')
-            features[parent_id].add_exon(exon)
+            parent_feat.add_exon(exon)
+            features[feat_id] = exon
 
         elif cols[2] == 'CDS':
-            CDS = biothings.CDS(id=feat_id)
+            CDS = biothings.CDS(id=feat_id, parent=parent_feat)
             CDS.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_id = biocodegff.column_9_value(cols[8], 'Parent')
-            features[parent_id].add_CDS(CDS)
+            parent_feat.add_CDS(CDS)
+            features[feat_id] = CDS
 
-    return (assemblies, genes)
+    return (assemblies, features)
 
 
 
