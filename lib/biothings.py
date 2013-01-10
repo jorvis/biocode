@@ -27,7 +27,7 @@ class LocatableThing:
 
         return they_overlap
 
-    def overlaps_with(self, thing=None):
+    def overlaps_with(self, thing):
         ## see if either are located on the same thing
         for ref_location in self.locations:
             for qry_location in thing.locations:

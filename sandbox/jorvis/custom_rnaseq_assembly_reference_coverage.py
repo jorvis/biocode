@@ -7,6 +7,9 @@ import biocodegff
 import sys
 import re
 
+## for debugging
+from pprint import pprint
+
 ## tracked in SILLAB-unk, this script was written to answer a specific set of questions, namely:
 
 # 1.1 How many genes in the current annotation have evidence from the assembled transcripts?
@@ -34,25 +37,82 @@ def main():
     (ref_assemblies, ref_features) = parse_gff3( args.reference_file )
     (qry_assemblies, qry_features) = parse_gff3( args.alignment_file )
 
+    ## for stats
+    total_ref_gene_count = 0
+    total_qry_gene_count = 0
+    qry_genes_not_overlapping_a_ref_gene = list()
+    nonoverlapping_qry_genes_not_overlapping_a_ref_gene = list()
+    
+
+    print("STATS: Found {0} reference assemblies with {1} features".format(len(ref_assemblies), len(ref_features) ) )
+    print("STATS: Found {0} query assemblies with {1} features".format(len(qry_assemblies), len(qry_features) ) )
+
     for asm_id in ref_assemblies:
         ref_assembly = ref_assemblies[asm_id]
+        qry_assembly = None
 
+        ## only continue processing if we have both qry and ref assemblies with the same name
+        if asm_id in qry_assemblies:
+            qry_assembly = qry_assemblies[asm_id]
+        else:
+            continue
+
+        print("DEBUG: comparing assembly {0}".format(asm_id) )
+        ref_gene_count = len(ref_assembly.genes())
+        qry_gene_count = len(qry_assembly.genes())
+        total_ref_gene_count += ref_gene_count
+        total_qry_gene_count += qry_gene_count
+        print("STATS: assembly:{2} - ref genes: ({0}), qry genes: ({1})".format( ref_gene_count, qry_gene_count, asm_id ) )
         
+        for ref_gene in ref_assembly.genes():
+            print("REF_GENE {0}".format(ref_gene.id) )
+            for qry_gene in qry_assembly.genes():
+                overlap = ref_gene.overlaps_with( qry_gene )
+
+                if overlap is True:
+                    print("DEBUG: {0} and {1} appear to overlap".format(ref_gene.id, qry_gene.id) )
+
+        ## now the opposite comparison (for 1.2.1 above)
+        for qry_gene in qry_assembly.genes():
+            found_overlap = False
+            
+            for ref_gene in ref_assembly.genes():
+                if ref_gene.overlaps_with( qry_gene ):
+                    found_overlap = True
+
+            if found_overlap == False:
+                qry_genes_not_overlapping_a_ref_gene.append(qry_gene)
         
-        for gene in ref_assembly.genes():
-            print("Got a GENE")
-            #LEFT OFF HERE
+    ## Now, for those qry genes which didn't map to a reference compare within
+    #   the same set to see how many of these are not overlapping themselves
+    nonoverlapping_qry_genes_not_overlapping_a_ref_gene = reduce_overlaps( qry_genes_not_overlapping_a_ref_gene )
 
-        for qry_gene_id in qry_genes:
-            qry_gene = qry_genes[qry_gene_id]
-
-            overlap = ref_gene.overlaps_with(thing=qry_gene)
-
-            if overlap:
-                print("DEBUG: {0} and {1} appear to overlap".format(ref_gene_id, qry_gene_id) )
+    print("STATS: total reference genes found: {0}".format(total_ref_gene_count) )
+    print("STATS: total query genes found: {0}".format(total_qry_gene_count) )
+    print("STATS: total query genes not overlapping a reference gene: {0}".format(len(qry_genes_not_overlapping_a_ref_gene)) )
+    print("STATS:   of these, count which are non-overlapping: {0}".format(len(nonoverlapping_qry_genes_not_overlapping_a_ref_gene)) )
 
 
+def reduce_overlaps( things ):
+    handled_ids = dict()
+    nonoverlapping_set = list()
     
+    for qry_gene in things:
+        if qry_gene.id in handled_ids:
+            continue
+        
+        ## mark this one as handled
+        handled_ids[qry_gene.id] = 1
+        nonoverlapping_set.append(qry_gene)
+
+        ## then mark any that align to it (except self)
+        for sbj_gene in things:
+            if qry_gene.id == sbj_gene.id:
+                continue
+            elif qry_gene.overlaps_with(sbj_gene):
+                handled_ids[sbj_gene.id] = 1
+            
+    return nonoverlapping_set
 
 def parse_gff3(gff3_file):
 
@@ -85,20 +145,19 @@ def parse_gff3(gff3_file):
             else:
                 raise Exception("Error in GFF3: Parent {0} referenced by a child feature before it was defined".format(parent_id) )
 
-        #print("Processing feature: ({0})".format(feat_id))
-
         if cols[6] == '-':
-            strand = -1
+            rstrand = -1
         elif cols[6] == '+':
-            strand = 1
+            rstrand = 1
         else:
-            strand = 0
-
+            rstrand = 0
+            
         if cols[2] == 'gene':
             gene = biothings.Gene(id=feat_id)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             features[feat_id] = gene
             current_assembly.add_gene(gene)
+
         
         elif cols[2] == 'mRNA':
             mRNA = biothings.mRNA(id=feat_id, parent=parent_feat)
