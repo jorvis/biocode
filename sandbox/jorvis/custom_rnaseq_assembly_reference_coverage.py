@@ -7,9 +7,6 @@ import biocodegff
 import sys
 import re
 
-## for debugging
-from pprint import pprint
-
 ## tracked in SILLAB-unk, this script was written to answer a specific set of questions, namely:
 
 # 1.1 How many genes in the current annotation have evidence from the assembled transcripts?
@@ -34,8 +31,8 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-    (ref_assemblies, ref_features) = parse_gff3( args.reference_file )
-    (qry_assemblies, qry_features) = parse_gff3( args.alignment_file )
+    (ref_assemblies, ref_features) = biocodegff.get_gff3_features( args.reference_file )
+    (qry_assemblies, qry_features) = biocodegff.get_gff3_features( args.alignment_file )
 
     ## for stats
     total_ref_gene_count = 0
@@ -113,83 +110,6 @@ def reduce_overlaps( things ):
                 handled_ids[sbj_gene.id] = 1
             
     return nonoverlapping_set
-
-def parse_gff3(gff3_file):
-
-    assemblies = dict()
-    features   = dict()
-    
-    for line in open(gff3_file):
-        cols = line.split("\t")
-
-        if len(cols) != 9:
-            continue
-
-        mol_id = cols[0]
-        
-        ## initialize this assembly if we haven't seen it yet
-        if mol_id not in assemblies:
-            assemblies[mol_id] = biothings.Assembly( id=mol_id )
-
-        current_assembly = assemblies[mol_id]
-        rfmin = int(cols[3]) - 1
-        rfmax = int(cols[4])
-        rstrand = None
-        feat_id = biocodegff.column_9_value(cols[8], 'ID')
-        parent_id = biocodegff.column_9_value(cols[8], 'Parent')
-        parent_feat = None
-        
-        if parent_id is not None:
-            if parent_id in features:
-                parent_feat = features[parent_id]
-            else:
-                raise Exception("Error in GFF3: Parent {0} referenced by a child feature before it was defined".format(parent_id) )
-
-        if cols[6] == '-':
-            rstrand = -1
-        elif cols[6] == '+':
-            rstrand = 1
-        else:
-            rstrand = 0
-            
-        if cols[2] == 'gene':
-            gene = biothings.Gene(id=feat_id)
-            gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            features[feat_id] = gene
-            current_assembly.add_gene(gene)
-
-        
-        elif cols[2] == 'mRNA':
-            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat)
-            mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_feat.add_mRNA(mRNA)
-            features[feat_id] = mRNA
-
-        elif cols[2] == 'rRNA':
-            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat)
-            rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_feat.add_rRNA(rRNA)
-            features[feat_id] = rRNA
-            
-        elif cols[2] == 'tRNA':
-            tRNA = biothings.tRNA(id=feat_id, parent=parent_feat)
-            tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_feat.add_tRNA(tRNA)
-            features[feat_id] = tRNA
-
-        elif cols[2] == 'exon':
-            exon = biothings.Exon(id=feat_id, parent=parent_feat)
-            exon.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_feat.add_exon(exon)
-            features[feat_id] = exon
-
-        elif cols[2] == 'CDS':
-            CDS = biothings.CDS(id=feat_id, parent=parent_feat)
-            CDS.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
-            parent_feat.add_CDS(CDS)
-            features[feat_id] = CDS
-
-    return (assemblies, features)
 
 
 
