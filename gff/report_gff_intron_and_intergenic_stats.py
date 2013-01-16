@@ -24,11 +24,21 @@ def main():
     Median intron size: 63 bp
     Minimum intron size: 2 bp
     Maximum intron size: 1676 bp
+
+
+    Optionally, you can pass the path to a PNG file to be created using the --histogram parameter,
+    which will generate a size distribution histogram with two overlaying plots - one representing
+    the distribution of intergenic region sizes and the other the intron lengths.  Because these
+    can often have long tails, you can limit both the Y- and X-axes values with the --ylimit and
+    --xlimit options, respectively.
     '''
     parser = argparse.ArgumentParser( description='Reports statistics of reference gene coverage and extension by aligned RNA-seq transcript data.')
 
     ## output file to be written
     parser.add_argument('-i', '--input_gff3', type=str, required=True, help='GFF3 file of a reference annotation' )
+    parser.add_argument('-g', '--histogram', type=str, required=False, help='Optional path to a histogram of intron/intergenic space size distribution to be created (PNG)' )
+    parser.add_argument('-x', '--xlimit', type=int, required=False, help='Use this if you want to limit the X-axis of the histogram (feature length)' )
+    parser.add_argument('-y', '--ylimit', type=int, required=False, help='Use this if you want to limit the Y-axis of the histogram (feature count)' )
     args = parser.parse_args()
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_gff3 )
@@ -115,7 +125,26 @@ def main():
     print("Minimum intron size: {0} bp".format(intron_sizes[0]) )
     print("Maximum intron size: {0} bp\n".format(intron_sizes[-1]) )
     
-    
+    ############################
+    ## Graphics section (optional)
+    ############################
+    if args.histogram is not None:
+        import matplotlib.pyplot as plt
+
+        plt.xlabel('length (bp)')
+        plt.ylabel('count')
+        plt.title('Distribution of intron size and intergenic distances')
+        plt.hist(intergenic_distances, bins=50, histtype='stepfilled', color='b', label='Intergenic distances' )
+        plt.hist(intron_sizes, bins=50, histtype='stepfilled', color='r', alpha=0.5, label='Intron sizes' )
+
+        if args.xlimit is not None:
+            plt.xlim([0, args.xlimit])
+        
+        if args.ylimit is not None:
+            plt.ylim([0, args.ylimit])
+
+        plt.legend(loc='best')
+        plt.savefig(args.histogram)
 
 if __name__ == '__main__':
     main()
