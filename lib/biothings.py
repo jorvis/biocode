@@ -1,3 +1,5 @@
+import uuid
+
 
 print("The biothings.py is still under testing and development.  Please feel free to try using it, though the API is in flux.")
 
@@ -14,30 +16,100 @@ class LocatableThing:
         if self.locations is None:
             self.locations = list()
 
+    def contained_within( self, thing ):
+        '''
+        Returns True/False depending on whether the current LocatableThing is contained completely
+        within the passed one.  An aligned transcript, for example, is hoped to be fully
+        contained within an annotated gene.  Only the min/max bounds of the features are checked here
+        currently, not internal substructures (like intron/exon bounds)
+
+        Checks both to make sure they're both located on the same molecule before comparing coordinates,
+        ignoring strandedness.
+        '''
+        ## see if either are located on the same thing
+        for refloc in self.locations:
+            for qryloc in thing.locations:
+                if refloc.on.id == qryloc.on.id:
+                    ## if so, see if self is completely within the passed object
+                    if refloc.fmin >= qryloc.fmin and refloc.fmax <= qryloc.fmax:
+                        return True
+
+        return False
+
+    def has_same_coordinates_as( self, on=None, thing=None ):
+        '''
+        Reports True/False depending on whether the calling object shares both start/stop coordinates
+        with the passed 'thing' when considering locations 'on' the passed molecule biothing object.
+        '''
+        other = thing
+
+        for this_loc in self.locations:
+            for other_loc in other.locations:
+                ## are the molecules the same and on the one requested?
+                if this_loc.on.id == other_loc.on.id == on.id:
+                    if this_loc.fmin == other_loc.fmin and this_loc.fmax == other_loc.fmax:
+                        print("VALIDATE: {0} has same coordinates as {1} on {2}".format(self.id, other.id, on.id) )
+                        return True
+
+        ## if we got here, there wasn't a match
+        return False
+
     def locate_on( self, target=None, fmin=None, fmax=None, strand=None ):
         loc = Location(on=target, fmin=fmin, fmax=fmax, strand=strand)
         self.locations.append( loc )
 
-    def _overlaps( self, refloc, qryloc ):
-        ''' This assumes they're on the same molecule and only looks at coordinates, ignoring strandedness '''
-        they_overlap = True  ## it's easier to negate an overlap
+    def located_on( self ):
+        '''
+        Returns a dict of the molecules this feature is located on.  The keys are the identifiers
+        and values are the objects that represent them.  This is distinct from the 'locations'
+        attribute, which provides each individual location across all molecules.
+        '''
+        mols = dict()
+        for loc in self.locations:
+            mols[loc.on.id] = loc.on
 
-        if refloc.fmax <= qryloc.fmin or qryloc.fmax <= refloc.fmin:
-            they_overlap = False
+        return mols
+    
+    def location_on( self, mol ):
+        '''
+        Returns a Location object representing the location of the calling biothing on the passed
+        molecule.  The name of this method implies that the object will be located on the molecule
+        only a single time, and this method throws an exception if there are more than one.  If it
+        isn't located on that molecule at all, None will be returned.
+        '''
+        loc_found = None
+        for loc in self.locations:
+            if loc.on.id == mol.id:
+                if loc_found is None:
+                    loc_found = loc
+                else:
+                    raise Exception("ERROR: multiple locations on the same molecule found for {0} on {1} when not expected".format(self.id, mol.id) )
 
-        return they_overlap
+        return loc_found
 
-    def overlaps_with(self, thing):
+
+    def overlaps_with( self, thing ):
+        '''
+        Returns True/False depending on whether the two LocatableThing objects have
+        even a single overlapping Location on the same molecule.
+
+        Checks both to make sure they're both located on the same molecule before comparing coordinates,
+        ignoring strandedness.
+        '''
         ## see if either are located on the same thing
         for ref_location in self.locations:
             for qry_location in thing.locations:
                 if ref_location.on.id == qry_location.on.id:
                     ## if so, see if they have overlapping coordinates
-                    if self._overlaps( ref_location, qry_location ):
-                        return True
+                    ## it's easier to negate an overlap
+                    if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
+                        return False
 
         ## if there were an overlap we would have reached it when looping, so now return False
-        return False
+        return True
+
+
+
 
 class Location:
     def __init__( self, on=None, fmin=None, fmax=None, strand=None ):
@@ -46,8 +118,10 @@ class Location:
         self.fmax = fmax
         self.strand = strand
 
+
 class Assembly( LocatableThing ):
-    def __init__( self, id=None, length=None, children=None ):
+    def __init__( self, id=None, locations=None, length=None, children=None ):
+        super().__init__(locations)
         self.id = id
         self.length = length
         self.children = children
@@ -72,12 +146,28 @@ class CDS( LocatableThing ):
         self.parent = parent
         self.length = length
 
+
 class Exon( LocatableThing ):
     def __init__( self, id=None, locations=None, parent=None, length=None ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
         self.length = length
+
+
+class Intron( LocatableThing ):
+    '''
+    Usually not represented directly.  Rather, these are generated on the fly
+    as needed when the RNA.introns() method is called.
+
+    There are some issues to resolve here.  For example, what's the parentage
+    of an intron?  What are conceivable children?
+    '''
+    def __init__( self, id=None, locations=None, length=None ):
+        super().__init__(locations)
+        self.id = id
+        self.length = length
+        
 
 class Gene( LocatableThing ):
     def __init__( self, id=None, locations=None, children=None ):
@@ -99,6 +189,9 @@ class Gene( LocatableThing ):
     def add_tRNA(self, rna):
         self.children['tRNA'].append(rna)
 
+    def mRNAs(self):
+        return self.children['mRNA']
+
 
 class RNA( LocatableThing ):
     def __init__( self, id=None, locations=None, parent=None, children=None ):
@@ -115,7 +208,42 @@ class RNA( LocatableThing ):
         self.children['exon'].append(exon)
 
     def add_CDS(self, cds):
-        self.children['CDS'].append(cds)  
+        self.children['CDS'].append(cds)
+
+    def exons(self):
+        return self.children['exon']
+
+    def introns(self, on=None):
+        '''
+        Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
+        generated introns depend on the object passed via the 'on' argument
+        '''
+        mol_on = on
+
+        intron_objs = list()
+        last_exon = None
+        last_exon_loc = None
+
+        for exon in self.exons():
+            exon_loc = exon.location_on( mol_on )
+
+            if last_exon is not None:
+                intron_id = uuid.uuid4()
+                intron = Intron( id=intron_id )
+                intron.locate_on( target=mol_on, fmin=last_exon_loc.fmax, fmax=exon_loc.fmin, strand=exon_loc.strand )
+                intron_objs.append( intron )
+
+            last_exon = exon
+            last_exon_loc = exon_loc
+
+        return intron_objs
+    
+    def has_introns( self ):
+        if len( self.exons() ) > 1:
+            return True
+        else:
+            return False
+
         
 class mRNA( RNA ):
     def __init__( self, id=None, locations=None, parent=None, children=None ):
@@ -132,7 +260,7 @@ class tRNA( RNA ):
 
 #############################
 ## Private help functions
-##   Hopefully this isn't to un-pythonic.  These were to aide in abstraction within classes
+##   Hopefully this isn't too un-pythonic.  These were to aide in abstraction within classes
 #############################
 
 def _initialize_type_list( children, feattype ):
