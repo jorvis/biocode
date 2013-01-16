@@ -16,6 +16,24 @@ class LocatableThing:
         if self.locations is None:
             self.locations = list()
 
+    def __lt__(self, other):
+        return self.locations[0].fmin < other.locations[0].fmin
+
+    def __le__(self, other):
+        return self.locations[0].fmin <= other.locations[0].fmin
+
+    def __eq__(self, other):
+        return self.locations[0].fmin == other.locations[0].fmin
+
+    def __ne__(self, other):
+        return self.locations[0].fmin != other.locations[0].fmin
+
+    def __gt__(self, other):
+        return self.locations[0].fmin > other.locations[0].fmin
+
+    def __ge__(self, other):
+        return self.locations[0].fmin >= other.locations[0].fmin
+
     def contained_within( self, thing ):
         '''
         Returns True/False depending on whether the current LocatableThing is contained completely
@@ -109,8 +127,6 @@ class LocatableThing:
         return True
 
 
-
-
 class Location:
     def __init__( self, on=None, fmin=None, fmax=None, strand=None ):
         self.on = on
@@ -193,6 +209,7 @@ class Gene( LocatableThing ):
         return self.children['mRNA']
 
 
+
 class RNA( LocatableThing ):
     def __init__( self, id=None, locations=None, parent=None, children=None ):
         super().__init__(locations)
@@ -218,6 +235,9 @@ class RNA( LocatableThing ):
         Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
         generated introns depend on the object passed via the 'on' argument
         '''
+        if on is None:
+            raise Exception("ERROR: the introns() method requires a passed molecule using the 'on' argument")
+        
         mol_on = on
 
         intron_objs = list()
