@@ -63,10 +63,12 @@ def main():
     args = parser.parse_args()
 
     file = args.vcf_file
+    file_is_encoded = False
 
     fh = None
     if file.endswith(".gz"):
         fh = gzip.GzipFile(file, "r")
+        file_is_encoded = True
     else:
         fh = open(file)
 
@@ -83,7 +85,11 @@ def main():
     other_c = 0
 
     for line in fh:
-        line = line.decode().rstrip()
+        if file_is_encoded:
+            line = line.decode().rstrip()
+        else:
+            line = line.rstrip()
+            
         cols = line.split("\t")
 
         if line.startswith("#"):
