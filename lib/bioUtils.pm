@@ -11,6 +11,8 @@ jorvis@gmail.com
 =cut
 
 
+use strict;
+
 sub read_list_file {
     my ($file, $regex) = @_;
     
@@ -72,23 +74,81 @@ sub gff3_get_column_9_value {
     return $value;
 }
 
+sub translate_sequence {
+    my ($dna, $label) = @_;
+    
+    my $polypeptide_seq = '';
+    
+    for(my $i=0; $i<(length($dna) - 2); $i+=3) {
+        $polypeptide_seq .= codon2aa( substr($dna,$i,3) );
+    }
+    
+    ## report if this had an internal stop
+    if ( $polypeptide_seq =~ /\*.*?.$/ ) {
+        _log("ERROR: internal stops detected in feature with feature_id: $label: ($polypeptide_seq)");
+    }
+    
+    return $polypeptide_seq;
+}
+
+my  %genetic_code = (
+    # Alanine
+    'GCA' => 'A', 'GCC' => 'A', 'GCG' => 'A', 'GCT' => 'A',
+    # Arginine
+    'CGA' => 'R', 'CGC' => 'R', 'CGG' => 'R', 'CGT' => 'R', 'AGA' => 'R', 'AGG' => 'R',
+    # Asparagine
+    'AAC' => 'N', 'AAT' => 'N',
+    # Aspartic Acid
+    'GAC' => 'D', 'GAT' => 'D', 
+    # Cysteine
+    'TGC' => 'C', 'TGT' => 'C',
+    # Glutamic acid
+    'GAA' => 'E', 'GAG' => 'E',
+    # Glutamine
+    'CAA' => 'Q', 'CAG' => 'Q',
+    # Glycine
+    'GGA' => 'G', 'GGC' => 'G', 'GGG' => 'G', 'GGT' => 'G',
+    # Histidine
+    'CAC' => 'H', 'CAT' => 'H',
+    # Isoleucine
+    'ATA' => 'I', 'ATC' => 'I', 'ATT' => 'I',
+    # Leucine
+    'TTA' => 'L', 'TTG' => 'L', 'CTA' => 'L', 'CTC' => 'L', 'CTG' => 'L','CTT' => 'L',
+    # Lysine
+    'AAA' => 'K', 'AAG' => 'K',
+    # Methionine
+    'ATG' => 'M',
+    # Phenylalanine
+    'TTC' => 'F', 'TTT' => 'F',
+    # Proline
+    'CCA' => 'P', 'CCC' => 'P', 'CCG' => 'P', 'CCT' => 'P',
+    # Serine
+    'TCA' => 'S', 'TCC' => 'S', 'TCG' => 'S', 'TCT' => 'S', 'AGC' => 'S', 'AGT' => 'S',
+    # Threonine
+    'ACA' => 'T', 'ACC' => 'T', 'ACG' => 'T', 'ACT' => 'T',
+    # Tryptophan
+    'TGG' => 'W',
+    # Tyrosine
+    'TAC' => 'Y', 'TAT' => 'Y',
+    # Valine
+    'GTA' => 'V', 'GTC' => 'V', 'GTG' => 'V', 'GTT' => 'V',
+    # STOP
+    'TAA' => '*', 'TAG' => '*', 'TGA' => '*',
+);
 
 
+## taken from Tisdall's book
+sub codon2aa {
+    my($codon) = @_;
 
+    $codon = uc $codon;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if (exists $genetic_code{$codon}) {
+        return $genetic_code{$codon};
+    } else {
+        return 'X';
+    }
+}
 
 
 

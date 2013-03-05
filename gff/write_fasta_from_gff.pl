@@ -26,8 +26,8 @@ B<--type,-t>
     proteins?  (values are 'cds' or 'protein', default=protein)
 
 B<--fasta,-f>
-    Optional.  If the FASTA file for the underlying assemblies isn't 
-    included in the document you'll need to pass the file here.
+    Optional.  If the FASTA entries for the underlying assemblies isn't 
+    included in the GFF3 document you'll need to pass a FASTA file here.
 
 B<--log,-l> 
     Log file
@@ -37,8 +37,8 @@ B<--help,-h>
 
 =head1  DESCRIPTION
 
-This extracts the CDS entries from a GFF3 file, translates them, and
-exports a FASTA file of the resulting polypeptide sequences.
+This extracts the CDS entries from a GFF3 file, optionally translates them, and
+exports a FASTA file of the CDS or resulting polypeptide sequences.
 
 =head1  INPUT
 
@@ -48,7 +48,7 @@ The input file should follow the official GFF3 specification found here:
 
 =head1  OUTPUT
 
-A FASTA file with the CDS entries extracted and translated to polypeptides.
+A FASTA file with the CDS entries extracted and optionally translated to polypeptides.
 
 =head1  CONTACT
 
@@ -195,7 +195,6 @@ $molecules{$current_seq_id} = join( '', @current_seq_lines );
 $molecules{$current_seq_id} =~ s/\s//g;
 $molecules{$current_seq_id} = uc( $molecules{$current_seq_id} );
 
-
 for my $mol_id ( keys %coords ) {
 
     ## make sure this molecule exists in FASTA
@@ -206,9 +205,9 @@ for my $mol_id ( keys %coords ) {
     for my $mrna_id ( keys %{$coords{$mol_id}} ) {
         my $complete_cds = '';
         my $strand;
-    
+
         for my $cds ( sort {$$a{min} <=> $$b{min} } @{$coords{$mol_id}{$mrna_id}} ) {
-            $complete_cds = substr($molecules{$mol_id}, 
+            $complete_cds .= substr($molecules{$mol_id}, 
                                    $$cds{min} - 1,
                                    $$cds{max} - $$cds{min} + 1);
             
@@ -230,106 +229,8 @@ for my $mol_id ( keys %coords ) {
 }
 
 
-
-
 exit(0);
 
-sub translate_sequence {
-    my ($dna, $label) = @_;
-    
-    my $polypeptide_seq = '';
-    
-    for(my $i=0; $i<(length($dna) - 2); $i+=3) {
-        $polypeptide_seq .= codon2aa( substr($dna,$i,3) );
-    }
-    
-    ## report if this had an internal stop
-    if ( $polypeptide_seq =~ /\*.*?.$/ ) {
-        _log("ERROR: internal stops detected in feature with feature_id: $label: ($polypeptide_seq)");
-    }
-    
-    return $polypeptide_seq;
-}
-
-## taken from Tisdall's book
-sub codon2aa {
-    my($codon) = @_;
-
-    $codon = uc $codon;
- 
-    my (%genetic_code) = (    
-        'TCA' => 'S',    # Serine
-        'TCC' => 'S',    # Serine
-        'TCG' => 'S',    # Serine
-        'TCT' => 'S',    # Serine
-        'TTC' => 'F',    # Phenylalanine
-        'TTT' => 'F',    # Phenylalanine
-        'TTA' => 'L',    # Leucine
-        'TTG' => 'L',    # Leucine
-        'TAC' => 'Y',    # Tyrosine
-        'TAT' => 'Y',    # Tyrosine
-        'TAA' => '*',    # Stop
-        'TAG' => '*',    # Stop
-        'TGC' => 'C',    # Cysteine
-        'TGT' => 'C',    # Cysteine
-        'TGA' => '*',    # Stop
-        'TGG' => 'W',    # Tryptophan
-        'CTA' => 'L',    # Leucine
-        'CTC' => 'L',    # Leucine
-        'CTG' => 'L',    # Leucine
-        'CTT' => 'L',    # Leucine
-        'CCA' => 'P',    # Proline
-        'CCC' => 'P',    # Proline
-        'CCG' => 'P',    # Proline
-        'CCT' => 'P',    # Proline
-        'CAC' => 'H',    # Histidine
-        'CAT' => 'H',    # Histidine
-        'CAA' => 'Q',    # Glutamine
-        'CAG' => 'Q',    # Glutamine
-        'CGA' => 'R',    # Arginine
-        'CGC' => 'R',    # Arginine
-        'CGG' => 'R',    # Arginine
-        'CGT' => 'R',    # Arginine
-        'ATA' => 'I',    # Isoleucine
-        'ATC' => 'I',    # Isoleucine
-        'ATT' => 'I',    # Isoleucine
-        'ATG' => 'M',    # Methionine
-        'ACA' => 'T',    # Threonine
-        'ACC' => 'T',    # Threonine
-        'ACG' => 'T',    # Threonine
-        'ACT' => 'T',    # Threonine
-        'AAC' => 'N',    # Asparagine
-        'AAT' => 'N',    # Asparagine
-        'AAA' => 'K',    # Lysine
-        'AAG' => 'K',    # Lysine
-        'AGC' => 'S',    # Serine
-        'AGT' => 'S',    # Serine
-        'AGA' => 'R',    # Arginine
-        'AGG' => 'R',    # Arginine
-        'GTA' => 'V',    # Valine
-        'GTC' => 'V',    # Valine
-        'GTG' => 'V',    # Valine
-        'GTT' => 'V',    # Valine
-        'GCA' => 'A',    # Alanine
-        'GCC' => 'A',    # Alanine
-        'GCG' => 'A',    # Alanine
-        'GCT' => 'A',    # Alanine
-        'GAC' => 'D',    # Aspartic Acid
-        'GAT' => 'D',    # Aspartic Acid
-        'GAA' => 'E',    # Glutamic Acid
-        'GAG' => 'E',    # Glutamic Acid
-        'GGA' => 'G',    # Glycine
-        'GGC' => 'G',    # Glycine
-        'GGG' => 'G',    # Glycine
-        'GGT' => 'G',    # Glycine
-    );
-
-    if (exists $genetic_code{$codon}) {
-        return $genetic_code{$codon};
-    }else{
-        return 'X';
-    }
-}
 
 sub _log {
     my $msg = shift;
