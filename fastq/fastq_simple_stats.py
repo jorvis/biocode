@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.2
 
 import argparse
+import gzip
 import os
 
 ## CONTACT: jorvis@gmail.com
@@ -23,7 +24,17 @@ def main():
     line_number = 0
 
     for input_file in args.input_files:
-        for line in open(input_file, 'r'):
+        if input_file.endswith('.gz'):
+            fh = gzip.open( input_file, 'rb')
+            is_compressed = True
+        else:
+            fh = open( input_file, 'rU' )
+            is_compressed = False
+        
+        for line in fh:
+            if is_compressed:
+                line = line.decode()
+            
             line.rstrip()
             line_number += 1
 
