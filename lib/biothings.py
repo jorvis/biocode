@@ -159,6 +159,18 @@ class LocatableThing:
         return True
 
 
+class Location:
+    '''
+    Notes on the 'phase' attribute, used as defined in the GFF3 spec:
+
+    For features of type "CDS", the phase indicates where the feature begins with reference to the 
+    reading frame. The phase is one of the integers 0, 1, or 2, indicating the number of bases that 
+    should be removed from the beginning of this feature to reach the first base of the next codon. 
+    In other words, a phase of "0" indicates that the next codon begins at the first base of the region 
+    described by the current line, a phase of "1" indicates that the next codon begins at the second 
+    base of this region, and a phase of "2" indicates that the codon begins at the third base of this 
+    region. This is NOT to be confused with the frame, which is simply start modulo 3.
+    
     For forward strand features, phase is counted from the start field. For reverse strand features,
     phase is counted from the end field.
 
