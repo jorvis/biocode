@@ -270,6 +270,14 @@ class Gene( LocatableThing ):
         --fh = File handle to which we should print (default: STDOUT)
         --format = Currently only 'gff3' or the default 'text'.
     '''
+    def print_as(self, fh=None, source=None, format=None):
+        if format == 'text':
+            _print_thing(self, fh=fh)
+        elif format == 'gff3':
+            biocodegff.print_biogene( gene=self, fh=fh, source=source )
+        else:
+            raise Exception("ERROR: the print_as method only accepts values of 'text' or 'gff3'")
+        
 
 class RNA( LocatableThing ):
     def __init__( self, id=None, locations=None, parent=None, children=None ):
