@@ -2,6 +2,26 @@ import re
 import biothings
 from urllib.parse import unquote
 
+def build_column_9( id=None, parent=None, other=None ):
+    ## either the id or parent must be defined
+    if id is None and parent is None:
+        raise Exception("ERROR: attempt to build a GFF3 9th column with no ID or Parent attributes")
+
+    colstring = None
+
+    ## ID should always be first, if there is one
+    if id is not None:
+        colstring = "ID={0}".format(id)
+
+    if parent is not None:
+        if colstring is not None:
+            colstring += ";"
+
+        colstring += "Parent={0}".format(parent)
+
+    return colstring
+
+
 def column_9_value(value, key):
     '''
     Pass a case-sensitive key and this function will return the value,
@@ -211,11 +231,68 @@ def parse_gff3_by_relationship( gff3_file ):
 
     return fgraph
 
+
+def print_biogene( gene=None, fh=None, source=None, on=None ):
+    '''
+    WRITE COMMENTS BEFORE COMMIT
+    '''
+    ## handle defaults
+    if source is None:
+        source = '.'
+
+    if gene is None:
+        raise Exception( "ERROR: The print_biogene() function requires a biogene to be passed via the 'gene' argument" );
+
+    ## we can auto-detect the molecule if the user didn't pass one
+    #   and if there's only one.
+    if on is None:
+        on = gene.location().on
+
+    gene_loc = gene.location_on( on )
+    strand = '0'
+
+    if gene_loc.strand == 1:
+        strand = '+'
+    elif gene_loc.strand == -1:
+        strand = '-'
+
+    columns = ['.']*9
+    columns[0:3] = [gene_loc.on.id, source, 'gene']
+    columns[3:7] = [str(gene_loc.fmin + 1), str(gene_loc.fmax), '.', strand]
+    columns[8] = build_column_9( id=gene.id, parent=None, other=None )
+
+    ## print the gene line
+    fh.write( "\t".join(columns) + "\n" )
+
+    ## modifications for the mRNA
+    for mRNA in gene.mRNAs():
+        mRNA_loc = mRNA.location_on( on )
+        columns[2] = 'mRNA'
+        columns[3:5] = [str(mRNA_loc.fmin + 1), str(mRNA_loc.fmax)]
+        columns[8] = build_column_9( id=mRNA.id, parent=mRNA.parent.id, other=None )
+        fh.write( "\t".join(columns) + "\n" )
     
-        
+        ## handle each CDS for this mRNA
+        for CDS in mRNA.CDSs():
+            CDS_loc = CDS.location_on( on )
+            columns[2] = 'CDS'
+            columns[3:5] = [str(CDS_loc.fmin + 1), str(CDS_loc.fmax)]
+            columns[7] = str(CDS_loc.phase)
+            columns[8] = build_column_9( id=CDS.id, parent=mRNA.parent.id, other=None )
+            fh.write( "\t".join(columns) + "\n" )
+
+        columns[7] = '.'
+
+        ## handle each exon for this mRNA
+        for exon in mRNA.exons():
+            exon_loc = exon.location_on( on )
+            columns[2] = 'exon'
+            columns[3:5] = [str(exon_loc.fmin + 1), str(exon_loc.fmax)]
+            columns[8] = build_column_9( id=exon.id, parent=mRNA.parent.id, other=None )
+            fh.write( "\t".join(columns) + "\n" )
+
 def _reunite_children( fg, mol_id, kids ):
     pass
-
 
 
 def _get_ultimate_parent( p, id ):
@@ -228,7 +305,6 @@ def _get_ultimate_parent( p, id ):
         oldest = p[oldest]
 
     return oldest
-
 
 
 

@@ -1,10 +1,14 @@
 import uuid
+import biocodegff
+import sys
 
+'''
+Warning: this module requires Python 3.2 or higher
 
-print("The biothings.py is still under testing and development.  Please feel free to try using it, though the API is in flux.")
-
-## Yes, there's a lot of abstraction that could happen here still but I'm trying to allow for
-##  special consideration to be allowed for each feature type.  For now, this is just the skeleton.
+Yes, there's a lot of abstraction that could happen here still but I'm trying to allow for 
+special consideration to be allowed for each feature type and for calls to read more like
+biology than CS.
+'''
 
 class LocatableThing:
     '''
@@ -72,8 +76,21 @@ class LocatableThing:
         ## if we got here, there wasn't a match
         return False
 
-    def locate_on( self, target=None, fmin=None, fmax=None, strand=None ):
-        loc = Location(on=target, fmin=fmin, fmax=fmax, strand=strand)
+
+    def locate_on( self, target=None, fmin=None, fmax=None, phase=None, strand=None ):
+        '''
+        Locates any given biothing onto another by position range.  Use this to locate a gene
+        onto an assembly, for example.  Any biothing can have multiple locations.
+
+        Coordinates here are 0-based interbase.  Strand values are [1,0,-1].  If you pass
+        "+" or "-" they'll be converted to 1 and -1, respectively.
+        '''
+        if strand == '+':
+            strand = 1
+        elif strand == '-':
+            strand = -1
+
+        loc = Location(on=target, fmin=fmin, fmax=fmax, strand=strand, phase=phase)
         self.locations.append( loc )
 
     def located_on( self ):
@@ -88,6 +105,21 @@ class LocatableThing:
 
         return mols
     
+    def location( self ):
+        '''
+        In a majority of use-cases any given feature will only be located on one other feature.
+        This method lets you access this location using a direct method call, but will raise
+        an exception if called on a biothing with either 0 or more than 1 location.
+        '''
+        loc_count = len( self.locations )
+
+        if loc_count == 1:
+            return self.locations[0]
+        elif loc_count == 0:
+            raise Exception("ERROR: {0} has no locations defined".format(self.id))
+        else:
+            raise Exception("ERROR: {0} has more than one location defined.  You should use the location_on() method instead.".format(self.id))
+
     def location_on( self, mol ):
         '''
         Returns a Location object representing the location of the calling biothing on the passed
@@ -127,12 +159,17 @@ class LocatableThing:
         return True
 
 
-class Location:
-    def __init__( self, on=None, fmin=None, fmax=None, strand=None ):
+    For forward strand features, phase is counted from the start field. For reverse strand features,
+    phase is counted from the end field.
+
+    The phase is REQUIRED for all CDS features.
+    '''
+    def __init__( self, on=None, fmin=None, fmax=None, phase=None, strand=None ):
         self.on = on
         self.fmin = fmin
         self.fmax = fmax
         self.strand = strand
+        self.phase = 0 if phase is None else phase
 
 
 class Assembly( LocatableThing ):
@@ -156,11 +193,12 @@ class Assembly( LocatableThing ):
 
 
 class CDS( LocatableThing ):
-    def __init__( self, id=None, locations=None, parent=None, length=None ):
+    def __init__( self, id=None, locations=None, parent=None, phase=None, length=None ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
         self.length = length
+        self.phase = 0 if phase is None else phase
 
 
 class Exon( LocatableThing ):
@@ -207,7 +245,18 @@ class Gene( LocatableThing ):
 
     def mRNAs(self):
         return self.children['mRNA']
+    
+    '''
+    Prints the gene as a GFF3 entry, with all children.  Is printed to STDOUT
+    unless the fh option is passed.  Really, only checks are done here before
+    passing the info to the biocodegff module
+    '''
+    '''
+    Overloading the print function allows users to directly print gene objects.
+    The options passed will decide the target and format of the print.
 
+        --fh = File handle to which we should print (default: STDOUT)
+        --format = Currently only 'gff3' or the default 'text'.
 
 
 class RNA( LocatableThing ):
@@ -229,6 +278,12 @@ class RNA( LocatableThing ):
 
     def exons(self):
         return self.children['exon']
+
+    def CDSs(self):
+        ## Why not "CDSes"?  As a grammarian, this gave me fits.  There are many references
+        #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
+        #  http://oxforddictionaries.com/definition/american_english/SOS
+        return self.children['CDS']
 
     def introns(self, on=None):
         '''
@@ -293,7 +348,7 @@ def _initialize_type_list( children, feattype ):
     return children
 
 
-def _print_thing( thing ):
+def _print_thing( thing, fh=None ):
     '''
     This is mostly used for debugging.  Pass any of the biothings like Gene, CDS, etc
     and this will print out its attributes including locations, children info, etc.
