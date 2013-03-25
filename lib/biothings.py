@@ -269,7 +269,7 @@ class Gene( LocatableThing ):
 
         --fh = File handle to which we should print (default: STDOUT)
         --format = Currently only 'gff3' or the default 'text'.
-
+    '''
 
 class RNA( LocatableThing ):
     def __init__( self, id=None, locations=None, parent=None, children=None ):
