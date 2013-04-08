@@ -16,23 +16,29 @@ def main():
     if args.input_list is None and args.fasta_file is None:
         raise Exception("ERROR: You must specify either --input_list or --fasta_file to define input");
 
+    files_to_process = list()
+
     if args.input_list is not None:
         for file in read_list_file( args.input_list ):
-            fail_count = process_fasta_file( file )
-
-            if ( fail_count > 0 ):
-                print( "{0}\t{1}\n".format(file, fail_count) )
+            files_to_process.append(file)
 
     if args.fasta_file is not None:
-        fail_count = process_fasta_file( args.fasta_file )
+        files_to_process.append(args.fasta_file)
 
-        if ( fail_count > 0 ):
-                print( "{0}\t{1}\n".format(file, fail_count) )
+    for file in files_to_process:
+        fail_lines = process_fasta_file( file )
+
+        if ( len(fail_lines) > 0 ):
+            print( "{0}\t{1}\n".format(file, len(fail_lines)) )
+
+            for line in fail_lines:
+                print("\t{0}\n".format(line))
+
         
 
 
 def process_fasta_file( file ):
-    embedded_header_count = 0
+    embedded_header_lines = list()
 
     print("INFO: processing file: {0}".format(file), file=sys.stderr )
 
@@ -41,10 +47,10 @@ def process_fasta_file( file ):
     for line in ifh:
         ## if the line contains a '>' but it's not at the beginning, flag the entry:
         if line.find('>') != -1 and not line.startswith('>'):
-            embedded_header_count += 1
+            embedded_header_lines.append(line)
     
     
-    return embedded_header_count
+    return embedded_header_lines
 
 
 if __name__ == '__main__':
