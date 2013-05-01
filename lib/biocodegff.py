@@ -278,7 +278,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             columns[2] = 'CDS'
             columns[3:5] = [str(CDS_loc.fmin + 1), str(CDS_loc.fmax)]
             columns[7] = str(CDS_loc.phase)
-            columns[8] = build_column_9( id=CDS.id, parent=mRNA.parent.id, other=None )
+            columns[8] = build_column_9( id=CDS.id, parent=mRNA.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
         columns[7] = '.'
@@ -288,7 +288,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             exon_loc = exon.location_on( on )
             columns[2] = 'exon'
             columns[3:5] = [str(exon_loc.fmin + 1), str(exon_loc.fmax)]
-            columns[8] = build_column_9( id=exon.id, parent=mRNA.parent.id, other=None )
+            columns[8] = build_column_9( id=exon.id, parent=mRNA.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
 def _reunite_children( fg, mol_id, kids ):
