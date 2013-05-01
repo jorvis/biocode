@@ -70,6 +70,9 @@ def main():
     current_sequence = None
     current_gene_comment_lines = list()
 
+    ## Used for tracking the exon count for each gene (for ID purposes)
+    exon_count_by_mRNA = dict()
+    
     fout = open(args.output, mode='wt', encoding='utf-8')
     fout.write("##gff-version 3")
 
@@ -113,11 +116,18 @@ def main():
             if feat_type == "gene":
                 gene = biothings.Gene( id=feat_id )
                 gene.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
+
             elif feat_type == "transcript":
                 mRNA = biothings.mRNA( id=feat_id, parent=gene )
                 mRNA.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
                 gene.add_mRNA(mRNA)
                 mRNAs[mRNA.id] = mRNA
+
+                if feat_id in exon_count_by_mRNA:
+                    raise Exception( "ERROR: two different mRNAs found with same ID: {0}".format(feat_id) )
+                else:
+                    exon_count_by_mRNA[feat_id] = 0
+                    
             elif feat_type == "CDS":
                 parent_id = biocodegff.column_9_value( cols[8], 'Parent' )
 
@@ -128,8 +138,12 @@ def main():
                 CDS = biothings.CDS( id=feat_id, parent=mRNAs[parent_id] )
                 CDS.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6], phase=int(cols[7]) )
                 mRNA.add_CDS(CDS)
-
-                exon = biothings.Exon( id=feat_id, parent=mRNAs[parent_id] )
+                
+                ## exons weren't explicitly defined in the input file, so we need to derive new IDs for them
+                exon_count_by_mRNA[parent_id] += 1
+                exon_id = "{0}.exon{1}".format(parent_id, exon_count_by_mRNA[parent_id])
+                
+                exon = biothings.Exon( id=exon_id, parent=mRNAs[parent_id] )
                 exon.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
                 mRNA.add_exon(exon)
         
