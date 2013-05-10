@@ -41,7 +41,7 @@ import biocodeutils
 import biothings
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Transforms a tab-delimited annotation file to PathoLogic format')
 
     ## output file to be written
     parser.add_argument('-a', '--annotation_tab', type=str, required=True, help='Path to an input file to be parsed' )
