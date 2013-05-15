@@ -205,12 +205,15 @@ class Assembly( LocatableThing ):
 
 
 class CDS( LocatableThing ):
-    def __init__( self, id=None, locations=None, parent=None, phase=None, length=None ):
+    def __init__( self, id=None, locations=None, parent=None, phase=None, length=None, annotation=None ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
         self.length = length
         self.phase = 0 if phase is None else phase
+
+        ## this should be an instance of FunctionalAnnotation from bioannotation.py
+        self.annotation = annotation
 
 
 class Exon( LocatableThing ):
