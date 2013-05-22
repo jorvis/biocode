@@ -139,7 +139,7 @@ def get_last_column_value( key, colstring ):
     if m:
         key_value = m.group(1)
     else:
-        re_str = "{0}=(.+?)".format(key)
+        re_str = "{0}=(.+)".format(key)
         m = re.match( re_str, colstring )
 
         if m:

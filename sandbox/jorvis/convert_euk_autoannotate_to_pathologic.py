@@ -92,7 +92,32 @@ def main():
 
         parse_annotation_line( line, genes, molecules )
         
-    write_annotation_files(  )
+    write_annotation_files( genes, molecules, args.output_dir )
+
+
+
+def write_annotation_files( genes, molecules, outdir ):
+    for gene_id in genes:
+        gene = genes[gene_id]
+
+        for mRNA in gene.mRNAs():
+            ## any changes to this path convention need to be also updated in write_elements_file()
+            annot_path = "{0}/{1}.pf".format(outdir, mRNA.id)
+            annotout = open(annot_path, mode='wt', encoding='utf-8')
+
+            for CDS in mRNA.CDSs():
+                
+                annotout.write("ID\t{0}\n".format(CDS.id))
+                annotout.write("PRODUCT-TYPE\tP\n")
+
+                if CDS.annotation.product_name is None:
+                    annotout.write("FUNCTION\tHypothetical protein\n")
+                else:
+                    annotout.write("FUNCTION\t{0}\n".format(CDS.annotation.product_name))
+                    
+                annotout.write("//\n")
+
+            annotout.close()
 
 
 def get_gene_id_from_transcript( transcript_id ):
@@ -109,8 +134,11 @@ def parse_annotation_line(line, genes, molecules):
     transcript_id = cols[0]
     CDS_id = cols[1]
     gene_id = get_gene_id_from_transcript( transcript_id )
-    ## this needs to be smarter than choosing just the HMM result
-    gene_product_name = cols[5]
+    
+    if cols[5] is None:
+        gene_product_name = cols[3]
+    else:
+        gene_product_name = cols[5]
 
     if transcript_id not in molecules:
         raise Exception("ERROR: found molecule {0} in referenced in annotation tab file but not in genomic_fasta file".format(transcript_id))
