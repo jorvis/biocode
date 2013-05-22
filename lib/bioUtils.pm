@@ -91,6 +91,20 @@ sub translate_sequence {
     return $polypeptide_seq;
 }
 
+
+## taken from Tisdall's book
+sub codon2aa {
+    my($codon) = @_;
+
+    $codon = uc $codon;
+
+    if (exists $genetic_code{$codon}) {
+        return $genetic_code{$codon};
+    } else {
+        return 'X';
+    }
+}
+
 my  %genetic_code = (
     # Alanine
     'GCA' => 'A', 'GCC' => 'A', 'GCG' => 'A', 'GCT' => 'A',
@@ -137,18 +151,6 @@ my  %genetic_code = (
 );
 
 
-## taken from Tisdall's book
-sub codon2aa {
-    my($codon) = @_;
-
-    $codon = uc $codon;
-
-    if (exists $genetic_code{$codon}) {
-        return $genetic_code{$codon};
-    } else {
-        return 'X';
-    }
-}
 
 
 
