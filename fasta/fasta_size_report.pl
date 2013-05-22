@@ -13,7 +13,7 @@ USAGE: fasta_size_report.pl
             --list=/path/to/some_file.list
                        OR
             --dir=/path/to/somedir
-
+          [ --summary=1 ]
 
 =head1 OPTIONS
 
@@ -25,6 +25,9 @@ B<--list,-l>
 
 B<--dir,-d>
     a directory containing .fsa, .fasta, .fa files 
+
+B<--summary,-s>
+    optional.  If set to 1, also exports summary lines (each begins with a # symbol)
 
 B<--log,-l> 
     Log file
@@ -58,6 +61,9 @@ The output is a tabular list of:
 
 ID    SIZE    DEFLINE    FILE
 1     100     >1 blah    /path/to/A.fasta
+
+Optionally, if the -s option is set to 1, also exports summary lines, each beginning
+with a comment.
 
 =head1  CONTACT
 
@@ -117,13 +123,11 @@ sub check_parameters {
     
     ## make sure required arguments were passed
     my @input_types = qw( file dir list );
-
-
     my @inputs = ();
 
     ## file
     if  ( defined $options->{file} ) {
-	@inputs = @{$options->{file}};
+        @inputs = @{$options->{file}};
     }
 
     ## list
@@ -138,14 +142,14 @@ sub check_parameters {
 
     ## dir (accept all 3 ways specified in documentation)
     if( defined $options->{dir} ) {
-	die "Invalid path give for directory input: $options->{dir} " if (! -d $options->{dir} );
-	my $dir = $options->{dir};
-	my @files = <$dir/*.fsa>;
-	@inputs = (@inputs, @files);
-	@files = <$dir/*.fa>;
-	@inputs = (@inputs, @files);
-	@files = <$dir/*.fasta>;
-	@inputs = (@inputs, @files);
+        die "Invalid path give for directory input: $options->{dir} " if (! -d $options->{dir} );
+        my $dir = $options->{dir};
+        my @files = <$dir/*.fsa>;
+        @inputs = (@inputs, @files);
+        @files = <$dir/*.fa>;
+        @inputs = (@inputs, @files);
+        @files = <$dir/*.fasta>;
+        @inputs = (@inputs, @files);
     }
 
     ## check to make sure we have files 
@@ -153,7 +157,7 @@ sub check_parameters {
 
     ## check to make sure they all exist
     foreach my $file (@inputs){
-	die "Error with file $file.  Check if it exists and is readable" if (!-e $file || !-r $file);
+        die "Error with file $file.  Check if it exists and is readable" if (!-e $file || !-r $file);
     }
 
     return @inputs;
