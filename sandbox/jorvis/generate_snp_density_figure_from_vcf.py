@@ -112,8 +112,11 @@ def plot_vcf_file( file ):
             pcounts.append( snps_scoring_this_high / (total_seq_length / 1000) )
             last_score = score
 
-    this_line = plt.plot(pscores, pcounts, label=sample_id, linewidth=2.0)
-    plt.gca().get_frame().set_linewidth(10).draw()
+    if ( snps_per_kb < 1 ):
+        this_line = plt.plot(pscores, pcounts, label=sample_id, linewidth=5.0)
+    else:
+        this_line = plt.plot(pscores, pcounts, label=sample_id, linewidth=2.0)
+ #   plt.gca().get_frame().set_linewidth(10).draw()
     
 
     
