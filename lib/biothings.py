@@ -8,6 +8,10 @@ Warning: this module requires Python 3.2 or higher
 Yes, there's a lot of abstraction that could happen here still but I'm trying to allow for 
 special consideration to be allowed for each feature type and for calls to read more like
 biology than CS.
+
+Each of the 'things' is intended to be biologically relevant, and I've included the definitions
+for each from the Sequence Ontology.  Their class representations may not match this perfectly
+yet, but that's the goal wherever possible.
 '''
 
 class LocatableThing:
@@ -185,6 +189,11 @@ class Location:
 
 
 class Assembly( LocatableThing ):
+    '''
+    SO definition (2013-05-22): "A region of the genome of known length that is composed by ordering and 
+    aligning two or more different regions."
+    '''
+    
     def __init__( self, id=None, locations=None, length=None, children=None ):
         super().__init__(locations)
         self.id = id
@@ -205,6 +214,10 @@ class Assembly( LocatableThing ):
 
 
 class CDS( LocatableThing ):
+    '''
+    SO definition (2013-05-22): "A contiguous sequence which begins with, and includes, a start codon 
+    and ends with, and includes, a stop codon."
+    '''
     def __init__( self, id=None, locations=None, parent=None, phase=None, length=None, annotation=None ):
         super().__init__(locations)
         self.id = id
@@ -231,6 +244,10 @@ class Intron( LocatableThing ):
 
     There are some issues to resolve here.  For example, what's the parentage
     of an intron?  What are conceivable children?
+    
+    SO definition (2013-05-22): "A region of a primary transcript that is transcribed, but 
+    removed from within the transcript by splicing together the sequences (exons) on either 
+    side of it."
     '''
     def __init__( self, id=None, locations=None, length=None ):
         super().__init__(locations)
@@ -239,6 +256,11 @@ class Intron( LocatableThing ):
         
 
 class Gene( LocatableThing ):
+    '''
+    SO definition (2013-05-22): "A region (or regions) that includes all of the sequence 
+    elements necessary to encode a functional transcript. A gene may include regulatory 
+    regions, transcribed regions and/or other functional sequence regions."
+    '''
     def __init__( self, id=None, locations=None, children=None ):
         super().__init__(locations)
         self.id = id
@@ -282,7 +304,26 @@ class Gene( LocatableThing ):
             raise Exception("ERROR: the print_as method only accepts values of 'text' or 'gff3'")
         
 
+class Polypeptide( LocatableThing ):
+    '''
+    SO definition (2013-05-22): "A sequence of amino acids linked by peptide bonds which may lack 
+    appreciable tertiary structure and may not be liable to irreversible denaturation."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(locations)
+        self.id = id
+        self.parent = parent
+        self.length = length
+        
+        ## this should be an instance of FunctionalAnnotation from bioannotation.py
+        self.annotation = annotation
+        
+        
 class RNA( LocatableThing ):
+    '''
+    SO definition (2013-05-22): "An attribute describing a sequence consisting of nucleobases 
+    bound to a repeating unit made of a D-ribose ring connected to a phosphate backbone."
+    '''
     def __init__( self, id=None, locations=None, parent=None, children=None ):
         super().__init__(locations)
         self.id = id
@@ -344,14 +385,32 @@ class RNA( LocatableThing ):
 
         
 class mRNA( RNA ):
+    '''
+    SO definition (2013-05-22): "Messenger RNA is the intermediate molecule between DNA and protein. It 
+    includes UTR and coding sequences. It does not contain introns."
+    '''
     def __init__( self, id=None, locations=None, parent=None, children=None ):
         super().__init__(id, locations, parent, children)
 
 class rRNA( RNA ):
+    '''
+    SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both 
+    structural scaffolding and catalytic activity."
+    '''
     def __init__( self, id=None, locations=None, parent=None, children=None ):
         super().__init__(id, locations, parent, children)
 
 class tRNA( RNA ):
+    '''
+    SO definition (2013-05-22): "Transfer RNA (tRNA) molecules are approximately 80 nucleotides in length. 
+    Their secondary structure includes four short double-helical elements and three loops (D, anti-codon, 
+    and T loops). Further hydrogen bonds mediate the characteristic L-shaped molecular structure. Transfer 
+    RNAs have two regions of fundamental functional importance: the anti-codon, which is responsible for 
+    specific mRNA codon recognition, and the 3' end, to which the tRNA's corresponding amino acid is 
+    attached (by aminoacyl-tRNA synthetases). Transfer RNAs cope with the degeneracy of the genetic code 
+    in two manners: having more than one tRNA (with a specific anti-codon) for a particular amino acid; 
+    and 'wobble' base-pairing, i.e. permitting non-standard base-pairing at the 3rd anti-codon position."
+    '''
     def __init__( self, id=None, locations=None, parent=None, children=None ):
         super().__init__(id, locations, parent, children)
 
