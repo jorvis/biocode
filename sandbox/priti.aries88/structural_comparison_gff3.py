@@ -98,7 +98,7 @@ def process_files(args):
                         p_exons.append(cord)
 
 
-        for exon_2 in pred_exons :                                      
+        for exon_2 in pred_exons :                                   ##Identify true exons.   
             for exon_1 in anno_exons :
                 if (exon_1 == exon_2) :
                     if (exon_2 not in exon_pred_all) :
