@@ -42,6 +42,8 @@ FLDTGVDTGHNLDTGV
 Development testing command:
 $ /opt/python-3.3.1/bin/python3.3 ~/svn/biocode/sandbox/jorvis/convert_euk_autoannotate_to_pathologic.py -a best_candidates.eclipsed_orfs_removed.evidence_annotation_EC_transcripts.tab -g combined_Trinity.fasta -o pathologic_out -p best_candidates.eclipsed_orfs_removed.pep
 
+From EUK-337: When completed, please write results here:
+/local/projects-t2/e_affinis/rna_seq/analysis/combined_assembly/pathway_tools
 
 OUTPUT:
 
@@ -50,6 +52,11 @@ To be more specific, it will create (N*2)+1 where N is the number of molecular
 fragments in the input nucleotide set.  This is true whether that number is
 10 supercontigs of a large genome or 50,000 transcripts annotated without
 a genome.
+
+I try to limit the number of files showing up in the base directory by creating
+subdirectories for the files in a repeatable way.  How?  A bit of a hack, but I
+take the md5sum of each molecules name and then only use the first two characters
+of it.
 
 Pathologic format described:
 http://bioinformatics.ai.sri.com/ptools/pathologic-format.pdf
@@ -68,6 +75,7 @@ import re
 import biocodeutils
 import biothings
 import bioannotation
+import hashlib
 
 def main():
     parser = argparse.ArgumentParser( description='Transforms a tab-delimited annotation file to PathoLogic format')
@@ -80,9 +88,14 @@ def main():
     args = parser.parse_args()
 
     molecules = biocodeutils.fasta_dict_from_file( args.genomic_fasta )
+    protein_coords = get_protein_coordinates_from_FASTA(args.protein_fasta)
 
-    #write_elements_file(molecules, args.output_dir )
-    #write_seq_files(molecules, args.output_dir)
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    
+    create_subdirectories(molecules, args.output_dir)
+    write_elements_file(molecules, args.output_dir)
+    write_seq_files(molecules, args.output_dir)
 
     genes = dict()
     
@@ -92,29 +105,99 @@ def main():
 
         parse_annotation_line( line, genes, molecules )
         
-    write_annotation_files( genes, molecules, args.output_dir )
+    write_annotation_files( genes, molecules, protein_coords, args.output_dir )
 
 
 
-def write_annotation_files( genes, molecules, outdir ):
+
+def get_base_directory_name( mol_name ):
+    m = hashlib.md5()
+    m.update(mol_name.encode())
+    digest = m.hexdigest()
+    return digest[:2]
+
+def create_subdirectories( mols, output_dir ):
+    for mol in mols:
+        base_name = get_base_directory_name( mol )
+        subdir_path = "{0}/{1}".format(output_dir, base_name)
+
+        if not os.path.exists(subdir_path):
+            os.makedirs(subdir_path)
+
+
+def get_protein_coordinates_from_FASTA(protein_fasta):
+    '''
+    This function is probably only relevant to a limited number of tasks where the protein input
+    FASTA file to the pipeline was produced by transdecoder, which incorporates the predicted
+    ORF coordinates into the FASTA header, like this:
+
+    >m.13585 g.13585  ORF g.13585 m.13585 type:3prime_partial len:76 (+) comp100033_c0_seq1:118-348(+)
+
+    Of all that, the only part we care about is that the first model number 'm.13585' matches that
+    of the second column in the annotation file, along with the matching genomic molecule name at
+    the end of the header 'comp100033_c0_seq1:118-348(+)
+
+    Returns a dict keyed on the model name (like 'm.13585') with the followed keyed values:
+       'mol'    = molecule ID (like 'comp100033_c0_seq1')
+       'fmin'   = 0-interbase start coordinate (117, from example above)
+       'fmax'   = 0-interbase stop coordinate (348, from example above)
+       'strand' = 1, 0 or -1 direction
+    '''
+    protein_locs = dict()
+
+    fasta_dict = biocodeutils.fasta_dict_from_file( protein_fasta )
+
+    pattern = re.compile('(comp\d+_c\d+_seq\d+)\:(\d+)\-(\d+)\(\+\)')
+
+    for model_id in fasta_dict:
+        if model_id in protein_locs:
+            raise Exception("ERROR: found duplicate model ID in file: {0}".format(protein_fasta) )
+
+        m = pattern.search(fasta_dict[model_id]['h'])
+
+        if m:
+            protein_locs[model_id] = { 'mol': m.group(1), 'fmin': int(m.group(2)) - 1, 'fmax': int(m.group(3)), 'strand': 1}
+        else:
+            raise Exception("ERROR: unexpected header format.  Expected to parse something like comp100033_c0_seq1:118-348(+).  Got: {0}".format(fasta_dict[model_id]['h']))
+
+    return protein_locs
+    
+
+
+
+def write_annotation_files( genes, molecules, locs, outdir ):
     for gene_id in genes:
         gene = genes[gene_id]
 
         for mRNA in gene.mRNAs():
             ## any changes to this path convention need to be also updated in write_elements_file()
-            annot_path = "{0}/{1}.pf".format(outdir, mRNA.id)
+            base_dir = get_base_directory_name(mRNA.id)
+            annot_path = "{0}/{1}/{2}.pf".format(outdir, base_dir, mRNA.id)
             annotout = open(annot_path, mode='wt', encoding='utf-8')
 
             for CDS in mRNA.CDSs():
                 
                 annotout.write("ID\t{0}\n".format(CDS.id))
-                annotout.write("PRODUCT-TYPE\tP\n")
+
+                if CDS.id in locs:
+                    annotout.write("STARTBASE\t{0}\n".format(str(locs[CDS.id]['fmin'] + 1)) )
+                    annotout.write("ENDBASE\t{0}\n".format(str(locs[CDS.id]['fmax'])) )
+
+                if len(CDS.annotation.ec_numbers):
+                    for ec_annot in CDS.annotation.ec_numbers:
+                        annotout.write("EC\t{0}\n".format(ec_annot.number))
+
+                if len(CDS.annotation.go_annotations):
+                    for go_annot in CDS.annotation.go_annotations:
+                        annotout.write("DBLINK\tGO:{0}\n".format(go_annot.go_id))
 
                 if CDS.annotation.product_name is None:
                     annotout.write("FUNCTION\tHypothetical protein\n")
                 else:
                     annotout.write("FUNCTION\t{0}\n".format(CDS.annotation.product_name))
-                    
+
+
+                annotout.write("PRODUCT-TYPE\tP\n")
                 annotout.write("//\n")
 
             annotout.close()
@@ -130,6 +213,7 @@ def get_gene_id_from_transcript( transcript_id ):
 
 def parse_annotation_line(line, genes, molecules):
     cols = line.split("\t")
+    cols[9] = cols[9].rstrip()
 
     transcript_id = cols[0]
     CDS_id = cols[1]
@@ -153,7 +237,30 @@ def parse_annotation_line(line, genes, molecules):
     gene.add_mRNA( mRNA )
 
     annotation = bioannotation.FunctionalAnnotation( product_name=gene_product_name )
-    
+
+    ec_num_pattern = re.compile('\d+.')
+
+    if cols[9] is not None:
+        ec_nums = cols[9].split(',')
+
+        for ec_num in ec_nums:
+            m = ec_num_pattern.search(ec_num)
+
+            if m:
+                ec = bioannotation.ECAnnotation( number=ec_num )
+                annotation.add_ec_number( ec )
+
+    go_pattern = re.compile('(\d+)')
+    if cols[8] is not None:
+        go_terms = cols[8].split(',')
+
+        for go_term in go_terms:
+            m = go_pattern.search(go_term)
+
+            if m:
+                go = bioannotation.GOAnnotation( go_id=go_term )
+                annotation.add_go_annotation( go )
+                
     CDS = biothings.CDS( id=CDS_id, annotation=annotation )
     mRNA.add_CDS( CDS )
 
@@ -162,7 +269,8 @@ def parse_annotation_line(line, genes, molecules):
 def write_seq_files( seqs, outdir ):
     for seq in seqs:
         ## any changes to this path convention need to be also updated in write_elements_file()
-        seqout_path = "{0}/{1}.fna".format(outdir, seq)
+        base_dir = get_base_directory_name(seq)
+        seqout_path = "{0}/{1}/{2}.fna".format(outdir, base_dir, seq)
         seqout = open(seqout_path, mode='wt', encoding='utf-8')
         seqout.write( ">{0} {1}\n".format(seq, seqs[seq]['h']) )
 
@@ -179,13 +287,14 @@ def write_elements_file( seqs, outdir ):
 
     for seq in seqs:
         fout.write( "ID\t{0}\n".format(seq) )
+        base_dir = get_base_directory_name(seq)
 
         if not seqs[seq]['h'].isspace():
             fout.write( "NAME\t{0} {1}\n".format(seq, seqs[seq]['h']) )
 
         fout.write( "CIRCULAR?\tN\n" )
-        fout.write( "ANNOT-FILE\t{0}/{1}.pf\n".format(outdir, seq) ) ## must be full path
-        fout.write( "SEQ-FILE\t{0}/{1}.fna\n".format(outdir, seq) ) ## must be full path
+        fout.write( "ANNOT-FILE\t{0}/{1}/{2}.pf\n".format(outdir, base_dir, seq) ) ## must be full path
+        fout.write( "SEQ-FILE\t{0}/{1}/{2}.fna\n".format(outdir, base_dir, seq) ) ## must be full path
         fout.write("//\n")
     
     fout.close()
