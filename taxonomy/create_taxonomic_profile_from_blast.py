@@ -48,7 +48,7 @@ def main():
         print("Processing file: ", file)
         if args.input_format == 'blast_m8' or args.input_format == 'btab':
             parse_blast_file( file, c, taxon_counts, args.eval_cutoff, args.input_format, stats )
-        else
+        else:
             raise Exception("Unsupported input format passed: {0}".format(args.input_format) )
 
         processed_file_count += 1
@@ -176,7 +176,7 @@ def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
             
             if current_id_classified == False:
                 if eval_cutoff is None or eval_cutoff >= float(cols[EVAL_COLUMN_NUM]):
-                    print("DEBUG: attempting to parse a GI for header: ({0})".format(cols[SUBJECT_LABEL_COLUMN_NUM]) )
+                    #print("DEBUG: attempting to parse a GI for header: ({0})".format(cols[SUBJECT_LABEL_COLUMN_NUM]) )
                     gi = parse_gi(cols[SUBJECT_LABEL_COLUMN_NUM], cursor)
                                         
                     if gi:
