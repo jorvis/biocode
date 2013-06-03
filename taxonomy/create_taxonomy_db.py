@@ -25,9 +25,11 @@ def main():
     parser.add_argument('-d', '--nodes_file', type=str, required=True, help='Path to a nodes.dmp file' )
 
     ## GbAccList file rows are like: AACY024122252,1,129568417    (acc,version_num,gi)
+    #  Example source: ftp://ftp.ncbi.nlm.nih.gov/genbank/livelists/GbAccList.0526.2013.gz
     parser.add_argument('-g', '--gbacclist_file', type=str, required=True, help='Path to a GbAccList.* file' )
 
     ## RefSeq Accession list file with rows like: 0. tax_id, 1. GI, 2. transcript version, 3. protein version
+    #  Example source: ftp://ftp.ncbi.nlm.nih.gov/refseq/release/release-catalog/release59.accession2geneid.gz
     parser.add_argument('-r', '--refseq_acclist_file', type=str, required=True, help='Path to a RefSeq accession2geneid file' )
 
 
