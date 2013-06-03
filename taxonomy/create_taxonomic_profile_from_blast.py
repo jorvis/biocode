@@ -117,16 +117,18 @@ def group_taxa_by_rank(rank, counts, cursor):
        up the taxonomy tree until all nodes are at the level of the passed
        rank
     """
-    ranked_counts = {}
+    ranked_counts = dict()
     unranked_taxon_count = 0
 
     for taxon_id in counts:
         ranked_taxon_id = get_ranked_taxon(taxon_id, cursor, rank, 0)
         if ranked_taxon_id:
             if ranked_taxon_id in ranked_counts:
-                ranked_counts[ranked_taxon_id] += 1
+                #print("DEBUG: increasing count for taxon: {0} by: {1}".format(taxon_id, counts[taxon_id]['n']) )
+                ranked_counts[ranked_taxon_id] += counts[taxon_id]['n']
             else:
-                ranked_counts[ranked_taxon_id] = 1
+                #print("DEBUG: initializing a count for ranked_taxon_id {0} from taxon_id {1}".format(ranked_taxon_id, taxon_id) )
+                ranked_counts[ranked_taxon_id] = counts[taxon_id]['n']
         else:
             unranked_taxon_count += 1
 
@@ -180,12 +182,13 @@ def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
                     gi = parse_gi(cols[SUBJECT_LABEL_COLUMN_NUM], cursor)
                                         
                     if gi:
-                        print("DEBUG: Got a GI ({0}) for hit with id this_id".format(gi))
+                        #print("DEBUG: Got a GI ({0}) for hit with id this_id".format(gi))
                         stats['gi_lookup_success_count'] += 1
                         taxon_id = get_taxon_id_by_gi(gi, cursor)
 
                         if taxon_id:
                             stats['taxon_lookup_success_count'] += 1
+                            #print("DEBUG: adding match to taxon_id: {0}".format(taxon_id) )
                             add_taxon_match( taxon_id, tax, cursor )
                             current_id_classified = True
                         else:
@@ -198,6 +201,7 @@ def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
 def add_taxon_match( id, tax, c ):
     if id in tax:
         tax[id]['n'] += 1
+        #print("DEBUG: match count for taxon id {0} increased to {1}".format(id, tax[id]['n']) )
     else:
         tax[id] = {}
         tax[id]['n'] = 1
