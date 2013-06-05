@@ -27,6 +27,9 @@ def main():
     ## E-value cutoff to use
     parser.add_argument('-e', '--eval_cutoff', type=float, required=False, help='Optional E-value cutoff to use.' )
 
+    ## Top N hits per query to score.  Only counts those where the taxon could be looked up in the indexes
+    parser.add_argument('-n', '--top_n', type=int, required=False, default=1, help=' Top N hits per query to score.  Only counts unique taxon matches which could be looked up in the indexes' )
+
     ## rank on which matches will be grouped and reported.  values like: species, genus, order, family, etc.
     parser.add_argument('-r', '--rank', type=str, required=True, help='Taxonomy rank on which to group all matches, such as: species, genus, order, family, etc.' )
     args = parser.parse_args()
@@ -47,7 +50,7 @@ def main():
     for file in blast_files:
         print("Processing file: ", file)
         if args.input_format == 'blast_m8' or args.input_format == 'btab':
-            parse_blast_file( file, c, taxon_counts, args.eval_cutoff, args.input_format, stats )
+            parse_blast_file( file, c, taxon_counts, args.eval_cutoff, args.input_format, stats, args.top_n )
         else:
             raise Exception("Unsupported input format passed: {0}".format(args.input_format) )
 
@@ -69,7 +72,7 @@ def main():
         if tax_id in node_names:
             sci_name = node_names[tax_id]
             
-        fout.write( "{0}\t{1}\t{2}\n".format(tax_id, result_table[tax_id], sci_name ) )
+        fout.write( "{0}\t{1}\t{2}\n".format(tax_id, int(result_table[tax_id]), sci_name ) )
 
     fout.close()
 
@@ -135,7 +138,7 @@ def group_taxa_by_rank(rank, counts, cursor):
     return ranked_counts
 
 
-def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
+def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats, hits_per_query ):
     """ For each query sequence find the top match above the E-val cutoff (if any)
         which has an NCBI taxonomy assignment.
     """
@@ -158,6 +161,8 @@ def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
     ID_COLUMN_NUM = 0
     SUBJECT_LABEL_COLUMN_NUM = 1
     EVAL_COLUMN_NUM = 10
+    ALIGN_LEN_COLUMN_NUM = 3
+    BIT_SCORE_COLUMN_NUM = 11
 
     if format == 'btab':
         ID_COLUMN_NUM = 0
@@ -166,17 +171,22 @@ def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
 
     current_id = ""
     current_id_classified = False
+    current_id_match_count = 0
+    current_match_ids = dict()
 
     for line in open(file, "r"):
         cols = line.split("\t")
         if len(cols) >= 10:
             this_id = cols[ID_COLUMN_NUM]
 
+            ## this controls that we only look at the top hit for query
             if this_id != current_id:
                 current_id_classified = False
+                current_id_match_ids = dict()
+                current_id_match_count = 0
                 current_id = this_id
             
-            if current_id_classified == False:
+            if current_id_match_count < hits_per_query:
                 if eval_cutoff is None or eval_cutoff >= float(cols[EVAL_COLUMN_NUM]):
                     #print("DEBUG: attempting to parse a GI for header: ({0})".format(cols[SUBJECT_LABEL_COLUMN_NUM]) )
                     gi = parse_gi(cols[SUBJECT_LABEL_COLUMN_NUM], cursor)
@@ -188,9 +198,12 @@ def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
 
                         if taxon_id:
                             stats['taxon_lookup_success_count'] += 1
-                            #print("DEBUG: adding match to taxon_id: {0}".format(taxon_id) )
-                            add_taxon_match( taxon_id, tax, cursor )
-                            current_id_classified = True
+                            if taxon_id not in current_match_ids:
+                                #print("DEBUG: adding match to taxon_id: {0}".format(taxon_id) )
+                                match_score = int(cols[BIT_SCORE_COLUMN_NUM])/int(cols[ALIGN_LEN_COLUMN_NUM])
+                                add_taxon_match( taxon_id, tax, cursor, match_score )
+                                current_id_match_count += 1
+                                current_match_ids[taxon_id] = True
                         else:
                             stats['taxon_lookup_failure_count'] += 1
                             print("WARN: failed to find a taxon_id for gi: {0}".format(gi))
@@ -198,13 +211,13 @@ def parse_blast_file( file, cursor, tax, eval_cutoff, format, stats ):
                         stats['gi_lookup_fail_count'] += 1
 
 
-def add_taxon_match( id, tax, c ):
+def add_taxon_match( id, tax, c, score ):
     if id in tax:
-        tax[id]['n'] += 1
+        tax[id]['n'] += score
         #print("DEBUG: match count for taxon id {0} increased to {1}".format(id, tax[id]['n']) )
     else:
         tax[id] = {}
-        tax[id]['n'] = 1
+        tax[id]['n'] = score
         tax[id]['l'] = get_clade_name_by_taxon_id( c, id )
 
 
