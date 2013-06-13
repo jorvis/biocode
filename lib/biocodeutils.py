@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 
 ## used for nt reverse complements
 _nt_comp_table = bytes.maketrans(b'ACBDGHKMNSRUTWVYacbdghkmnsrutwvy', \
@@ -76,7 +77,7 @@ def fasta_dict_from_file( file ):
             if current_id is not None:
                 ## warn if it has already been found
                 if current_id in seqs:
-                    sys.stderr.write("WARN: Duplicate ID ({0}) found.  Only last one kept.".format(current_id))
+                    sys.stderr.write("WARN: Duplicate ID ({0}) found.  Only last one kept.\n".format(current_id))
 
                 ## remove all whitespace and save
                 current_seq = ''.join(current_seq.split())
