@@ -129,7 +129,7 @@ $prefix =~ s/\.gtf//;
 $prefix =~ s/\.gff//;
 
 print "Reading annotation file ...\n\n" ;
-open($fh, "<$hCmdLineOption{'annotation1'}") or die "Cannot open the list file.";
+open($fh, "<$hCmdLineOption{'annotation1'}") or die "Cannot open the annotation file.";
 open( $ftemp , ">$sOutDir/temp.gff3") or die "Error.. Cannot open file for writing.";
 open( $fout , ">$sOutDir/$prefix\.gff3") or die "Error.. Cannot open file for writing.";
 print $fout "##gff-version 3\n";
