@@ -32,8 +32,13 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to parse' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-p', '--name_prefix', type=str, required=False, help='So that resulting GFF3 files from multiple runs can be merged, you can supply a prefix for the IDs generated here' )
+    parser.add_argument('-d', '--perc_identity_cutoff', type=float, required=False, help='Filters on the % identity of over the length of the alignment' )
+    parser.add_argument('-s', '--perc_similarity_cutoff', type=float, required=False, help='Filters on the % similarity of over the length of the alignment' )
+    
     args = parser.parse_args()
     algorithm = None
+    total_chains = 0
+    chains_exported = 0
 
     ofh = open(args.output_file, 'w')
     current_chain_number = 1
@@ -45,22 +50,35 @@ def main():
         
         segment = { 'contig_id':cols[0], 'contig_start':int(cols[6]), 'contig_end':int(cols[7]), \
                     'hit_id':cols[5], 'hit_start':int(cols[8]), 'hit_end':int(cols[9]), \
+                    'pct_id':float(cols[10]), 'pct_sim':float(cols[11]), \
                     'strand':cols[17], 'product':cols[15], 'score':cols[18] }
 
         if algorithm is None:
             algorithm = os.path.basename(cols[3])
 
         if chain_num != current_chain_number:
+            chain_pct_id = global_pct_id( gene_segments )
+
             # this is a new chain
-            export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix )
+            total_chains += 1
+            exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, args.perc_similarity_cutoff )
+            if exported is True:
+                chains_exported += 1
+
             current_chain_number = chain_num
             gene_segments = []
 
         gene_segments.append( segment )
     
     ## make sure to do the last one
-    export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix )
-        
+    total_chains += 1
+    exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, args.perc_similarity_cutoff )
+    if exported is True:
+        chains_exported += 1
+
+    print("\nTotal alignment chains found: {0}".format(total_chains) )
+    print("Total chains exported (after cutoffs applied): {0}\n".format(chains_exported) )
+    
 
 def get_next_id(type, prefix):
     if prefix == None:
@@ -73,7 +91,45 @@ def get_next_id(type, prefix):
     return id
 
 
-def export_gene( segments, out, chn_num, source, prefix ):
+def global_pct_id( segments ):
+    """
+    Calculated like this:
+    
+    10bp @ 50% id = 5 matching residues, 10 total residues
+    10bp @ 80% id = 8 matching residues, 10 total residues
+                   13 matching residues, 20 total residues
+                   ---------------------------------------
+                   13 / 20 * 100 = 65%
+
+    """
+    match_length = 0
+    identical_residues = 0
+    
+    for segment in segments:
+        segment_length = abs(segment['contig_start'] - segment['contig_end']) + 1
+        match_length += segment_length
+        matched_residues = segment_length * (segment['pct_id'] / 100)
+        identical_residues += matched_residues
+
+    return (identical_residues / match_length) * 100
+
+def global_pct_sim( segments ):
+    """
+    Calculated as in global_pct_id(), but with the percent similarity field
+    """
+    match_length = 0
+    similar_residues = 0
+    
+    for segment in segments:
+        segment_length = abs(segment['contig_start'] - segment['contig_end']) + 1
+        match_length += segment_length
+        similar_residues = segment_length * (segment['pct_sim'] / 100)
+        identical_residues += similar_residues
+
+    return (similar_residues / match_length) * 100
+
+
+def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_sim_cutoff ):
     contig_min = None
     contig_max = None
     contig_id  = None
@@ -105,7 +161,20 @@ def export_gene( segments, out, chn_num, source, prefix ):
         if hit_id is None:
             hit_id = segment['hit_id']
 
-    print("Exported chain: ({0}) min:({1}) max({2})".format(chn_num, contig_min, contig_max))
+    ## does this score above any user-defined cutoffs.
+    if perc_id_cutoff is not None:
+        pct_id = global_pct_id( segments )
+
+        if pct_id < perc_id_cutoff:
+            return False
+
+    if perc_sim_cutoff is not None:
+        pct_sim = global_pct_sim( segments )
+
+        if pct_sim < perc_sim_cutoff:
+            return False
+    
+    #print("Exported chain: ({0}) min:({1}) max({2})".format(chn_num, contig_min, contig_max))
     
     ## write the gene feature
     gene_id = get_next_id('gene', prefix)
@@ -143,6 +212,8 @@ def export_gene( segments, out, chn_num, source, prefix ):
                 contig_id, source, 'CDS', exon_start, exon_end, \
                 '.', segment_strand, 0, data_column 
                 ) )
+
+    return True
 
 if __name__ == '__main__':
     main()
