@@ -84,7 +84,7 @@ def get_next_id(type, prefix):
     if prefix == None:
         id = type + ".{0:06d}".format( next_ids[type] )
     else:
-        id = prefix + type + ".{0:06d}".format( next_ids[type] )
+        id = prefix + "." + type + ".{0:06d}".format( next_ids[type] )
     
     next_ids[type] += 1
 
@@ -206,7 +206,7 @@ def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_si
                 ) )
 
         CDS_id = get_next_id('CDS', prefix)
-        data_column = "ID={0};Parent={1}Target={2} {3} {4}".format(exon_id, mRNA_id, hit_id, \
+        data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(exon_id, mRNA_id, hit_id, \
                 exon_hit_start, exon_hit_end)
         out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
                 contig_id, source, 'CDS', exon_start, exon_end, \
