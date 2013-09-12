@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
 import argparse
 import math
@@ -79,6 +79,68 @@ The script creates 5 files, named using the prefix specified by the -o option:
         molecule, these data are listed here.  The columns of the file are:
 
             reference_id | ref_fmin | ref_fmax | ref_strand | qry_id | qry_fmin | qry_fmax | qry_strand | qry_length
+
+=======
+METHODS
+=======
+
+Some notes on the methods behind some of the statistics reported above.
+
+$prefix.stats.refmol_coverage : Ref % covered by query fragments
+     main:cov_perc = (ref_cov_stats['n_cov'] / ref_cov_stats['n_total']) * 100
+     cov_stats['n_total'] += ref_length
+     cov_stats['n_cov'] += bases_covered
+     cov_stats['sum_pct_id'] = pctid_base_score / ref_length
+
+     Iterate through all fragments aligned to a given molecule, sorted by fmin.  The query fragment is
+     checked to see if it overlaps the end of the reference molecule, indicating a possible extension.
+     Fragments aligned completely within a previous fragment's boundaries are discarded.
+
+     The query fragment is next checked to see if is starts after or at the end of the last fragment.
+     For example, if one aligns at positions 1-3, then the next is at either 5-10 or 3-10.  For these
+     the previously aligned fragment is non-influential, so the base range covered by that fragment
+     is recorded as well as the % identity of the alignment.  The number of bases within this range is
+     actually calculated as the base_range * pct_identity.
+
+     If the query fragment overlaps a previously aligned query fragment (for example 1-5, then 3-8)
+     then only the novel aligned region is added to the covered base count. There is a quick check
+     though to see if the current region has a higher percent identity than the previous one and, if
+     so, the number of bases actually covered is recalculated for the overlapping area between these
+     two fragments using the higher percent identity.
+
+     Once all fragments have been processed the totals for this query molecule are added to a running
+     sum for all query molecules.  The data tracked are:
+
+         - Total # of bases in the reference molecules (n_total)
+         - Total # of bases that are part of a range of alignments (n_cov)
+         - Total # without coverage (n_uncov)
+         - Total # of individual bases in the reference molecules with at least 1x coverage. (n_identical)
+
+     After analyzing all reference molecules These running sums are calculated:
+
+         Ref % covered by query fragments  = (n_cov / n_total) * 100
+         Ref % identity by query fragments = (n_identical / n_total) * 100
+         
+
+     Illustration:
+
+     ref : --------------------------------------------------------------------------- (75 bases/dashes)
+     qry1:           ----------
+     qry2:                  ----------
+     qry3:                                 -------------------------------------------
+ segments:      1       2    3    4     5                        6
+           |---------|------|--|-----|-----|------------------------------------------|
+     
+           Effectively this splits the region into 6 segments with different depths.  In each of
+           these segments the best-scoring percent identity is applied to the Ref 'Ref % identity' coverage,
+           while the sum of the spans themselves with ANY alignment go toward the 'Ref % covered' one.
+
+     
+         
+    
+
+$prefix.stats.refmol_coverage : Ref % identity by query fragments
+    main:ref_cov_stats['sum_pct_id']
 
 """
 
@@ -270,7 +332,8 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
             bases_covered += bases_covered_by_this_frag
             bases_uncovered += (frag['rfmin'] - last_ref_coord)
             last_ref_coord = frag['rfmax']
-            pctid_base_score += (bases_covered_by_this_frag * frag['pctid'])
+            pctid_base_score += (bases_covered_by_this_frag * frag['pctid'] / 100)
+            print("pctid_base_score += ({0} * {1})".format(bases_covered_by_this_frag, frag['pctid']))
             last_frag_rfmax = frag['rfmax']
             last_frag_pctid = frag['pctid']
             
@@ -278,12 +341,12 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
         elif frag['rfmin'] < last_ref_coord:
             bases_covered_by_this_frag = frag['rfmax'] - last_ref_coord
             bases_covered += bases_covered_by_this_frag
-            pctid_base_score += (bases_covered_by_this_frag * frag['pctid'])
+            pctid_base_score += (bases_covered_by_this_frag * frag['pctid'] / 100)
 
             ## if this fragment has a higher percent identity than the previous one
             #  pct_id score needs to be corrected/increased
             if frag['pctid'] > last_frag_pctid:
-                adjustment = (last_frag_rfmax - frag['rfmin']) * (frag['pctid'] - last_frag_pctid)
+                adjustment = (last_frag_rfmax - frag['rfmin']) * ((frag['pctid'] - last_frag_pctid) / 100)
                 print("adjustment:{0} because {4} < {5}: ({3} - {4}) * ({1} - {2})".format( \
                        adjustment, frag['pctid'], last_frag_pctid, last_frag_rfmax, frag['rfmin'], \
                        last_ref_coord))
@@ -308,7 +371,7 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
     cov_stats['n_total'] += ref_length
     cov_stats['n_cov'] += bases_covered
     cov_stats['n_uncov'] += bases_uncovered
-    cov_stats['sum_pct_id'] = pctid_base_score / ref_length
+    cov_stats['n_identical'] += pctid_base_score
     
 
 def main():
@@ -337,7 +400,7 @@ def main():
     refext_list_ofh.write("# {0}\n".format(args.output_prefix) )
     refext_list_ofh.write("# reference_id\tref_fmin\tref_fmax\tref_strand\tqry_id\tqry_fmin\tqry_fmax\tqry_strand\tqry_length\n");
     
-    ref_cov_stats = { 'n_total': 0, 'n_cov': 0, 'n_uncov': 0 }
+    ref_cov_stats = { 'n_total': 0, 'n_cov': 0, 'n_uncov': 0, 'n_identical': 0 }
 
     alignment_lines_found = 0
     current_ref_id = None
@@ -395,10 +458,11 @@ def main():
     report_gene_coverage_results( annot, genecov_stats_ofh, genesmissing_list_ofh )
     
     cov_perc = (ref_cov_stats['n_cov'] / ref_cov_stats['n_total']) * 100
+    cov_perc_id =(ref_cov_stats['n_identical'] / ref_cov_stats['n_total']) * 100
     refmol_stats_ofh.write("Total bases in reference molecules\t{0}\n".format(ref_cov_stats['n_total']) )
     refmol_stats_ofh.write("Ref bases covered by query fragments\t{0}\n".format(ref_cov_stats['n_cov']) )
     refmol_stats_ofh.write("Ref % covered by query fragments\t{0:.2f}\n".format(cov_perc))
-    refmol_stats_ofh.write("Ref % identity by query fragments\t{0:.2f}\n".format(ref_cov_stats['sum_pct_id']))
+    refmol_stats_ofh.write("Ref % identity by query fragments\t{0:.2f}\n".format(cov_perc_id))
 
 
 if __name__ == '__main__':
