@@ -27,7 +27,7 @@ B<--dir,-d>
     a directory containing .fsa, .fasta, .fa files 
 
 B<--summary,-s>
-    optional.  If set to 1, also exports summary lines (each begins with a # symbol)
+    optional.  If passed, also exports summary lines (each begins with a # symbol)
 
 B<--log,-l> 
     Log file
@@ -85,6 +85,7 @@ my $results = GetOptions (\%options,
                           'file|f=s@',
                           'list|l=s',
                           'dir|d=s',
+                          'summary|s',
                           'log|l=s',
                           'help|h') || pod2usage();
 
@@ -102,11 +103,19 @@ if (defined $options{log}) {
 ## make sure everything passed was peachy and retrieve files of interest
 my @files = &check_parameters(\%options);
 
+my $summary_record_count = 0;
+my $summary_size = 0;
+
 ## print mapping for each file
 foreach my $file (@files){
     &print_size($file);
 }
 
+if ( $options{summary} ) {
+    print "\nSummary:\n" .
+          "\tRecord count   : $summary_record_count\n" .
+          "\tSum of residues: $summary_size\n";
+}
 
 exit(0);
 
@@ -199,6 +208,9 @@ sub print_size {
 	}
     }
     print "$id\t$len\t$defline\t$file\n";
+
+    $summary_record_count++;
+    $summary_size += $len;
 
     close($FIN);
 
