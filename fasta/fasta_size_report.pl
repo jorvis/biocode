@@ -192,7 +192,9 @@ sub print_size {
 	    ## if we processed a line already
 	    if ($len > 0) {
 		print "$id\t$len\t$defline\t$file\n";
-		$len = 0;
+        $summary_record_count++;
+        $summary_size += $len;
+        $len = 0;
 	    }
 
 	    $defline = $line;
@@ -208,9 +210,9 @@ sub print_size {
 	}
     }
     print "$id\t$len\t$defline\t$file\n";
-
     $summary_record_count++;
     $summary_size += $len;
+
 
     close($FIN);
 
