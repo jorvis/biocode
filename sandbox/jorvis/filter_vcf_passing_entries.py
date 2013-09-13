@@ -38,7 +38,8 @@ def main():
     sample_id = None
         
     for line in fh:
-        line = line.decode().rstrip()
+        #line = line.decode().rstrip()
+        line = line.rstrip()
         cols = line.split("\t")
 
         if line.startswith("##contig="):
