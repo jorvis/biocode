@@ -443,7 +443,14 @@ def _print_thing( thing, fh=None ):
         print("\tparent = None")
 
     if hasattr(thing, 'children'):
-        print("\tchild count = {0}".format( len(thing.children) ) )
+        child_count = 0
+
+        for child_type in thing.children:
+            for child in thing.children[child_type]:
+                child_count += 1
+                print("\t\t{0}".format(child.id) )
+        
+        print("\tchild count = {0}".format( child_count ) )
     else:
         print("\tchildren = None")
 
