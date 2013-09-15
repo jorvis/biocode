@@ -267,6 +267,10 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
     ## modifications for the mRNA
     for mRNA in gene.mRNAs():
         mRNA_loc = mRNA.location_on( on )
+
+        if mRNA_loc is None:
+            raise Exception("ERROR: Expected mRNA {0} to be located on {1} but it wasn't".format(mRNA.id, on.id))
+        
         columns[2] = 'mRNA'
         columns[3:5] = [str(mRNA_loc.fmin + 1), str(mRNA_loc.fmax)]
         columns[8] = build_column_9( id=mRNA.id, parent=mRNA.parent.id, other=None )
@@ -275,6 +279,10 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         ## handle each CDS for this mRNA
         for CDS in mRNA.CDSs():
             CDS_loc = CDS.location_on( on )
+
+            if CDS_loc is None:
+                raise Exception("ERROR: Expected CDS {0} to be located on {1} but it wasn't".format(CDS.id, on.id) )
+            
             columns[2] = 'CDS'
             columns[3:5] = [str(CDS_loc.fmin + 1), str(CDS_loc.fmax)]
             columns[7] = str(CDS_loc.phase)
@@ -286,6 +294,10 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         ## handle each exon for this mRNA
         for exon in mRNA.exons():
             exon_loc = exon.location_on( on )
+
+            if exon_loc is None:
+                raise Exception("ERROR: Expected exon {0} to be located on {1} but it wasn't".format(exon.id, on.id))
+            
             columns[2] = 'exon'
             columns[3:5] = [str(exon_loc.fmin + 1), str(exon_loc.fmax)]
             columns[8] = build_column_9( id=exon.id, parent=mRNA.id, other=None )
