@@ -43,7 +43,7 @@ def column_9_value(value, key):
             continue
         tt = t.split(EQ)
         if len(tt) != 2:
-            raise ParseError("Bad column 9 format near '%s'."%t)
+            raise Exception("Bad column 9 format: {0}".format(value) )
         n = unquote(tt[0].strip())
         [*v] = map(unquote, tt[1].strip().split(COMMA))
         if len(v) == 1:
