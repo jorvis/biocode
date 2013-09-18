@@ -162,7 +162,7 @@ sub check_parameters {
     }
 
     ## check to make sure we have files 
-    die "Script requires at least one fasta file input " if (scalar @inputs == 0);
+    die "Script requires at least one fasta file input via the -f or -l options" if (scalar @inputs == 0);
 
     ## check to make sure they all exist
     foreach my $file (@inputs){
