@@ -1,10 +1,20 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
+
+"""
+Reads one or more FASTQ files and reports some basic statistics.  Example:
+
+Total sequence entries: 277971801
+Total bases: 28353123702
+Avg sequence length: 102.0
+
+Contact: jorvis@gmail.com
+"""
+
 
 import argparse
 import gzip
 import os
 
-## CONTACT: jorvis@gmail.com
 
 def main():
     parser = argparse.ArgumentParser( description='Provides simple quantitative statistics for a given FASTQ file')
