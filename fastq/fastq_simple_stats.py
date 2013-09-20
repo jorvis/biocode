@@ -53,7 +53,7 @@ def main():
             if is_compressed:
                 line = line.decode()
             
-            line.rstrip()
+            line = line.rstrip()
             line_number += 1
 
             ## every 4th line is the start of a sequence entry (check still)
