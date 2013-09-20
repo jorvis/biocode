@@ -3,6 +3,8 @@
 """
 Reads one or more FASTQ files and reports some basic statistics.  Example:
 
+$ ./fastq_simple_stats.py my.fastq
+
 Total sequence entries: 277971801
 Total bases: 28353123702
 Avg sequence length: 102.0
@@ -12,8 +14,10 @@ Contact: jorvis@gmail.com
 
 
 import argparse
+import codecs
 import gzip
 import os
+import sys
 
 
 def main():
@@ -21,11 +25,15 @@ def main():
 
     ## output file to be written
     parser.add_argument('input_files', metavar='N', type=str, nargs='+', help='Path to one or more input files, separated by spaces' )
-    parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
+    parser.add_argument('-o', '--output_file', type=str, required=False, help='Optional path to an output file to be created, else prints on STDOUT' )
     args = parser.parse_args()
 
     ## open the output file
-    fout = open(args.output_file, "w")
+    fout = None
+    if args.output_file is None:
+        fout = codecs.getwriter('utf8')(sys.stdout.buffer)
+    else:
+        fout = open(args.output_file, "w")
 
     ## values that will be reported
     entry_count = 0
