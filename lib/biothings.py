@@ -194,10 +194,11 @@ class Assembly( LocatableThing ):
     aligning two or more different regions."
     '''
     
-    def __init__( self, id=None, locations=None, length=None, children=None ):
+    def __init__( self, id=None, locations=None, length=None, residues=None, children=None ):
         super().__init__(locations)
         self.id = id
         self.length = length
+        self.residues = residues
         self.children = children
 
         ## initialize any types needed
@@ -211,6 +212,8 @@ class Assembly( LocatableThing ):
         Returns all Gene objects which are children of this Assembly
         '''
         return self.children['gene']
+    
+    
 
 
 class CDS( LocatableThing ):
