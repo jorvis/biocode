@@ -221,15 +221,35 @@ class CDS( LocatableThing ):
     SO definition (2013-05-22): "A contiguous sequence which begins with, and includes, a start codon 
     and ends with, and includes, a stop codon."
     '''
-    def __init__( self, id=None, locations=None, parent=None, phase=None, length=None, annotation=None ):
+    def __init__( self, id=None, locations=None, parent=None, phase=None, length=None, residues=None, annotation=None ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
         self.length = length
+        self.residues = residues
         self.phase = 0 if phase is None else phase
 
         ## this should be an instance of FunctionalAnnotation from bioannotation.py
         self.annotation = annotation
+
+    def get_residues(self):
+        if len(self.locations) == 0:
+            raise Exception("ERROR: CDS.get_residues() requested but CDS {0} isn't located on anything.".format(self.id))
+        elif len(self.locations) > 1:
+            raise Exception("ERROR: CDS {0} is located on multiple molecules.  Can't automatically extract the residues.".format(self.id))
+
+        loc = self.location()
+        mol = loc.on
+
+        # make sure this thing has its residues populated
+        if len(mol.residues) <= 0:
+            raise Exception("ERROR: CDS.get_residues() requested but its molecule {0} has no stored residues".format(mol.id))
+
+        print("extracting CDS at {0}-{1}".format(loc.fmin, loc.fmax))
+        self.residues = mol.residues[loc.fmin:loc.fmax]
+        self.length = len(self.residues)
+
+        return self.residues
 
 
 class Exon( LocatableThing ):
