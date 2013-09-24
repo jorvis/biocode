@@ -39,6 +39,8 @@ def translate( seq, translation_table=None ):
     Does a direct translation of the passed DNA/RNA sequence in phase 0.
     You can pass a numeric translation table, else 1 is assumed.
 
+    An 'X' is used when a codon is unknown (contains an N)
+
     http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
     """
     if translation_table is None:
@@ -59,14 +61,17 @@ def translate( seq, translation_table=None ):
     while True:
         try:
             polypeptide_seq += trans_table[seq[x:x+3]]
-            x += 3
         except (IndexError):
             break
         except (KeyError):
             if len(seq[x:x+3]) == 3:
-                raise Exception("ERROR: Encountered unknown codon during translation: {0}".format(seq[x:x+3]))
+                #raise Exception("ERROR: Encountered unknown codon during translation: {0}".format(seq[x:x+3]))
+                print("WARN: Encountered unknown codon during translation: {0}".format(seq[x:x+3]))
+                polypeptide_seq += 'X'
             else:
                 break
+        x += 3
+        
     
     return polypeptide_seq
 
