@@ -1,5 +1,6 @@
 import uuid
 import biocodegff
+import biocodeutils
 import sys
 
 '''
@@ -245,10 +246,12 @@ class CDS( LocatableThing ):
         if len(mol.residues) <= 0:
             raise Exception("ERROR: CDS.get_residues() requested but its molecule {0} has no stored residues".format(mol.id))
 
-        print("extracting CDS at {0}-{1}".format(loc.fmin, loc.fmax))
         self.residues = mol.residues[loc.fmin:loc.fmax]
         self.length = len(self.residues)
 
+        if loc.strand == -1:
+            self.residues = biocodeutils.reverse_complement(self.residues)
+        
         return self.residues
 
 
