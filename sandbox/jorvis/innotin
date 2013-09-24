@@ -1,0 +1,45 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+unless ( scalar @ARGV == 4 ) {
+    print STDERR "USAGE: $0 file1 column file2 column\n\n";
+    exit(1);
+}
+
+my ($file1, $col1, $file2, $col2) = @ARGV;
+
+my (%entries1, %entries2);
+read_file( $file1, $col1, \%entries1 );
+read_file( $file2, $col2, \%entries2 );
+
+for my $entry1 ( sort keys %entries1 ) {
+    if ( ! exists $entries2{$entry1} ) {
+        print "$entry1\n";
+    }
+}
+
+
+
+exit;
+
+sub read_file {
+    my ($file, $col, $href) = @_;
+    
+    open(my $ifh, "<$file") || die "failed to read input file: $!";
+    
+    while (my $line = <$ifh> ) {
+        next if ( $line =~ /^\s*$/ );
+        chomp $line;
+        
+        my @cols = split('\t', $line);
+        
+        if ($col > scalar @cols) {
+            print STDERR "ERROR: You requested column $col but found a row in $file that has only ", 
+                         scalar(@cols), " columns\n";
+        }
+        
+        $$href{ $cols[$col] }++;
+    }
+}
+
