@@ -1,10 +1,75 @@
 import os
 import re
 import sys
+import string
 
 ## used for nt reverse complements
 _nt_comp_table = bytes.maketrans(b'ACBDGHKMNSRUTWVYacbdghkmnsrutwvy', \
                                  b'TGVHCDMKNSYAAWBRtgvhcdmknsyaawbr')
+
+# for translations: http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
+_translation_table = {
+    1: { 
+        'GCA':'A', 'GCC':'A', 'GCG':'A', 'GCT':'A',
+        'CGA':'R', 'CGC':'R', 'CGG':'R', 'CGT':'R', 'AGA':'R', 'AGG':'R',
+        'AAC':'N', 'AAT':'N',
+        'GAC':'D', 'GAT':'D', 
+        'TGC':'C', 'TGT':'C',
+        'GAA':'E', 'GAG':'E',
+        'CAA':'Q', 'CAG':'Q',
+        'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGT':'G',
+        'CAC':'H', 'CAT':'H',
+        'ATA':'I', 'ATC':'I', 'ATT':'I',
+        'TTA':'L', 'TTG':'L', 'CTA':'L', 'CTC':'L', 'CTG':'L','CTT':'L',
+        'AAA':'K', 'AAG':'K',
+        'ATG':'M',
+        'TTC':'F', 'TTT':'F',
+        'CCA':'P', 'CCC':'P', 'CCG':'P', 'CCT':'P',
+        'TCA':'S', 'TCC':'S', 'TCG':'S', 'TCT':'S', 'AGC':'S', 'AGT':'S',
+        'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACT':'T',
+        'TGG':'W',
+        'TAC':'Y', 'TAT':'Y',
+        'GTA':'V', 'GTC':'V', 'GTG':'V', 'GTT':'V',
+        'TAA':'*', 'TAG':'*', 'TGA':'*'
+        }
+}
+
+def translate( seq, translation_table=None ):
+    """
+    Does a direct translation of the passed DNA/RNA sequence in phase 0.
+    You can pass a numeric translation table, else 1 is assumed.
+
+    http://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
+    """
+    if translation_table is None:
+        translation_table = 1
+
+    # make sure we've defined this translation table
+    if translation_table not in _nt_comp_table:
+        raise Exception("ERROR: translation requested using table {0}, which isn't yet supported.".format(translation_table))
+
+    trans_table = _translation_table[translation_table]
+    
+    # In case an RNA string was passed
+    seq = seq.translate(seq.maketrans('Uutagc', 'TTTAGC'))
+
+    polypeptide_seq = ''
+    x = 0
+
+    while True:
+        try:
+            polypeptide_seq += trans_table[seq[x:x+3]]
+            x += 3
+        except (IndexError):
+            break
+        except (KeyError):
+            if len(seq[x:x+3]) == 3:
+                raise Exception("ERROR: Encountered unknown codon during translation: {0}".format(seq[x:x+3]))
+            else:
+                break
+    
+    return polypeptide_seq
+
 
 def read_list_file( file ):
     """Parse an list file and return an array of the paths"""
