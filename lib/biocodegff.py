@@ -72,8 +72,40 @@ def get_gff3_features(gff3_file):
     
     assemblies = dict()
     features   = dict()
+
+    # these are related to parsing any embedded FASTA
+    in_fasta_section = False
+    is_assembly_fasta = False
+    current_fasta_id = None
+    
     
     for line in open(gff3_file):
+        if in_fasta_section == True:
+            m = re.search('>(\S+)\s*(.*)', line)
+            if m:
+                current_fasta_id = m.group(1)
+
+                if current_fasta_id in assemblies:
+                    is_assembly_fasta = True
+                else:
+                    is_assembly_fasta = False
+                    
+            else:
+                if is_assembly_fasta == True:
+                    # must be a sequence line for an assembly
+                    # python 2.6+ makes string concatenation amortized O(n)
+                    #  http://stackoverflow.com/a/4435752/1368079
+                    assemblies[current_fasta_id].residues += str(line.rstrip())
+                    assemblies[current_fasta_id].length = len( assemblies[current_fasta_id].residues )
+
+            continue
+        
+        elif line.startswith("##FASTA"):
+            # all data to the end of the file must be FASTA
+            in_fasta_section = True
+            continue
+
+        
         cols = line.split("\t")
 
         if len(cols) != 9:
@@ -81,9 +113,9 @@ def get_gff3_features(gff3_file):
 
         mol_id = cols[0]
         
-        ## initialize this assembly if we haven't seen it yet
+        # initialize this assembly if we haven't seen it yet
         if mol_id not in assemblies:
-            assemblies[mol_id] = biothings.Assembly( id=mol_id )
+            assemblies[mol_id] = biothings.Assembly( id=mol_id, residues='' )
 
         current_assembly = assemblies[mol_id]
         rfmin = int(cols[3]) - 1
