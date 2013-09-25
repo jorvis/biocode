@@ -124,7 +124,11 @@ def get_gff3_features(gff3_file):
         feat_id = column_9_value(cols[8], 'ID')
         parent_id = column_9_value(cols[8], 'Parent')
         parent_feat = None
-        
+
+        # shared features is not yet supported
+        if isinstance(parent_id, list):
+            raise Exception("This line contains a shared feature with multiple parents.  This isn't yet supported:\n{0}".format(line))
+
         if parent_id is not None:
             if parent_id in features:
                 parent_feat = features[parent_id]
