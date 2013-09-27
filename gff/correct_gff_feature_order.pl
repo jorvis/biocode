@@ -112,8 +112,14 @@ my @other_feats = ();
 #    }
 my %features = ();
 
+## keeps all the row information for segmented features.
+## data structure like:
+#   $h{$id} = [ [columns], [columns], ...  ]
+my %segmented_features = ();
+
 ## used to keep references of genes on molecules for sorting purposes
 my %molecules = ();
+
 
 while (my $line = <$ifh>) {
     chomp $line;
@@ -135,11 +141,15 @@ while (my $line = <$ifh>) {
     #my ($parent) = $cols[8] =~ /Parent\=(.+?)\;/;
     my $parent = gff3_get_column_9_value( $cols[8], 'Parent' );
     
-    $features{$id} = {
-        type => $feat_type,
-        parent => $parent,
-        cols => \@cols,
-    };
+    if ( exists $features{$id} ) {
+        push @{$segmented_features{$id}}, \@cols;
+    } else {
+        $features{$id} = {
+            type => $feat_type,
+            parent => $parent,
+            cols => \@cols,
+        };
+    }
     
     if ( $feat_type eq 'gene' ) {
         ## make sure the molecule doesn't have a gene there already
@@ -199,7 +209,7 @@ for my $feat_id ( keys %features ) {
 
 for my $molecule_id ( sort keys %molecules ) {
 
-    #print "DEBUG: Found " . scalar(keys %{$molecules{$molecule_id}}) . " genes to export on molecule $molecule_id\n";
+    print "DEBUG: Found " . scalar(keys %{$molecules{$molecule_id}}) . " genes to export on molecule $molecule_id\n";
     
     for my $start ( sort { $a<=>$b } keys %{$molecules{$molecule_id}} ) {
         my $feat_id = $molecules{$molecule_id}{$start};
@@ -230,6 +240,15 @@ for my $molecule_id ( sort keys %molecules ) {
             if ( exists $features{$feat_id}{children}{$child_type} ) {
                 for my $child_id ( sort { $features{$a}{cols}[3] <=> $features{$b}{cols}[3] } @{$features{$feat_id}{children}{$child_type}} ) {
                     print $ofh join("\t", @{$features{$child_id}{cols}}), "\n";
+
+                    ## if this is a segmented feature, print those too
+                    if (exists $segmented_features{$child_id}) {
+                        for my $child ( $segmented_features{$child_id} ) {
+                            for my $elem ( sort {$$a[3] <=> $$b[3]} @$child ) {
+                                print $ofh join("\t", @$elem), "\n";
+                            }
+                        }
+                    }
                 }
             }
         }
