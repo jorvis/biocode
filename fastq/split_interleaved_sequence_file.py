@@ -1,4 +1,29 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
+
+"""
+Some analysis tasks produce an interleaved FASTA or FASTQ file (such as digital normalization).
+Use this script to split that interleaved file back out into R1, R2 and singleton files.
+
+The read mates will be kept in pairwise order within the R1 and R2 files.
+
+The -o option defines the base name of the output files to which the directionality
+and extensions will be added.  So given the options:
+
+  -o ATCC_30222
+  -t fastq
+
+The following files will be created:
+
+  ATCC_30222.R1.fastq
+  ATCC_30222.R1.fastq
+  ATCC_30222.single.fastq
+
+Note: No format conversion will happen here.  If your input is FASTA your output
+will also be FASTA.
+  
+Original author: Priti Kumari
+"""
+
 
 
 import argparse
@@ -11,7 +36,7 @@ def interface():
     parser.add_argument('-i', '--input_file',type=str, required=True, help='The interleaved fastq/fasta file to split.')
     parser.add_argument('-t', '--input_type',type=str, required=True, help='The type of input file(fasta/fastq).')
     ## output file to be written
-    parser.add_argument('-o', '--output', type=str, required=True, help='Path to an output file to be created' )
+    parser.add_argument('-o', '--output', type=str, required=True, help='Base path/name for the output files to be created' )
     parser = parser.parse_args()
     return parser
 
