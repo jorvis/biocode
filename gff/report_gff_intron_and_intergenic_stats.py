@@ -90,6 +90,10 @@ def main():
                     total_intron_count += 1
                     intron_loc = intron.location_on(assembly)
                     intron_size = intron_loc.fmax - intron_loc.fmin
+
+                    if intron_size < 0:
+                        print("WARN: Intron size ({1}) < 0 reported in gene {0}".format(gene.id, intron_size))
+                    
                     intron_sizes.append(intron_size)
                     total_intron_residues += intron_size
                 
