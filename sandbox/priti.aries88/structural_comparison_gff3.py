@@ -1,3 +1,15 @@
+"""
+Author
+
+Priti Kumari
+Bioinformatics Software Engineer 
+Institute for Genome Sciences
+University of Maryland
+Baltimore, Maryland 21201
+
+"""
+
+
 #!/usr/bin/env python3
 
 import argparse
