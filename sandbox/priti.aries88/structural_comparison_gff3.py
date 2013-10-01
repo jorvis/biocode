@@ -1,5 +1,72 @@
+#!/usr/bin/env python3
+
+
 """
+========
+OVERVIEW
+========
+
+The script compares two gff3 file at base, exon, mRNA and gene level and outputs the positive 
+predictive value(PPV) and sensitivity(SN). The first input will be treated as a known gff3 file
+and second as the predicted gff3 file. The PPV/SN in the output will be for predicted gff3 with
+respect to the known gff3.
+
+
+=====
+INPUT
+=====
+
+Options
+-------
+-a1 --ANNOTATION_1       required
+    Path to first annotation file(known).
+
+-a2 --ANNOTATION_2       required
+    Path to second annotation file(predicted).
+
+-o  --output_dir          required
+    Path to output directory.
+
+
+======
+OUTPUT
+======
+
+Script generates a summary.txt file in the output directory.
+Summary.txt is a tab delimited file with following headers :
+
+Feature    Known    Predicted    True_predicted    SN    PPV
+Gene
+mRNA
+Exon
+Base
+No. of predicted gene overlapping  0 known gene (new gene):  0
+No. of predicted gene overlapping > 1 known gene:  115
+No. of predicted gene overlaping 1 known gene :  4057
+No. of known gene overlapping > 1 predicted gene :  115
+No. of known gene overlapping 1 predicted gene :  4057
+No. of known gene overlapping 0 predicted gene (gene missing) :  0
+
+
+The summary will also be printed in the console.
+
+
+====
+NOTE
+====
+
+Both the input annotation file should be in the correct gff3 format.
+http://www.sequenceontology.org/gff3.shtml
+
+Examples :
+chr1   genbank   gene    1    3000    .    -    .    ID=gene1
+chr1   genbank   mRNA    10   2900    .    -    .    ID=mrna1;Parent=gene1
+chr1   genbank   exon    10   1000    .    -    .    ID=exon1;Parent=mrna1
+
+
+======
 Author
+======
 
 Priti Kumari
 Bioinformatics Software Engineer 
@@ -10,14 +77,13 @@ Baltimore, Maryland 21201
 """
 
 
-#!/usr/bin/env python3
-
 import argparse
 import os
 import fileinput
 import biothings
 import biocodegff
 import sys
+
 
 
 def interface():
@@ -194,7 +260,7 @@ def process_files(args):
     
     out2 = args.output_dir + '/exon_2_merged.bed'
     cmd = "bedtools merge -nms -scores sum -i " + exon2_bed + " -s >"+out2
-    print(cmd)
+    #print(cmd)
     os.system(cmd)
     
     exon1_bed = args.output_dir + '/exon_1.bed'
@@ -213,12 +279,12 @@ def process_files(args):
 
     out1 = args.output_dir + '/exon_1_merged.bed'
     cmd = "bedtools merge -nms -scores sum -i " + exon1_bed + " -s >"+out1
-    print(cmd)
+    #print(cmd)
     os.system(cmd)
     
     out_intersect = args.output_dir + '/exon_1_2_intersect.bed'
     cmd = "bedtools intersect -s -wo -a " + out1 + " -b " + out2 + " >" + out_intersect
-    print(cmd)
+    #print(cmd)
     os.system(cmd)
     
     a_base_file = open(out1,'r')
@@ -352,15 +418,23 @@ def process_files(args):
             gene += 1
         if (len(gene_overlap) == 0) :
             gene_missing += 1
-            
+
+
     print ("No. of predicted gene overlapping  0 known gene (new gene): ",new_gene)
     print ("No. of predicted gene overlapping > 1 known gene: ",gene_merge)
     print ("No. of predicted gene overlaping 1 known gene : ",gene_found)
     print ("No. of known gene overlapping > 1 predicted gene : ",gene_split)
     print ("No. of known gene overlapping 1 predicted gene : ",gene)
     print ("No. of known gene overlapping 0 predicted gene (gene missing) : ",gene_missing)
-
         
+    fout.write ("No. of predicted gene overlapping  0 known gene (new gene): " + str(gene) + "\n")
+    fout.write ("No. of predicted gene overlapping > 1 known gene: " + str(gene_merge) + "\n")
+    fout.write ("No. of predicted gene overlaping 1 known gene : " + str(gene_found) + "\n")
+    fout.write ("No. of known gene overlapping > 1 predicted gene : " + str(gene_split) + "\n")
+    fout.write ("No. of known gene overlapping 1 predicted gene : " + str(gene) + "\n")
+    fout.write ("No. of known gene overlapping 0 predicted gene (gene missing) : " + str(gene_missing) + "\n")
+
+    fout.close() 
 
 
     
