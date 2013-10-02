@@ -21,7 +21,7 @@ match this naming convention.
    6. HMM total score
    7. HMM total E-value
    8. GO terms (derived from HMM), comma-separated
-   9. EC numbers (dervied from HMM), comma-separated
+   9. EC numbers (derived from HMM), comma-separated
 
 Example:
 
@@ -213,6 +213,11 @@ def get_gene_id_from_transcript( transcript_id ):
 
 def parse_annotation_line(line, genes, molecules):
     cols = line.split("\t")
+
+    if len(cols) != 10:
+        print("WARNING: Ignoring the following line because I expected 10 columns:\n{0}".format(line))
+        return False
+    
     cols[9] = cols[9].rstrip()
 
     transcript_id = cols[0]
