@@ -424,10 +424,14 @@ def main():
                 calculate_gene_coverage( annot[current_ref_id], query_fragments )
                 calculate_fragment_coverage( current_ref_id, query_fragments, current_ref_length, ref_cov_stats, refcov_stats_ofh, refext_list_ofh )
                 
-            ## reste
+            ## reset
             current_ref_id = cols[9]
             current_ref_length = int(cols[7])
             query_fragments = []
+
+            ## quick sanity check
+            if current_ref_id not in annot:
+                raise Exception("ERROR: found a nucleotide accession for which we have no annotation: {0}".format(current_ref_id))
         
         qstrand = 1
 
