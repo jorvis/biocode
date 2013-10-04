@@ -123,8 +123,8 @@ def global_pct_sim( segments ):
     for segment in segments:
         segment_length = abs(segment['contig_start'] - segment['contig_end']) + 1
         match_length += segment_length
-        similar_residues = segment_length * (segment['pct_sim'] / 100)
-        identical_residues += similar_residues
+        matched_residues = segment_length * (segment['pct_sim'] / 100)
+        similar_residues += matched_residues
 
     return (similar_residues / match_length) * 100
 
