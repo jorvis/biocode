@@ -60,6 +60,7 @@ if ( scalar(keys %$seqs1) != scalar(keys %$seqs2) ) {
 }
 
 print "\nchecking for unique sequences in $file1\n";
+my @uniq_in_f1 = ();
 
 open(my $idmapfh, ">/tmp/id.map") || die "couldn't create id.map output file: $!";
 
@@ -91,11 +92,13 @@ for my $s1_id ( keys %$seqs1 ) {
 
     if (! scalar @matches ) {
         #print "\tentry $s1_id unique to file1\n";
+        push @uniq_in_f1, $s1_id;
         $differences_found++;
     }
 }
 
 print "checking for unique sequences in $file2\n";
+my @uniq_in_f2 = ();
 
 for my $s2_id ( keys %$seqs2 ) {
     
@@ -117,7 +120,8 @@ for my $s2_id ( keys %$seqs2 ) {
     }
     
     if (! scalar @matches ) {
-        #print "\tentry $s2_id unique to file1\n";
+        #print "\tentry $s2_id unique to file2\n";
+        push @uniq_in_f2, $s2_id;
         $differences_found++;
     }
 }
@@ -133,7 +137,21 @@ if ( $differences_found ) {
     exit(0);
 }
 
+if ( scalar @uniq_in_f1 ) {
+    print "\nThe following entries were unique to $file1:\n";
 
+    for (@uniq_in_f1) {
+        print "\t$_\n";
+    }
+}
+
+if ( scalar @uniq_in_f2 ) {
+    print "\nThe following entries were unique to $file2:\n";
+
+    for (@uniq_in_f2) {
+        print "\t$_\n";
+    }
+}
 
 sub read_seqs_from_file {
     my ($file) = @_;
