@@ -48,14 +48,20 @@ with a // symbol.  An example record:
          -      *      *      *      *      *      *      *      *      0 
 //
 
+Another optional input is the pfam2go data file:
+ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/external2go/pfam2go
+
 
 OUTPUT
 
-The following tables are created in the SQLite3 db (which is created if it doesn't already exist):
+The following tables are created in the SQLite3 db (which is created if it doesn't
+already exist) (these are fake example data):
 
 table: hmm
 ----------
-id
+id = auto-int
+accession => 'PF02977',
+version   => 'PF02977.10',
 name => 'S16'
 hmm_com_name => 'ribosomal protein S16',
 hmm_len => 81,
@@ -112,14 +118,22 @@ import os
 import re
 import sqlite3
 
+pfam2go = dict()
 
 def main():
     parser = argparse.ArgumentParser( description='Reads an HMM file and creates a SQLite3 database of commonly-accessed attributes for each HMM.')
 
     ## output file to be written
     parser.add_argument('-i', '--input_hmm', type=str, required=True, help='Path to an HMM collection.  See INPUT section for details' )
+    parser.add_argument('-p', '--pfam2go', type=str, required=False, help='EBI pfam2go file' )
     parser.add_argument('-o', '--output_db', type=str, required=True, help='Path to an output SQLite3 db to be created' )
     args = parser.parse_args()
+
+    if args.pfam2go is not None:
+        pfam2go = load_pfam2go(args.pfam2go)
+
+    print("DEBUG: loaded {0} pfam2go accessions".format(len(pfam2go)))
+    #exit(0)
 
     # this creates it if it doesn't already exist
     conn = sqlite3.connect(args.output_db)
@@ -137,7 +151,7 @@ def main():
         
         # is this the end of an entry?
         if re.match( "^//", line ):
-            add_hmm(atts, c)
+            add_hmm(atts, c, pfam2go)
             atts = dict()
         else:
             m = re.match("^([A-Z]+)\s+(.*)$", line)
@@ -149,11 +163,39 @@ def main():
     c.close()
     
 
+def load_pfam2go( path ):
+    pf_acc = dict()
+    
+    for line in open(path):
+        line = line.rstrip()
+        m = re.match("Pfam:(PF\d+) .+ GO\:(\d+)", line)
+        if m:
+            acc = m.group(1)
+            go_id = m.group(2)
 
-def add_hmm( atts, cur ):
+            if acc not in pf_acc:
+                pf_acc[acc] = list()
+
+            pf_acc[acc].append(go_id)
+
+    return pf_acc
+
+
+def add_hmm( atts, cur, pf2g ):
     # the name attribute is a fall-back if acc isn't defined.
     if 'ACC' not in atts or len(atts['ACC']) == 0:
         atts['ACC'] = atts['NAME']
+
+    accession = atts['ACC']
+    version = None
+
+    # if this is a PFAM accession, split it into accession and version and
+    #  set the isotype to 'pfam'
+    m = re.match("^(PF\d+)\.\d+", accession)
+    if m:
+        version = accession
+        accession = m.group(1)
+        atts['IT'] = 'pfam'
 
     print("INFO: adding hmm: {0}".format(atts['ACC']))
         
@@ -191,23 +233,29 @@ def add_hmm( atts, cur ):
     product_name = atts['DESC']
     product_name = product_name.rstrip( "{0}: ".format(atts['NAME']) )
 
-    # if this looks like a PFAM accession (PF03372.14), set the isotype to 'pfam'
-    if re.match("^PF\d+\.\d+", atts['ACC']):
-        atts['IT'] = 'pfam'
-
-    columns = "name, hmm_com_name, hmm_len, hmm_comment, trusted_global_cutoff, trusted_domain_cutoff, " \
+    columns = "accession, version, name, hmm_com_name, hmm_len, hmm_comment, trusted_global_cutoff, trusted_domain_cutoff, " \
               "noise_global_cutoff, noise_domain_cutoff, gathering_global_cutoff, gathering_domain_cutoff, " \
               "ec_num, gene_symbol, isotype"
-    cur.execute("INSERT INTO hmm ({0}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)".format(columns), \
-               (atts['NAME'], product_name, atts['LENG'], atts['CC'], trusted_global, trusted_domain, \
+    cur.execute("INSERT INTO hmm ({0}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)".format(columns), \
+               (accession, version, atts['NAME'], product_name, atts['LENG'], atts['CC'], trusted_global, trusted_domain, \
                 noise_global, noise_domain, gathering_global, gathering_domain, \
                 atts['EC'], atts['GS'], atts['IT'] ))
+
+    hmm_id = cur.lastrowid
+
+    # if pfam2go was passed, does this accession have any associations?
+    if accession in pf2g:
+        for go_id in pf2g[ accession ]:
+            cur.execute("INSERT INTO hmm_go (hmm_id, go_id) values (?,?)", (hmm_id, go_id))
+
 
 
 def create_tables( cursor ):
     cursor.execute("""
               CREATE TABLE hmm (
                  id                integer primary key autoincrement,
+                 accession         text,
+                 version           text,
                  name              text,
                  hmm_com_name      text,
                  hmm_len           int,
