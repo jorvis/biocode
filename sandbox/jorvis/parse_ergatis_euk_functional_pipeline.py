@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
 import argparse
 import os
@@ -6,6 +6,8 @@ import sys
 import bioannotation
 import biocodeutils
 import biothings
+import sqlite3
+import re
 
 ## constants
 DEFAULT_PRODUCT_NAME = "hypothetical protein"
@@ -18,10 +20,15 @@ def main():
     parser.add_argument('-m', '--hmm_htab_list', type=str, required=True, help='List of htab files from hmmpfam3' )
     parser.add_argument('-b', '--blast_btab_list', type=str, required=True, help='List of btab files from BLAST' )
     parser.add_argument('-o', '--output_tab', type=str, required=False, help='Optional output tab file path (else STDOUT)' )
+    parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
     args = parser.parse_args()
 
+    conn = sqlite3.connect(args.hmm_db)
+    curs = conn.cursor()
+
     polypeptides = initialize_polypeptides( args.input_fasta )
-    parse_hmm_evidence( polypeptides, args.hmm_htab_list )
+    
+    parse_hmm_evidence( polypeptides, args.hmm_htab_list, curs )
     parse_blast_evidence( polypeptides, args.blast_btab_list )
 
     ## output will either be a file or STDOUT
@@ -33,8 +40,14 @@ def main():
 
     for polypeptide_id in polypeptides:
         polypeptide = polypeptides[polypeptide_id]
-        fout.write( "{0}\t{1}\t{2}\t?GO_terms?\t?EC_nums?\n".format( \
-                polypeptide_id, polypeptide.length, polypeptide.annotation.product_name) )
+        go_string = ""
+
+        for go_annot in polypeptide.annotation.go_annotations:
+            go_string += "GO:{0},".format(go_annot.go_id)
+        go_string = go_string.rstrip(',')
+                
+        fout.write( "{0}\t{1}\t{2}\t{3}\t?EC_nums?\n".format( \
+                polypeptide_id, polypeptide.length, polypeptide.annotation.product_name, go_string) )
 
     fout.close()
 
@@ -82,12 +95,14 @@ def parse_blast_evidence( polypeptides, blast_list ):
                 last_qry_id = this_qry_id
 
 
-def parse_hmm_evidence( polypeptides, htab_list ):
+def parse_hmm_evidence( polypeptides, htab_list, cursor ):
     '''
     Reads a list file of HMM evidence and dict of polypeptides, populating each with
     Annotation evidence where appropriate.  Each file in the list can have results
     for multiple queries, but it's assumed that ALL candidate matches for any given
     query are grouped together.
+
+    Currently only the top hit for any given query polypeptide is used.
     '''
     for file in biocodeutils.read_list_file(htab_list):
         last_qry_id = None
@@ -101,15 +116,43 @@ def parse_hmm_evidence( polypeptides, htab_list ):
                 continue
 
             this_qry_id = cols[5]
-            
+            accession = cols[0]
+            version = None
+
+            # if this is a PFAM accession, handle the version
+            m = re.match("^(PF\d+)\.\d+", accession)
+            if m:
+                version = accession
+                accession = m.group(1)
+
             ## the HMM hits are sorted already with the top hit for each query first
             if last_qry_id != this_qry_id:
                 ## save it
                 annot = polypeptides[this_qry_id].annotation
                 annot.product_name = cols[15]
+                
+                # does our hmm database provide GO terms for this accession?
+                for go_annot in get_hmmdb_go_terms( accession, cursor ):
+                    annot.add_go_annotation(go_annot)
 
                 ## remember the ID we just saw
                 last_qry_id = this_qry_id
+
+
+def get_hmmdb_go_terms( acc, c ):
+    """
+    This returns a list of bioannotation:GOAnnotation objects
+    """
+    qry = "SELECT hg.go_id FROM hmm_go hg JOIN hmm ON hg.hmm_id=hmm.id WHERE hmm.accession = ?"
+    c.execute(qry, (acc,))
+
+    go_annots = list()
+    
+    for row in c:
+        go = bioannotation.GOAnnotation(go_id=row[0], ev_code='ISM', with_from=acc)
+        go_annots.append(go)
+    
+    return go_annots
 
 
 
