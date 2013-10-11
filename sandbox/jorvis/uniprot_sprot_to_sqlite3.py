@@ -84,6 +84,7 @@ def main():
     conn = sqlite3.connect(args.output_db)
     curs = conn.cursor()
 
+    print("INFO: Creating tables ...")
     create_tables( curs )
     conn.commit()
 
@@ -93,7 +94,7 @@ def main():
     go_ids = list()
     ec_nums = list()
     
-
+    print("INFO: Parsing DAT file ...")
     for line in open(args.input):
         line = line.rstrip()
         
@@ -142,11 +143,29 @@ def main():
             if m:
                 go_ids.append(m.group(1))
             
+    conn.commit()
 
+    print("INFO: Creating indexes ...")
+    create_indexes(curs)
     conn.commit()
     curs.close()
+    print("INFO: Complete.")
     
 
+
+def create_indexes( cursor ):
+    # CREATE INDEX index_name ON table_name (column_name);
+
+    cursor.execute("CREATE INDEX idx_col_us_id  ON uniprot_sprot (id)")
+
+    cursor.execute("CREATE INDEX idx_col_usa_id  ON uniprot_sprot_acc (id)")
+    cursor.execute("CREATE INDEX idx_col_usa_acc ON uniprot_sprot_acc (accession)")
+    
+    cursor.execute("CREATE INDEX idx_col_usg_id ON uniprot_sprot_go (id)")
+    cursor.execute("CREATE INDEX idx_col_usg_go ON uniprot_sprot_go (go_id)")
+
+    cursor.execute("CREATE INDEX idx_col_use_id ON uniprot_sprot_ec (id)")
+    cursor.execute("CREATE INDEX idx_col_use_ec ON uniprot_sprot_ec (ec_num)")
 
 
 def create_tables( cursor ):
