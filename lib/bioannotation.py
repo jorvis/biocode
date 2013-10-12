@@ -102,7 +102,7 @@ class ECAnnotation:
         self.class2 = None
         self.class3 = None
 
-        re_pattern = re.compile('(((([0-9\-]+)\.[0-9\-]+)\.[0-9\-]+)\.[0-9\-]+)')
+        re_pattern = re.compile('(((([0-9\-]+)\.[0-9\-]+)\.[0-9\-]+)\.[a-z0-9\-]+)')
         m = re_pattern.search(self.number)
 
         if m:
