@@ -68,6 +68,12 @@ The script creates 5 files, named using the prefix specified by the -o option:
             Ref % covered by query fragments	        98.01
             Ref % identity by query fragments    	98.49
 
+    $prefix.tab.gene_coverage
+        Each gene ID from the GFF annotation is listed along with a classification of
+        either 'FULL', 'PARTIAL', 'NONE'.  Columns are:
+
+            reference_id | gene_id | classification
+            
     $prefix.tab.refmol_coverage
         Here each reference molecule is listed along with its coverage statistics. The
         columns are:
@@ -239,7 +245,7 @@ def calculate_gene_coverage( annot, frags ):
                 gene['cov'] = 'partial'
 
 
-def report_gene_coverage_results( annot, stats_ofh, missing_ofh ):
+def report_gene_coverage_results( annot, stats_ofh, missing_ofh, tab_ofh ):
     total_molecule_count = 0
     total_gene_count = 0
     partial_covered_gene_count = 0
@@ -254,10 +260,13 @@ def report_gene_coverage_results( annot, stats_ofh, missing_ofh ):
 
             if gene['cov'] == 'partial':
                 partial_covered_gene_count += 1
+                tab_ofh.write("{0}\t{1}\t{2}\n".format(assembly_id, gene['id'], 'PARTIAL'))
             elif gene['cov'] == 'complete':
                 completely_covered_gene_count += 1
+                tab_ofh.write("{0}\t{1}\t{2}\n".format(assembly_id, gene['id'], 'FULL'))
             else:
                 completely_missed_gene_count += 1
+                tab_ofh.write("{0}\t{1}\t{2}\n".format(assembly_id, gene['id'], 'NONE'))
                 missing_ofh.write("assembly:{0}\t{1}\t{2}\t{3}\t{4}\n".format( \
                         assembly_id, gene['id'], gene['fmin'], gene['fmax'], gene['prod']) )
 
@@ -397,6 +406,7 @@ def main():
     refmol_stats_ofh      = open(args.output_prefix + ".stats.refmol_coverage", "wt")
     refcov_stats_ofh      = open(args.output_prefix + ".tab.refmol_coverage", "wt")
     refext_list_ofh       = open(args.output_prefix + ".tab.extensions", "wt")
+    genecov_tab_ofh       = open(args.output_prefix + ".tab.gene_coverage", "wt")
     refext_list_ofh.write("# {0}\n".format(args.output_prefix) )
     refext_list_ofh.write("# reference_id\tref_fmin\tref_fmax\tref_strand\tqry_id\tqry_fmin\tqry_fmax\tqry_strand\tqry_length\n");
     
@@ -459,7 +469,7 @@ def main():
     else:
         print("INFO: {0} alignment lines found".format(alignment_lines_found) )
 
-    report_gene_coverage_results( annot, genecov_stats_ofh, genesmissing_list_ofh )
+    report_gene_coverage_results( annot, genecov_stats_ofh, genesmissing_list_ofh, genecov_tab_ofh )
     
     cov_perc = (ref_cov_stats['n_cov'] / ref_cov_stats['n_total']) * 100
     cov_perc_id =(ref_cov_stats['n_identical'] / ref_cov_stats['n_total']) * 100
