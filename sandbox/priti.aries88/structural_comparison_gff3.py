@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+#!/usr/bin/env python3.2
 
 """
 ========
@@ -83,7 +82,6 @@ import fileinput
 import biothings
 import biocodegff
 import sys
-
 
 
 def interface():
@@ -212,9 +210,9 @@ def process_files(args):
                             count += 1
                             break
                     
-                    if (len(pred_exon) == count) :        
-                        mrna_true.add(cord_m)    
-                        true_pred_mrna_per_gene += 1
+                if (len(pred_exon) == count and count > 0) :        
+                    mrna_true.add(cord_m)    
+                    true_pred_mrna_per_gene += 1
                         
             if (true_pred_mrna_per_gene >= 1) :                                  ## If the predicted gene has atleast one true predicted mrna, then the gene is true.
                 gene_true.add(cord_g)
@@ -260,7 +258,7 @@ def process_files(args):
     
     out2 = args.output_dir + '/exon_2_merged.bed'
     cmd = "bedtools merge -nms -scores sum -i " + exon2_bed + " -s >"+out2
-    #print(cmd)
+    print(cmd)
     os.system(cmd)
     
     exon1_bed = args.output_dir + '/exon_1.bed'
@@ -279,12 +277,12 @@ def process_files(args):
 
     out1 = args.output_dir + '/exon_1_merged.bed'
     cmd = "bedtools merge -nms -scores sum -i " + exon1_bed + " -s >"+out1
-    #print(cmd)
+    print(cmd)
     os.system(cmd)
     
     out_intersect = args.output_dir + '/exon_1_2_intersect.bed'
     cmd = "bedtools intersect -s -wo -a " + out1 + " -b " + out2 + " >" + out_intersect
-    #print(cmd)
+    print(cmd)
     os.system(cmd)
     
     a_base_file = open(out1,'r')
@@ -418,23 +416,15 @@ def process_files(args):
             gene += 1
         if (len(gene_overlap) == 0) :
             gene_missing += 1
-
-
+            
     print ("No. of predicted gene overlapping  0 known gene (new gene): ",new_gene)
     print ("No. of predicted gene overlapping > 1 known gene: ",gene_merge)
     print ("No. of predicted gene overlaping 1 known gene : ",gene_found)
     print ("No. of known gene overlapping > 1 predicted gene : ",gene_split)
     print ("No. of known gene overlapping 1 predicted gene : ",gene)
     print ("No. of known gene overlapping 0 predicted gene (gene missing) : ",gene_missing)
-        
-    fout.write ("No. of predicted gene overlapping  0 known gene (new gene): " + str(gene) + "\n")
-    fout.write ("No. of predicted gene overlapping > 1 known gene: " + str(gene_merge) + "\n")
-    fout.write ("No. of predicted gene overlaping 1 known gene : " + str(gene_found) + "\n")
-    fout.write ("No. of known gene overlapping > 1 predicted gene : " + str(gene_split) + "\n")
-    fout.write ("No. of known gene overlapping 1 predicted gene : " + str(gene) + "\n")
-    fout.write ("No. of known gene overlapping 0 predicted gene (gene missing) : " + str(gene_missing) + "\n")
 
-    fout.close() 
+        
 
 
     
