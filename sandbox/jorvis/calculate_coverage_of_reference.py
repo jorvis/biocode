@@ -72,7 +72,7 @@ The script creates 5 files, named using the prefix specified by the -o option:
         Each gene ID from the GFF annotation is listed along with a classification of
         either 'FULL', 'PARTIAL', 'NONE'.  Columns are:
 
-            reference_id | gene_id | classification
+            reference_id | gene_id | classification | percent_coverage
             
     $prefix.tab.refmol_coverage
         Here each reference molecule is listed along with its coverage statistics. The
@@ -182,6 +182,7 @@ def parse_annotation(gff3_file, product_key):
         gene['fmin'] = int(cols[3]) - 1
         gene['fmax'] = int(cols[4])
         gene['cov'] = None
+        gene['frags'] = list()
 
         ## grab the annotation, if a key was specified
         if product_key:
@@ -216,7 +217,7 @@ def get_last_column_value( key, colstring ):
     return key_value
 
 
-def calculate_gene_coverage( annot, frags ):
+def calculate_gene_coverage_fragments( annot, frags ):
     """
     Iterates through the fragments aligned to a reference molecule and tracks the
     overlaps of each fragment with the genes that are annotated on that reference
@@ -224,25 +225,66 @@ def calculate_gene_coverage( annot, frags ):
     ## this can be reduced to a sliding analysis window if this performs unreasonably
     for frag in frags:
         for gene in annot:
-            #if gene['id'] == 'TP05_0045' and frag['id'] == 'ctg7180000023240':
-            #    print("DEBUG: comparing the target gene and fragment")
-            #    print("DEBUG: comparing r({0}-{1}) with q({2}-{3})".format(gene['fmin'],gene['fmax'],frag['rfmin'],frag['rfmax']) )
-
-            ## don't check this one if it's already reported as completely covered by another fragment
-            if gene['cov'] == 'complete':
-                continue
-
             ## if the gene fmin falls within range of this fragment, it has at least partial coverage
             if gene['fmin'] >= frag['rfmin'] and gene['fmin'] <= frag['rfmax']:
-                gene['cov'] = 'partial'
 
                 ## if the gene fmax also falls within range, the gene is fully covered
                 if gene['fmax'] <= frag['rfmax']:
-                    gene['cov'] = 'complete'
+                    gene['frags'].append( [gene['fmin'], gene['fmax']] )
+                else:
+                    gene['frags'].append( [gene['fmin'], frag['rfmax']] )
 
             ## also check for fmax-only coverage of the gene
             elif gene['fmax'] >= frag['rfmin'] and gene['fmax'] <= frag['rfmax']:
-                gene['cov'] = 'partial'
+                gene['frags'].append( [frag['rfmin'], gene['fmax']] )
+
+
+def calculate_fragment_coverage_of_gene(gene):
+    bases_cov = 0
+    pct_cov = 0
+    
+    if len(gene['frags']) > 0:
+        [bases_cov, pct_cov] = calculate_coverage_of_coordinate_array(gene['frags'], gene['fmin'], gene['fmax'])
+
+    return pct_cov
+
+
+def calculate_coverage_of_coordinate_array( frags, qry_fmin, qry_fmax ):
+    """
+    Given the length of any feature and an array of matching start/stop coordinates (0-interbase)
+    on that feature, this returns the following:
+
+    (number_of_bases_covered, pct_coverage)
+    """
+    last_fmin = None
+    last_fmax = None
+    qry_len = qry_fmax - qry_fmin
+    bases_uncov = 0
+    pct_cov = 0
+
+    for frag in sorted(frags, key=itemgetter(0,1)):
+        #print("\tfragment: {0}-{1}".format(frag[0], frag[1]) )
+        if last_fmin is None:
+            last_fmin = frag[0]
+            last_fmax = frag[1]
+            bases_uncov += frag[0] - qry_fmin
+            #print("\t\tbases_uncov now: {0}".format(bases_uncov) )
+            continue
+
+        if frag[0] > last_fmax:
+            bases_uncov += frag[0] - last_fmax
+            #print("\t\tbases_uncov now: {0}".format(bases_uncov) )
+
+        last_fmin = frag[0]
+        last_fmax = frag[1]
+
+    # finally, add any trailing sequence uncovered
+    bases_uncov += qry_fmax - last_fmax;
+    #print("\t\tbases_uncov now: {0}".format(bases_uncov) )
+    bases_cov = qry_len - bases_uncov
+    pct_cov = (bases_cov / qry_len) * 100
+
+    return [bases_cov, pct_cov]
 
 
 def report_gene_coverage_results( annot, stats_ofh, missing_ofh, tab_ofh ):
@@ -257,19 +299,20 @@ def report_gene_coverage_results( annot, stats_ofh, missing_ofh, tab_ofh ):
 
         for gene in annot[assembly_id]:
             total_gene_count += 1
+            gene_frag_cov = calculate_fragment_coverage_of_gene(gene)
 
-            if gene['cov'] == 'partial':
-                partial_covered_gene_count += 1
-                tab_ofh.write("{0}\t{1}\t{2}\n".format(assembly_id, gene['id'], 'PARTIAL'))
-            elif gene['cov'] == 'complete':
+            if gene_frag_cov == 100:
                 completely_covered_gene_count += 1
-                tab_ofh.write("{0}\t{1}\t{2}\n".format(assembly_id, gene['id'], 'FULL'))
-            else:
+                tab_ofh.write("{0}\t{1}\t{2}\t{3}%\n".format(assembly_id, gene['id'], 'FULL', gene_frag_cov))
+            elif gene_frag_cov == 0:
                 completely_missed_gene_count += 1
-                tab_ofh.write("{0}\t{1}\t{2}\n".format(assembly_id, gene['id'], 'NONE'))
+                tab_ofh.write("{0}\t{1}\t{2}\t{3}%\n".format(assembly_id, gene['id'], 'NONE', gene_frag_cov))
                 missing_ofh.write("assembly:{0}\t{1}\t{2}\t{3}\t{4}\n".format( \
                         assembly_id, gene['id'], gene['fmin'], gene['fmax'], gene['prod']) )
-
+            else:
+                partial_covered_gene_count += 1
+                tab_ofh.write("{0}\t{1}\t{2}\t{3}\n".format(assembly_id, gene['id'], 'PARTIAL', gene_frag_cov))
+            
     stats_ofh.write("Total molecule count\t{0}\n".format(total_molecule_count) )
     stats_ofh.write("Total gene count\t{0}\n".format(total_gene_count) )
     stats_ofh.write("Genes not covered at all\t{0}\n".format(completely_missed_gene_count) )
@@ -431,7 +474,7 @@ def main():
         
         if cols[9] != current_ref_id:
             if current_ref_id is not None:
-                calculate_gene_coverage( annot[current_ref_id], query_fragments )
+                calculate_gene_coverage_fragments( annot[current_ref_id], query_fragments )
                 calculate_fragment_coverage( current_ref_id, query_fragments, current_ref_length, ref_cov_stats, refcov_stats_ofh, refext_list_ofh )
                 
             ## reset
@@ -461,7 +504,7 @@ def main():
         query_fragments.append(fragment)
 
     ## don't forget the last one
-    calculate_gene_coverage( annot[current_ref_id], query_fragments )
+    calculate_gene_coverage_fragments( annot[current_ref_id], query_fragments )
     calculate_fragment_coverage( current_ref_id, query_fragments, current_ref_length, ref_cov_stats, refcov_stats_ofh, refext_list_ofh )
     
     if alignment_lines_found == 0:
