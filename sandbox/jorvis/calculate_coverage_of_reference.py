@@ -325,6 +325,8 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
     last_frag_rfmax = 0
     bases_covered = 0
     bases_uncovered = 0
+
+    print("DEBUGTEMP: calculate_fragment_coverage called on {0} ({1} bp)".format(ref_id, ref_length))
     
     ## these are the possible number of bases that might be extended off the end of
     #   the reference sequence based on the fragments aligned.
@@ -474,13 +476,17 @@ def main():
         
         if cols[9] != current_ref_id:
             if current_ref_id is not None:
-                calculate_gene_coverage_fragments( annot[current_ref_id], query_fragments )
+                if current_ref_id in annot:
+                    calculate_gene_coverage_fragments( annot[current_ref_id], query_fragments )
+                    
                 calculate_fragment_coverage( current_ref_id, query_fragments, current_ref_length, ref_cov_stats, refcov_stats_ofh, refext_list_ofh )
                 
             ## reset
             current_ref_id = cols[9]
             current_ref_length = int(cols[7])
             query_fragments = []
+
+            print("DEBUGTEMP: {0} - {1}bp".format(current_ref_id, current_ref_length))
 
             ## quick sanity check
             if current_ref_id not in annot:
