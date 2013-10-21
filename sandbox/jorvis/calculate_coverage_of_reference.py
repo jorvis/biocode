@@ -510,7 +510,9 @@ def main():
         query_fragments.append(fragment)
 
     ## don't forget the last one
-    calculate_gene_coverage_fragments( annot[current_ref_id], query_fragments )
+    if current_ref_id in annot:
+        calculate_gene_coverage_fragments( annot[current_ref_id], query_fragments )
+        
     calculate_fragment_coverage( current_ref_id, query_fragments, current_ref_length, ref_cov_stats, refcov_stats_ofh, refext_list_ofh )
     
     if alignment_lines_found == 0:
