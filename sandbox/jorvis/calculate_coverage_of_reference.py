@@ -326,7 +326,7 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
     bases_covered = 0
     bases_uncovered = 0
 
-    print("DEBUGTEMP: calculate_fragment_coverage called on {0} ({1} bp)".format(ref_id, ref_length))
+    #print("DEBUGTEMP: calculate_fragment_coverage called on {0} ({1} bp)".format(ref_id, ref_length))
     
     ## these are the possible number of bases that might be extended off the end of
     #   the reference sequence based on the fragments aligned.
@@ -387,7 +387,7 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
             bases_uncovered += (frag['rfmin'] - last_ref_coord)
             last_ref_coord = frag['rfmax']
             pctid_base_score += (bases_covered_by_this_frag * frag['pctid'] / 100)
-            print("pctid_base_score += ({0} * {1})".format(bases_covered_by_this_frag, frag['pctid']))
+            #print("pctid_base_score += ({0} * {1})".format(bases_covered_by_this_frag, frag['pctid']))
             last_frag_rfmax = frag['rfmax']
             last_frag_pctid = frag['pctid']
             
@@ -486,11 +486,11 @@ def main():
             current_ref_length = int(cols[7])
             query_fragments = []
 
-            print("DEBUGTEMP: {0} - {1}bp".format(current_ref_id, current_ref_length))
+            #print("DEBUGTEMP: {0} - {1}bp".format(current_ref_id, current_ref_length))
 
             ## quick sanity check
             if current_ref_id not in annot:
-                raise Exception("ERROR: found a nucleotide accession for which we have no annotation: {0}".format(current_ref_id))
+                print("WARNING: found a nucleotide accession for which we have no annotation: {0}".format(current_ref_id))
         
         qstrand = 1
 
