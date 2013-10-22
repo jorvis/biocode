@@ -4,6 +4,7 @@ import argparse
 import math
 import os
 import re
+import biocodeutils
 
 from operator import itemgetter
 
@@ -422,7 +423,6 @@ def calculate_fragment_coverage( ref_id, frags, ref_length, cov_stats, covinfo_o
     covinfo_ofh.write("{0}\t{1}\t{2}\t{3}\n".format(ref_id, ref_length, bases_covered, perc_cov))
     #print("DEBUG: {0} size: {1} has {2}bp covered, ({3:.2f}%)".format(ref_id, ref_length, bases_covered, perc_cov))
 
-    cov_stats['n_total'] += ref_length
     cov_stats['n_cov'] += bases_covered
     cov_stats['n_uncov'] += bases_uncovered
     cov_stats['n_identical'] += pctid_base_score
@@ -436,6 +436,7 @@ def main():
                             help='Path to a nucmer coords file with non-overlapping results (requires -l -r -T options of show-coords)' )
     parser.add_argument('-o', '--output_prefix', type=str, required=True, help='Several output files will be created with this prefix.' )
     parser.add_argument('-a', '--annotation_file', type=str, required=True, help='Path to a sorted GFF3 annotation file' )
+    parser.add_argument('-r', '--reference_fasta', type=str, required=True, help='Path to the reference file used with nucmer' )
     parser.add_argument('-k', '--annotation_key', type=str, required=False, help='Optional.  Key string to look for in the 9th column of the GFF3 file for an annotation string.' )
     args = parser.parse_args()
 
@@ -444,6 +445,12 @@ def main():
 
     ## like: [ {id=?,qfmin=?,qfmax=?,rfmin=?,rfmax=?} ]
     query_fragments = []
+
+    ref_molecules = biocodeutils.fasta_dict_from_file( args.reference_fasta )
+    ref_n_total = 0
+
+    for ref_id in ref_molecules:
+        ref_n_total += len( ref_molecules[ref_id]['s'] )
 
     ## open the output files
     genecov_stats_ofh     = open(args.output_prefix + ".stats.gene_coverage", "wt")
@@ -455,12 +462,11 @@ def main():
     refext_list_ofh.write("# {0}\n".format(args.output_prefix) )
     refext_list_ofh.write("# reference_id\tref_fmin\tref_fmax\tref_strand\tqry_id\tqry_fmin\tqry_fmax\tqry_strand\tqry_length\n");
     
-    ref_cov_stats = { 'n_total': 0, 'n_cov': 0, 'n_uncov': 0, 'n_identical': 0 }
+    ref_cov_stats = { 'n_cov': 0, 'n_uncov': 0, 'n_identical': 0 }
 
     alignment_lines_found = 0
     current_ref_id = None
-    current_ref_length = None
-    
+
     for line in open(args.coords_file, 'r'):
         cols = line.split()
 
@@ -485,8 +491,6 @@ def main():
             current_ref_id = cols[9]
             current_ref_length = int(cols[7])
             query_fragments = []
-
-            #print("DEBUGTEMP: {0} - {1}bp".format(current_ref_id, current_ref_length))
 
             ## quick sanity check
             if current_ref_id not in annot:
@@ -523,9 +527,9 @@ def main():
 
     report_gene_coverage_results( annot, genecov_stats_ofh, genesmissing_list_ofh, genecov_tab_ofh )
     
-    cov_perc = (ref_cov_stats['n_cov'] / ref_cov_stats['n_total']) * 100
-    cov_perc_id =(ref_cov_stats['n_identical'] / ref_cov_stats['n_total']) * 100
-    refmol_stats_ofh.write("Total bases in reference molecules\t{0}\n".format(ref_cov_stats['n_total']) )
+    cov_perc = (ref_cov_stats['n_cov'] / ref_n_total) * 100
+    cov_perc_id =(ref_cov_stats['n_identical'] / ref_n_total) * 100
+    refmol_stats_ofh.write("Total bases in reference molecules\t{0}\n".format(ref_n_total) )
     refmol_stats_ofh.write("Ref bases covered by query fragments\t{0}\n".format(ref_cov_stats['n_cov']) )
     refmol_stats_ofh.write("Ref % covered by query fragments\t{0:.2f}\n".format(cov_perc))
     refmol_stats_ofh.write("Ref % identity by query fragments\t{0:.2f}\n".format(cov_perc_id))
