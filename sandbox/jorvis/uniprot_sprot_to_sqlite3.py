@@ -30,11 +30,23 @@ DR   GO; GO:0008289; F:lipid binding; IEA:UniProtKB-KW.
 DR   GO; GO:0005737; C:cytoplasm; IEA:UniProtKB-SubCell.
 DR   GO; GO:0005634; C:nucleus; IEA:Compara.
 
+OS   Homo sapiens (Human).
+
+GN   Name=AASDHPPT; ORFNames=CGI-80, HAH-P, HSPC223, x0005;
+
 DE            EC=6.3.4.3;
 DE              EC=1.5.1.5;
 DE              EC=3.5.4.9;
 DE              EC=6.3.4.3;
 
+The FASTA headers (though they're not used) in the corresponding release look like:
+
+>sp|Q9NRN7|ADPPT_HUMAN L-aminoadipate-semialdehyde dehydrogenase-phosphopantetheinyl transferase OS=Homo sapiens GN=AASDHPPT PE=1 SV=2
+>sp|Q196Z6|064L_IIV3 Uncharacterized protein 064L OS=Invertebrate iridescent virus 3 GN=IIV3-064L PE=4 SV=1
+>sp|Q6GZR1|064R_FRG3G Caspase recruitment domain-containing protein 064R OS=Frog virus 3 (isolate Goorha) GN=FV3-064R PE=4 SV=1
+>sp|O35296|3BHS3_MESAU 3 beta-hydroxysteroid dehydrogenase type 3 OS=Mesocricetus auratus GN=HSD3B3 PE=2 SV=3
+
+These are defined by: http://www.uniprot.org/help/fasta-headers
 
 OUTPUT
 
@@ -46,6 +58,8 @@ table: uniprot_sprot
 ----------
 id = 001R_FRG3G
 full_name = 11S globulin subunit beta
+organism = Frog virus 3 (isolate Goorha)
+symbol = FV3-001R
 
 uniprot_sprot_acc
 -----------------
@@ -91,6 +105,8 @@ def main():
     id = None
     accs = list()
     full_name = None
+    organism = None
+    symbol = None
     go_ids = list()
     ec_nums = list()
     
@@ -101,7 +117,7 @@ def main():
         # is this the end of an entry?
         if re.match( "^//", line ):
             # save
-            curs.execute("INSERT INTO uniprot_sprot (id, full_name) values (?,?)", (id, full_name))
+            curs.execute("INSERT INTO uniprot_sprot (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
 
             for acc in accs:
                 curs.execute("INSERT INTO uniprot_sprot_acc (id, accession) values (?,?)", (id, acc))
@@ -116,6 +132,8 @@ def main():
             id = None
             accs = list()
             full_name = None
+            organism = None
+            symbol = None
             go_ids = list()
             ec_nums = list()
             
@@ -138,10 +156,22 @@ def main():
                 m = re.search("EC=(\S+)", line.rstrip(';'))
                 if m:
                     ec_nums.append(m.group(1))
+
         elif line.startswith("DR"):
             m = re.search("GO:(\d+)", line)
             if m:
                 go_ids.append(m.group(1))
+
+        elif line.startswith("OS"):
+            m = re.match("OS\s+(.+)\.$", line)
+            if m:
+                organism = m.group(1)
+                
+        elif line.startswith("GN"):
+            m = re.search("^GN\s+Name=(.+?)\;", line)
+            if m:
+                symbol = m.group(1)
+        
             
     conn.commit()
 
@@ -172,7 +202,9 @@ def create_tables( cursor ):
     cursor.execute("""
               CREATE TABLE uniprot_sprot (
                  id                text primary key,
-                 full_name         text
+                 full_name         text,
+                 organism          text,
+                 symbol            text
               )
     """)
     
