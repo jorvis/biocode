@@ -270,7 +270,8 @@ def parse_gff3_by_relationship( gff3_file ):
 
 def print_biogene( gene=None, fh=None, source=None, on=None ):
     '''
-    WRITE COMMENTS BEFORE COMMIT
+    This method accepts a Gene object located on an Assembly object (from biothings.py) and prints
+    the feature graph for that gene in GFF3 format, including the gene, mRNA, CDS and exon features.
     '''
     ## handle defaults
     if source is None:
