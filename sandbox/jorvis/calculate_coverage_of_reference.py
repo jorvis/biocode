@@ -20,6 +20,11 @@ related to coverage of a reference genome.
 INPUT
 =====
 
+Two steps should be done before you run this script:
+
+1. Run nucmer to align your query and reference, generating a delta file.
+2. Run show-coords (with -l -r -T options) on the delta file to generate a coords file.
+
 Options
 -------
 -c, --coords_file         required
@@ -33,6 +38,9 @@ Options
 
 -a, --annotation_file     required
     Path to a coordinate-sorted GFF3 annotation file.  Follow the spec.
+
+-r, --reference_fasta     required
+    Path to a the FASTA file used as the reference to the nucmer run.
 
 -k, --annotation_key      optional
     There is no standard place in the 9th column of GFF3 where an annotation string like
