@@ -8,6 +8,7 @@ import biocodeutils
 import biothings
 import sqlite3
 import re
+from collections import defaultdict
 
 ## constants
 DEFAULT_PRODUCT_NAME = "hypothetical protein"
@@ -19,24 +20,31 @@ def main():
     parser.add_argument('-f', '--input_fasta', type=str, required=True, help='Protein FASTA file of source molecules' )
     parser.add_argument('-m', '--hmm_htab_list', type=str, required=True, help='List of htab files from hmmpfam3' )
     parser.add_argument('-b', '--blast_btab_list', type=str, required=True, help='List of btab files from BLAST' )
-    parser.add_argument('-o', '--output_tab', type=str, required=False, help='Optional output tab file path (else STDOUT)' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--unitprot_sprot_db', type=str, required=True, help='SQLite3 db with UNITPROT/SWISSPROT information' )
+    parser.add_argument('-o', '--output_tab', type=str, required=False, help='Optional output tab file path (else STDOUT)' )
+    parser.add_argument('-r', '--organism_table', type=str, required=False, help='Optional table with counts of organism frequency based on top BLAST match for each protein' )
     args = parser.parse_args()
 
+    # connection to the HMM-associated SQLite3 database
     hmm_db_conn = sqlite3.connect(args.hmm_db)
     hmm_db_curs = hmm_db_conn.cursor()
 
+    # connection to the UniProt_Sprot SQLite3 database
     usp_db_conn = sqlite3.connect(args.unitprot_sprot_db)
     usp_db_curs = usp_db_conn.cursor()
 
+    # this is a dict of biothings.Polypeptide objects
     polypeptides = initialize_polypeptides( args.input_fasta )
+
+    # keyed on polypeptide ID, the values here are the organism name for the top BLAST match of each
+    polypeptide_blast_org = dict()
 
     print("INFO: parsing HMM evidence")
     parse_hmm_evidence( polypeptides, args.hmm_htab_list, hmm_db_curs )
 
     print("INFO: parsing BLAST evidence")
-    parse_blast_evidence( polypeptides, args.blast_btab_list, usp_db_curs )
+    parse_blast_evidence( polypeptides, polypeptide_blast_org, args.blast_btab_list, usp_db_curs )
 
     hmm_db_curs.close()
 
@@ -45,7 +53,7 @@ def main():
     if args.output_tab is not None:
         fout = open(args.output_tab, 'wt')
 
-    fout.write("polypeptide ID\tpolypeptide_length\tgene_product_name\tGO_terms\tEC_nums\n")
+    fout.write("# polypeptide ID\tpolypeptide_length\tgene_product_name\tGO_terms\tEC_nums\tgene_symbol\n")
 
     for polypeptide_id in polypeptides:
         polypeptide = polypeptides[polypeptide_id]
@@ -60,10 +68,14 @@ def main():
             ec_string += "{0},".format(ec_annot.number)
         ec_string = ec_string.rstrip(',')
                 
-        fout.write( "{0}\t{1}\t{2}\t{3}\t{4}\n".format( \
-                polypeptide_id, polypeptide.length, polypeptide.annotation.product_name, go_string, ec_string) )
+        fout.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( \
+                polypeptide_id, polypeptide.length, polypeptide.annotation.product_name, go_string, ec_string, \
+                polypeptide.annotation.gene_symbol) )
 
     fout.close()
+
+    if args.organism_table is not None:
+        create_organism_table(args.organism_table, polypeptide_blast_org)
 
 def initialize_polypeptides( fasta_file ):
     '''
@@ -84,7 +96,7 @@ def initialize_polypeptides( fasta_file ):
     return polypeptides
 
 
-def parse_blast_evidence( polypeptides, blast_list, cursor ):
+def parse_blast_evidence( polypeptides, blast_org, blast_list, cursor ):
     '''
     Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
     each with Annotation evidence where appropriate.  Only attaches evidence if
@@ -112,7 +124,10 @@ def parse_blast_evidence( polypeptides, blast_list, cursor ):
                     # pluck the second part out of this:
                     #  sp|Q4PEV8|EIF3M_USTMA
                     accession = accession.split('|')[1]
-                
+
+                assertions = get_uspdb_annot( accession, cursor )
+                blast_org[this_qry_id] = assertions['organism']
+                    
                 # save it, unless the gene product name has already changed from the default
                 if annot.product_name == DEFAULT_PRODUCT_NAME:
                     annot.product_name = cols[15]
@@ -127,8 +142,15 @@ def parse_blast_evidence( polypeptides, blast_list, cursor ):
                     for go_annot in get_uspdb_go_terms( accession, cursor ):
                         annot.add_go_annotation(go_annot)
 
+                # if no gene symbol has been set, it can inherit from this
+                if annot.gene_symbol is None:
+                    annot.gene_symbol = assertions['symbol']
+
                 # remember the ID we just saw
                 last_qry_id = this_qry_id
+
+
+
 
 
 def parse_hmm_evidence( polypeptides, htab_list, cursor ):
@@ -173,6 +195,32 @@ def parse_hmm_evidence( polypeptides, htab_list, cursor ):
 
                 ## remember the ID we just saw
                 last_qry_id = this_qry_id
+
+
+def get_uspdb_annot( acc, c ):
+    """
+    This returns a dict of any annotation assertions for a given accession
+    in which there will only be one.  Examples: organism name, gene symbol, etc.
+
+    Other methods pull GO terms and EC numbers
+    """
+    qry = """
+          SELECT us.organism, us.symbol
+            FROM uniprot_sprot us
+                 JOIN uniprot_sprot_acc us_acc ON us.id = us_acc.id
+           WHERE us_acc.accession = ?
+          """
+    c.execute(qry, (acc,))
+    #print("DEBUG: executing annot query where accession = ({0})".format(acc))
+
+    assertions = { 'organism':None, 'symbol':None }
+
+    for row in c:
+        assertions['organism'] = row[0]
+        assertions['symbol'] = row[1]
+        break
+
+    return assertions
 
 
 def get_uspdb_ec_nums( acc, c ):
@@ -234,6 +282,19 @@ def get_hmmdb_go_terms( acc, c ):
     
     return go_annots
 
+
+def create_organism_table( file_path, blast ):
+    org = defaultdict(int)
+    
+    for protein_id in blast:
+        org[ blast[protein_id] ] += 1
+
+    table = open(file_path, 'wt')
+
+    for name in sorted(org, key=org.get, reverse=True):
+        table.write("{0}\t{1}\n".format(name, org[name]))
+    
+    table.close()
 
 
 if __name__ == '__main__':
