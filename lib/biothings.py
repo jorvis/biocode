@@ -12,7 +12,11 @@ biology than CS.
 
 Each of the 'things' is intended to be biologically relevant, and I've included the definitions
 for each from the Sequence Ontology.  Their class representations may not match this perfectly
-yet, but that's the goal wherever possible.
+yet, but that's the goal wherever possible.  Some terms, such as Organism, fall outside the scope
+of the Sequence Ontology but I found them relevant (or convenient) to include here.
+
+Documentation should be shifted from pydoc to:
+http://sphinx-doc.org/
 '''
 
 class LocatableThing:
@@ -189,6 +193,36 @@ class Location:
         self.phase = 0 if phase is None else phase
 
 
+
+class Organism:
+    '''
+    This is a pretty high-level representation of an organism, and (currently) mostly serves as a
+    container for Assembly objects.
+    '''
+    def __init__( self, id=None, assemblies=None, taxon_id=None, genus=None, species=None, strain=None ):
+        self.id = id
+        self.assemblies = assemblies
+        self.taxon_id = taxon_id
+
+        # convenience attributes
+        self.genus = genus
+        self.species = species
+        self.strain = strain
+
+        if self.assemblies is None:
+            self.assemblies = list()
+
+        def add_assembly( self, assembly ):
+            self.assemblies.append( assembly )
+            
+        def common_name(self):
+            if self.strain is None:
+                return "{0} {1}".format(self.genus, self.species)
+            else:
+                return "{0} {1} ({2})".format(self.genus, self.species, self.strain)
+
+            
+
 class Assembly( LocatableThing ):
     '''
     SO definition (2013-05-22): "A region of the genome of known length that is composed by ordering and 
@@ -213,7 +247,6 @@ class Assembly( LocatableThing ):
         Returns all Gene objects which are children of this Assembly
         '''
         return self.children['gene']
-    
     
 
 
