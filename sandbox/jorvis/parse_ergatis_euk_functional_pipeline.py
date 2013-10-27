@@ -22,6 +22,7 @@ def main():
     parser.add_argument('-b', '--blast_btab_list', type=str, required=True, help='List of btab files from BLAST' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--unitprot_sprot_db', type=str, required=True, help='SQLite3 db with UNITPROT/SWISSPROT information' )
+    parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=false, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
     parser.add_argument('-o', '--output_tab', type=str, required=False, help='Optional output tab file path (else STDOUT)' )
     parser.add_argument('-r', '--organism_table', type=str, required=False, help='Optional table with counts of organism frequency based on top BLAST match for each protein' )
     args = parser.parse_args()
@@ -44,7 +45,7 @@ def main():
     parse_hmm_evidence( polypeptides, args.hmm_htab_list, hmm_db_curs )
 
     print("INFO: parsing BLAST evidence")
-    parse_blast_evidence( polypeptides, polypeptide_blast_org, args.blast_btab_list, usp_db_curs )
+    parse_blast_evidence( polypeptides, polypeptide_blast_org, args.blast_btab_list, usp_db_curs, args.blast_eval_cutoff )
 
     hmm_db_curs.close()
 
@@ -96,7 +97,7 @@ def initialize_polypeptides( fasta_file ):
     return polypeptides
 
 
-def parse_blast_evidence( polypeptides, blast_org, blast_list, cursor ):
+def parse_blast_evidence( polypeptides, blast_org, blast_list, cursor, eval_cutoff ):
     '''
     Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
     each with Annotation evidence where appropriate.  Only attaches evidence if
@@ -111,6 +112,10 @@ def parse_blast_evidence( polypeptides, blast_org, blast_list, cursor ):
             line = line.rstrip()
             cols = line.split("\t")
             this_qry_id = cols[0]
+
+            # skip this line if it doesn't meet the cutoff
+            if cols[19] > eval_cutoff:
+                continue
 
             # the BLAST hits are sorted already with the top hit for each query first
             if last_qry_id != this_qry_id:
