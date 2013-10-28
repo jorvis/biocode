@@ -56,7 +56,8 @@ def main():
                     global_kmer_counts[kmer] += read_counts[kmer]
 
         current_line_number += 1
-    
+
+    print("Completed.  {0} reads out of {1} would have been kept.".format(reads_kept, reads_total) )
     
 def median(mylist):
     sorts = sorted(mylist)
