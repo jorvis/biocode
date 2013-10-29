@@ -13,7 +13,7 @@ writing this rudimentary implementation to get a better feel for the algorithm w
 
 If you need digital normalization code go here:
 
-https://github.com/ctb/khmer
+https://github.com/ged-lab/khmer
 
 And yes, I know this could be written more succinctly to the point of obfuscation, but
 I'm using it to teach the method.  It works.
