@@ -41,6 +41,8 @@ def main():
     chains_exported = 0
 
     ofh = open(args.output_file, 'w')
+    ofh.write("##gff-version 3\n")
+    
     current_chain_number = 1
     gene_segments = []
 
