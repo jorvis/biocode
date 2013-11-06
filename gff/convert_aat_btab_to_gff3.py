@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
 """
 Converts the btab output of AAT (nap/gap2) to GFF3 format with proper gene models.
@@ -32,8 +32,8 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to parse' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-p', '--name_prefix', type=str, required=False, help='So that resulting GFF3 files from multiple runs can be merged, you can supply a prefix for the IDs generated here' )
-    parser.add_argument('-d', '--perc_identity_cutoff', type=float, required=False, help='Filters on the % identity of over the length of the alignment' )
-    parser.add_argument('-s', '--perc_similarity_cutoff', type=float, required=False, help='Filters on the % similarity of over the length of the alignment' )
+    parser.add_argument('-d', '--perc_identity_cutoff', type=float, required=False, help='Filters on the percent identity of over the length of the alignment' )
+    parser.add_argument('-s', '--perc_similarity_cutoff', type=float, required=False, help='Filters on the percent similarity of over the length of the alignment' )
     
     args = parser.parse_args()
     algorithm = None
