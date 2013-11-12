@@ -221,7 +221,7 @@ class Organism:
             else:
                 return "{0} {1} ({2})".format(self.genus, self.species, self.strain)
 
-            
+
 
 class Assembly( LocatableThing ):
     '''
@@ -392,12 +392,16 @@ class RNA( LocatableThing ):
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'exon')
         self.children = _initialize_type_list(self.children, 'CDS')
+        self.children = _initialize_type_list(self.children, 'polypeptide')
 
     def add_exon(self, exon):
         self.children['exon'].append(exon)
 
     def add_CDS(self, cds):
         self.children['CDS'].append(cds)
+
+    def add_polypeptide(self, polypeptide):
+        self.children['polypeptide'].append(polypeptide)
 
     def exons(self):
         return self.children['exon']
@@ -407,6 +411,9 @@ class RNA( LocatableThing ):
         #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
         #  http://oxforddictionaries.com/definition/american_english/SOS
         return self.children['CDS']
+
+    def polypeptides(self):
+        return self.children['polypeptide']
 
     def introns(self, on=None):
         '''
