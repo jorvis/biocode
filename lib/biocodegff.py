@@ -1,5 +1,6 @@
 import re
 import biothings
+import bioannotation
 from urllib.parse import unquote
 
 def build_column_9( id=None, parent=None, other=None ):
@@ -19,6 +20,14 @@ def build_column_9( id=None, parent=None, other=None ):
 
         colstring += "Parent={0}".format(parent)
 
+    # other is a dict of key,value pairs
+    if other is not None:
+        for att in other:
+            if colstring is not None:
+                colstring += ";"
+
+            colstring += "{0}={1}".format(att, other[att])
+        
     return colstring
 
 
@@ -340,7 +349,23 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             columns[8] = build_column_9( id=exon.id, parent=mRNA.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
+        # are there polypeptides?
+        for polypeptide in mRNA.polypeptides():
+            ## HACK - we probably don't want to keep this
+            polypeptide_loc = mRNA_loc
+            annot = polypeptide.annotation
+
+            assertions = {'product_name':annot.product_name, }
+
+            #if 
+
+            columns[2] = 'polypeptide'
+            columns[3:5] = [str(polypeptide_loc.fmin + 1), str(polypeptide_loc.fmax)]
+            columns[8] = build_column_9( id=polypeptide.id, parent=mRNA.parent.id, other=assertions )
+            fh.write( "\t".join(columns) + "\n" )
+
 def _reunite_children( fg, mol_id, kids ):
+    sys.stderr.write("WARNING: biocodegff._reunite_children called but not yet implemented.  You are ahead of your time.\n")
     pass
 
 
