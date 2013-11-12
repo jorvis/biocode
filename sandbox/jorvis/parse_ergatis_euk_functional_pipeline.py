@@ -6,12 +6,15 @@ import sys
 import bioannotation
 import biocodeutils
 import biothings
+import biocodegff
 import sqlite3
 import re
 from collections import defaultdict
 
 ## constants
 DEFAULT_PRODUCT_NAME = "hypothetical protein"
+
+next_ids = defaultdict(int)
 
 def main():
     parser = argparse.ArgumentParser( description='Parses multiple sources of evidence to generate a consensus functional annotation')
@@ -22,10 +25,14 @@ def main():
     parser.add_argument('-b', '--blast_btab_list', type=str, required=True, help='List of btab files from BLAST' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--unitprot_sprot_db', type=str, required=True, help='SQLite3 db with UNITPROT/SWISSPROT information' )
-    parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=false, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
-    parser.add_argument('-o', '--output_tab', type=str, required=False, help='Optional output tab file path (else STDOUT)' )
+    parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are "tab" or "gff3"' )
+    parser.add_argument('-s', '--source_gff', type=str, required=False, help='Source GFF file from which proteins were derived.  Required if you want to export any format other than tab-delimited.' )
+    parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
+    parser.add_argument('-o', '--output_file', type=str, required=False, help='Optional output file path (else STDOUT)' )
     parser.add_argument('-r', '--organism_table', type=str, required=False, help='Optional table with counts of organism frequency based on top BLAST match for each protein' )
     args = parser.parse_args()
+
+    check_arguments(args)
 
     # connection to the HMM-associated SQLite3 database
     hmm_db_conn = sqlite3.connect(args.hmm_db)
@@ -41,6 +48,11 @@ def main():
     # keyed on polypeptide ID, the values here are the organism name for the top BLAST match of each
     polypeptide_blast_org = dict()
 
+    # get source structural annotation, if necessary:
+    if args.source_gff is not None:
+        print("INFO: parsing source GFF")
+        (assemblies, features) = biocodegff.get_gff3_features( args.source_gff )
+
     print("INFO: parsing HMM evidence")
     parse_hmm_evidence( polypeptides, args.hmm_htab_list, hmm_db_curs )
 
@@ -51,10 +63,46 @@ def main():
 
     ## output will either be a file or STDOUT
     fout = sys.stdout
-    if args.output_tab is not None:
-        fout = open(args.output_tab, 'wt')
+    if args.output_file is not None:
+        fout = open(args.output_file, 'wt')
 
-    fout.write("# polypeptide ID\tpolypeptide_length\tgene_product_name\tGO_terms\tEC_nums\tgene_symbol\n")
+    if args.format == 'tab':
+        write_tab_results(fout, polypeptides)
+    elif args.format == 'gff3':
+        write_gff3_results(fout, polypeptides, assemblies, features)
+    
+    fout.close()
+
+    if args.organism_table is not None:
+        create_organism_table(args.organism_table, polypeptide_blast_org)
+
+def check_arguments( args ):
+    # Check the acceptable values for format
+    if args.format not in ('tab', 'gff3'):
+        raise Exception("ERROR: The format provided ({0}) isn't supported.  Please check the documentation again.".format(args.format))
+
+    # The --source_gff argument is required unless --format=tab was specified
+    if args.source_gff is None and args.format != 'tab':
+        raise Exception("ERROR: You must pass the --source_gff argument unless --format=tab")
+
+
+def write_gff3_results( f, polypeptides, assemblies, features ):
+    f.write("##gff-version 3")
+    
+    for assembly_id in assemblies:
+        for gene in assemblies[assembly_id].genes():
+            for mRNA in gene.mRNAs():
+                # add polypeptides to the mRNAs
+                if mRNA.id in polypeptides:
+                    poly = polypeptides[mRNA.id]
+                    poly.id = "{0}.polypeptide".format(poly.id)
+                    mRNA.add_polypeptide(poly)
+            
+            gene.print_as(fh=f, source='IGS', format='gff3')
+
+
+def write_tab_results( f, polypeptides ):
+    f.write("# polypeptide ID\tpolypeptide_length\tgene_product_name\tGO_terms\tEC_nums\tgene_symbol\n")
 
     for polypeptide_id in polypeptides:
         polypeptide = polypeptides[polypeptide_id]
@@ -63,20 +111,16 @@ def main():
 
         for go_annot in polypeptide.annotation.go_annotations:
             go_string += "GO:{0},".format(go_annot.go_id)
-        go_string = go_string.rstrip(',')
+            go_string = go_string.rstrip(',')
 
         for ec_annot in polypeptide.annotation.ec_numbers:
             ec_string += "{0},".format(ec_annot.number)
-        ec_string = ec_string.rstrip(',')
+            ec_string = ec_string.rstrip(',')
                 
-        fout.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( \
+        f.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( \
                 polypeptide_id, polypeptide.length, polypeptide.annotation.product_name, go_string, ec_string, \
                 polypeptide.annotation.gene_symbol) )
 
-    fout.close()
-
-    if args.organism_table is not None:
-        create_organism_table(args.organism_table, polypeptide_blast_org)
 
 def initialize_polypeptides( fasta_file ):
     '''
@@ -114,7 +158,7 @@ def parse_blast_evidence( polypeptides, blast_org, blast_list, cursor, eval_cuto
             this_qry_id = cols[0]
 
             # skip this line if it doesn't meet the cutoff
-            if cols[19] > eval_cutoff:
+            if float(cols[19]) > eval_cutoff:
                 continue
 
             # the BLAST hits are sorted already with the top hit for each query first
