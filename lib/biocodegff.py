@@ -354,10 +354,32 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             ## HACK - we probably don't want to keep this
             polypeptide_loc = mRNA_loc
             annot = polypeptide.annotation
+            assertions = dict()
+            dbxref_strs = list()
+            ontology_strs = list()
 
-            assertions = {'product_name':annot.product_name, }
+            if annot is not None:
+                if annot.product_name is not None:
+                    assertions['product_name'] = annot.product_name
 
-            #if 
+                if annot.gene_symbol is not None:
+                    assertions['gene_symbol'] = annot.gene_symbol
+            
+                if len(annot.ec_numbers):
+                    # should this construction be in build_column_9() instead?
+                    # this is treating each EC number as a string, but each should be an ECAnnotation object
+                    for ec in annot.ec_numbers:
+                        dbxref_strs.append("EC:{0}".format(ec.number))
+
+                if len(annot.go_annotations):
+                    for go in annot.go_annotations:
+                        ontology_strs.append("GO:{0}".format(go.go_id))
+
+            if len(dbxref_strs) > 0:
+                assertions['Dbxref'] = ",".join(dbxref_strs)
+
+            if len(ontology_strs) > 0:
+                assertions['Ontology_term'] = ",".join(ontology_strs)
 
             columns[2] = 'polypeptide'
             columns[3:5] = [str(polypeptide_loc.fmin + 1), str(polypeptide_loc.fmax)]
