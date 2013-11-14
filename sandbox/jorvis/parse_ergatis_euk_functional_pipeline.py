@@ -30,6 +30,7 @@ def main():
     parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Optional output file path (else STDOUT)' )
     parser.add_argument('-r', '--organism_table', type=str, required=False, help='Optional table with counts of organism frequency based on top BLAST match for each protein' )
+    parser.add_argument('-g', '--genomic_fasta', type=str, required=False, help='If passed, the genomic FASTA sequence will be included in the exported GFF3')
     args = parser.parse_args()
 
     check_arguments(args)
@@ -55,13 +56,14 @@ def main():
 
     print("INFO: parsing HMM evidence")
     parse_hmm_evidence( polypeptides, args.hmm_htab_list, hmm_db_curs )
+    hmm_db_curs.close()
 
     print("INFO: parsing BLAST evidence")
     parse_blast_evidence( polypeptides, polypeptide_blast_org, args.blast_btab_list, usp_db_curs, args.blast_eval_cutoff )
-
-    hmm_db_curs.close()
+    usp_db_curs.close()
 
     ## output will either be a file or STDOUT
+    print("INFO: writing output")
     fout = sys.stdout
     if args.output_file is not None:
         fout = open(args.output_file, 'wt')
@@ -69,7 +71,7 @@ def main():
     if args.format == 'tab':
         write_tab_results(fout, polypeptides)
     elif args.format == 'gff3':
-        write_gff3_results(fout, polypeptides, assemblies, features)
+        write_gff3_results(fout, polypeptides, assemblies, features, args.genomic_fasta)
     
     fout.close()
 
@@ -86,7 +88,7 @@ def check_arguments( args ):
         raise Exception("ERROR: You must pass the --source_gff argument unless --format=tab")
 
 
-def write_gff3_results( f, polypeptides, assemblies, features ):
+def write_gff3_results( f, polypeptides, assemblies, features, genomic_fasta ):
     f.write("##gff-version 3")
     
     for assembly_id in assemblies:
@@ -99,6 +101,12 @@ def write_gff3_results( f, polypeptides, assemblies, features ):
                     mRNA.add_polypeptide(poly)
             
             gene.print_as(fh=f, source='IGS', format='gff3')
+
+    if genomic_fasta is not None:
+        f.write("##FASTA\n")
+
+        for line in open(genomic_fasta):
+            f.write(line)
 
 
 def write_tab_results( f, polypeptides ):
