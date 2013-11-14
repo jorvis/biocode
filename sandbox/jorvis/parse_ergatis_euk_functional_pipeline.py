@@ -88,7 +88,7 @@ def check_arguments( args ):
         raise Exception("ERROR: You must pass the --source_gff argument unless --format=tab")
 
     # It doesn't make sense to pass --genomic_fasta if the --format isn't GFF3
-    if args.genomic_fasta is not Null and args.format != 'gff3':
+    if args.genomic_fasta is not None and args.format != 'gff3':
         raise Exception("ERROR: Argument --genomic_fasta not valid unless --format=gff3")
 
 
