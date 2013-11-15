@@ -93,7 +93,7 @@ def check_arguments( args ):
 
 
 def write_gff3_results( f, polypeptides, assemblies, features, genomic_fasta ):
-    f.write("##gff-version 3")
+    f.write("##gff-version 3\n")
     
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
