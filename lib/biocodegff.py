@@ -1,7 +1,7 @@
 import re
 import biothings
 import bioannotation
-from urllib.parse import unquote
+from urllib.parse import unquote, quote
 
 def build_column_9( id=None, parent=None, other=None ):
     ## either the id or parent must be defined
@@ -26,7 +26,7 @@ def build_column_9( id=None, parent=None, other=None ):
             if colstring is not None:
                 colstring += ";"
 
-            colstring += "{0}={1}".format(att, other[att])
+            colstring += "{0}={1}".format(att, escape(other[att]))
         
     return colstring
 
@@ -64,6 +64,29 @@ def column_9_value(value, key):
         return c9[key]
     else:
         return None
+
+
+def escape(s):
+    """
+    ;  =>  %3B
+    =  =>  %3D
+    &  =>  %26
+    ,  =>  %2C
+    """
+    # before the comma-based one can be used build_column_9 needs to be able to
+    #  support list values for 'other' attributes
+    #return ''.join(x if x not in ';=&,' else quote(x) for x in s)
+    return ''.join(x if x not in ';=&' else quote(x) for x in s)
+    
+
+def unescape(s):
+    """
+    %3B  =>  ;
+    %3D  =>  =
+    %26  =>  &
+    %2C  =>  ,
+    """
+    return unquote(s)
 
 
 def get_gff3_features(gff3_file):
