@@ -32,6 +32,8 @@ import os
 import sys
 import biocodegff
 from collections import defaultdict
+from binascii import hexlify
+from uuid import uuid4
 
 ## constants
 next_ids_sequential = defaultdict(lambda: 1)
@@ -88,11 +90,8 @@ def main():
 
             cols[8] = cols[8].replace("Parent={0}".format(parent), "Parent={0}".format(new_parent))
 
-        print("old_id:{0} - old_parent:{1}, new_id:{2} - new_parent:{3}".format(id, parent, new_id, new_parent))
+        #print("DEBUG: old_id:{0} - old_parent:{1}, new_id:{2} - new_parent:{3}".format(id, parent, new_id, new_parent))
         fout.write("\t".join(cols) + "\n")
-
-        
-
 
     #>>> binascii.hexlify(os.urandom(4))
     #b'c08ca446'
@@ -107,13 +106,12 @@ def get_new_id(prefix, type, mode):
     if mode == 'sequential':
         new_id += str(next_ids_sequential[type])
         next_ids_sequential[type] += 1
-        
     elif mode == 'uuid':
-        pass
+        new_id += str(uuid4())
     elif mode == 'hex8':
-        pass
+        new_id += hexlify(os.urandom(4)).decode('ascii')
     elif mode == 'hex12':
-        pass
+        new_id += hexlify(os.urandom(6)).decode('ascii')
 
     new_id += '.1'
 
