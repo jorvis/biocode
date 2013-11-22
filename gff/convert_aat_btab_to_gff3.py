@@ -34,6 +34,7 @@ def main():
     parser.add_argument('-p', '--name_prefix', type=str, required=False, help='So that resulting GFF3 files from multiple runs can be merged, you can supply a prefix for the IDs generated here' )
     parser.add_argument('-d', '--perc_identity_cutoff', type=float, required=False, help='Filters on the percent identity of over the length of the alignment' )
     parser.add_argument('-s', '--perc_similarity_cutoff', type=float, required=False, help='Filters on the percent similarity of over the length of the alignment' )
+    parser.add_argument('-m', '--max_intron_cutoff', type=int, required=False, help='Excludes alignment chains which propose an intron greater than this value' )
     
     args = parser.parse_args()
     algorithm = None
@@ -63,7 +64,8 @@ def main():
 
             # this is a new chain
             total_chains += 1
-            exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, args.perc_similarity_cutoff )
+            exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                                    args.perc_similarity_cutoff, args.max_intron_cutoff )
             if exported is True:
                 chains_exported += 1
 
@@ -74,7 +76,8 @@ def main():
     
     ## make sure to do the last one
     total_chains += 1
-    exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, args.perc_similarity_cutoff )
+    exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                            args.perc_similarity_cutoff, args.max_intron_cutoff )
     if exported is True:
         chains_exported += 1
 
@@ -131,7 +134,7 @@ def global_pct_sim( segments ):
     return (similar_residues / match_length) * 100
 
 
-def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_sim_cutoff ):
+def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_sim_cutoff, max_intron_cutoff ):
     contig_min = None
     contig_max = None
     contig_id  = None
@@ -140,12 +143,22 @@ def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_si
     hit_max    = None
     segment_strand = '+'
 
+    segment_last_max = None
+
+    # these are always returned in the file in order, so there's no need to sort segments
     for segment in segments:
         segment_min = min( segment['contig_start'], segment['contig_end'] )
         segment_max = max( segment['contig_start'], segment['contig_end'] )
         segment_hit_min = min( segment['hit_start'], segment['hit_end'] )
         segment_hit_max = max( segment['hit_start'], segment['hit_end'] )
 
+        if segment_last_max is not None:
+            intron_size = segment_min - segment_last_max - 1
+            if max_intron_cutoff is not None and intron_size > max_intron_cutoff:
+                return False
+
+        segment_last_max = segment_max
+        
         if segment['strand'] == 'Minus':
             segment_strand = '-'
 
