@@ -76,6 +76,12 @@ def main():
             algorithm = os.path.basename(cols[3])
 
         if args.export_mode == 'match':
+            if args.perc_identity_cutoff is not None and segment['pct_id'] < args.perc_identity_cutoff:
+                continue
+
+            if args.perc_similarity_cutoff is not None and segment['pct_sim'] < args.perc_similarity_cutoff:
+                continue
+            
             segment_min = min( segment['contig_start'], segment['contig_end'] )
             segment_max = max( segment['contig_start'], segment['contig_end'] )
             hit_min = min( segment['hit_start'], segment['hit_end'] )
