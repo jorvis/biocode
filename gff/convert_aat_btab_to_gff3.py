@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 """
-Converts the btab output of AAT (nap/gap2) to GFF3 format with proper gene models.
+Converts the btab output of AAT (nap/gap2) to GFF3 format with option-dependent modeling.
 
 Example input:
 jcf7180000787896        Aug 28 2013     16242   /usr/local/packages/aat/nap     /usr/local/projects/mucormycosis/protein_alignments/fungi_jgi/fungi_jgi.faa     jgi|Rhior3|10928|RO3G_01207     1       103     1162    1198    25.000000       41.666667       15      1       1               -1      Plus    1484
 jcf7180000787896        Aug 28 2013     16242   /usr/local/packages/aat/nap     /usr/local/projects/mucormycosis/protein_alignments/fungi_jgi/fungi_jgi.faa     jgi|Rhior3|10928|RO3G_01207     870     1729    1198    1484    91.958042       93.356643       1384    1       2               -1      Plus    1484
 
-Example output:
+The output here depends on the mode requested.  If --export_mode=model (default), then it is:
+
 jcf7180000787896        nap     gene    1       1729    .       +       .       ID=gene.000001
 jcf7180000787896        nap     mRNA    1       1729    .       +       .       ID=mRNA.000001;Parent=gene.000001
 jcf7180000787896        nap     exon    1       103     .       +       .       ID=exon.000001;Parent=mRNA.000001
@@ -15,15 +16,20 @@ jcf7180000787896        nap     CDS     1       103     .       +       0       
 jcf7180000787896        nap     exon    870     1729    .       +       .       ID=exon.000002;Parent=mRNA.000001
 jcf7180000787896        nap     CDS     870     1729    .       +       0       ID=exon.000002;Parent=mRNA.000010
 
-Future development possibilities:
-- Add an output mode for exporting alignments as 'nucleotide_to_protein_match' SO features
-  rather than gene models.
+On the other hand, if you specify --export_mode=match you'll get:
+
+
+Note that chain membership is (intentionally) lost in this mode, and all segments appear as
+individual, distinct matches.
+
 """
 
 import argparse
 import os
+import re
 
-next_ids = {'gene':1, 'mRNA':1, 'exon':1, 'CDS':1 }
+next_ids = {'gene':1, 'mRNA':1, 'exon':1, 'CDS':1, 'match':1 }
+MATCH_TERM = 'nucleotide_to_protein_match'
 
 def main():
     parser = argparse.ArgumentParser( description='AAT (nap/gap2) converter to GFF3 format')
@@ -35,6 +41,7 @@ def main():
     parser.add_argument('-d', '--perc_identity_cutoff', type=float, required=False, help='Filters on the percent identity of over the length of the alignment' )
     parser.add_argument('-s', '--perc_similarity_cutoff', type=float, required=False, help='Filters on the percent similarity of over the length of the alignment' )
     parser.add_argument('-m', '--max_intron_cutoff', type=int, required=False, help='Excludes alignment chains which propose an intron greater than this value' )
+    parser.add_argument('-e', '--export_mode', type=str, required=False, default='model', help='Controls whether chains are modeled as genes or match regions' )
     
     args = parser.parse_args()
     algorithm = None
@@ -56,33 +63,62 @@ def main():
                     'pct_id':float(cols[10]), 'pct_sim':float(cols[11]), \
                     'strand':cols[17], 'product':cols[15], 'score':cols[18] }
 
+        ## aat product fields are a bit of mess, so lets tease a few parts out:
+        #   | organism=Neospora_caninum_Liverpool | product=Iron regulatory protein-like protein, related | location=FR823391:1231501-1237765(-) | length=986 | sequence_SO=chromosome | SO=protein_coding
+        #   | organism=Toxoplasma_gondii_ME49 | product=aconitate hydratase ACN/IRP | location=TGME49_chrX:1400716-1407887(-) | length=1055 | sequence_SO=chromosome | SO=protein_coding
+        m = re.search("product=(.+?) \|", segment['product'])
+        if m:
+            hit_product = m.group(1)
+        else:
+            hit_product = None
+        
         if algorithm is None:
             algorithm = os.path.basename(cols[3])
 
-        if chain_num != current_chain_number:
-            chain_pct_id = global_pct_id( gene_segments )
+        if args.export_mode == 'match':
+            segment_min = min( segment['contig_start'], segment['contig_end'] )
+            segment_max = max( segment['contig_start'], segment['contig_end'] )
+            hit_min = min( segment['hit_start'], segment['hit_end'] )
+            hit_max = max( segment['hit_start'], segment['hit_end'] )
+            
+            if segment['strand'] == 'Minus':
+                segment_strand = '-'
+            else:
+                segment_strand = '+'
 
-            # this is a new chain
-            total_chains += 1
-            exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
-                                    args.perc_similarity_cutoff, args.max_intron_cutoff )
-            if exported is True:
-                chains_exported += 1
+            match_id = get_next_id('match', args.name_prefix)
+            data_column = "ID={0};Target={1} {2} {3};Name={4}".format(match_id, segment['hit_id'], hit_min, hit_max, hit_product)
+            ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
+                    segment['contig_id'], algorithm, MATCH_TERM, segment_min, segment_max, '.', segment_strand, \
+                    '.', data_column ))
+        else:
+            if chain_num != current_chain_number:
+                chain_pct_id = global_pct_id( gene_segments )
 
-            current_chain_number = chain_num
-            gene_segments = []
+                # this is a new chain
+                total_chains += 1
+                exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                                        args.perc_similarity_cutoff, args.max_intron_cutoff )
+                if exported is True:
+                    chains_exported += 1
 
-        gene_segments.append( segment )
+                current_chain_number = chain_num
+                gene_segments = []
+
+            gene_segments.append( segment )
     
     ## make sure to do the last one
-    total_chains += 1
-    exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
-                            args.perc_similarity_cutoff, args.max_intron_cutoff )
-    if exported is True:
-        chains_exported += 1
+    if args.export_mode == 'match':
+        pass
+    else:
+        total_chains += 1
+        exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                                args.perc_similarity_cutoff, args.max_intron_cutoff )
+        if exported is True:
+            chains_exported += 1
 
-    print("\nTotal alignment chains found: {0}".format(total_chains) )
-    print("Total chains exported (after cutoffs applied): {0}\n".format(chains_exported) )
+        print("\nTotal alignment chains found: {0}".format(total_chains) )
+        print("Total chains exported (after cutoffs applied): {0}\n".format(chains_exported) )
     
 
 def get_next_id(type, prefix):
@@ -132,6 +168,10 @@ def global_pct_sim( segments ):
         similar_residues += matched_residues
 
     return (similar_residues / match_length) * 100
+
+
+def export_match():
+    pass
 
 
 def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_sim_cutoff, max_intron_cutoff ):
