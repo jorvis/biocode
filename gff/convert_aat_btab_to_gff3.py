@@ -81,11 +81,27 @@ def main():
 
             if args.perc_similarity_cutoff is not None and segment['pct_sim'] < args.perc_similarity_cutoff:
                 continue
-            
+
             segment_min = min( segment['contig_start'], segment['contig_end'] )
             segment_max = max( segment['contig_start'], segment['contig_end'] )
             hit_min = min( segment['hit_start'], segment['hit_end'] )
             hit_max = max( segment['hit_start'], segment['hit_end'] )
+
+            ############################
+            # custom filters for Joana:
+            #keep = False
+            #protein_hit_length = hit_max - hit_min + 1
+            #if protein_hit_length >= 20 and protein_hit_length < 50 and segment['pct_sim'] >= 90:
+            #    keep = True
+            #elif protein_hit_length >= 50 and protein_hit_length < 100 and segment['pct_sim'] >= 60:
+            #    keep = True
+            #elif protein_hit_length >= 100:
+            #    keep = True
+
+            #if keep is False:
+            #    continue
+            ############################
+            
             
             if segment['strand'] == 'Minus':
                 segment_strand = '-'
