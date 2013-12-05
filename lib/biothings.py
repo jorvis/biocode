@@ -410,8 +410,19 @@ class RNA( LocatableThing ):
         ## Why not "CDSes"?  As a grammarian, this gave me fits.  There are many references
         #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
         #  http://oxforddictionaries.com/definition/american_english/SOS
+        #
+        # This method was added for consistency of usage and naming, but it really returns an array
+        #  of the CDS fragments in spliced genes.  If you want the contiguous sequence, use get_CDS_residues()
         return self.children['CDS']
 
+    def get_CDS_residues(self):
+        residues = ''
+
+        for cds in self.CDSs():
+            residues += cds.get_residues()
+
+        return residues
+    
     def polypeptides(self):
         return self.children['polypeptide']
 
