@@ -416,10 +416,24 @@ class RNA( LocatableThing ):
         return self.children['CDS']
 
     def get_CDS_residues(self):
-        residues = ''
+        if len(self.locations) == 0:
+            raise Exception("ERROR: RNA.get_CDS_residues() requested but RNA {0} isn't located on anything.".format(self.id))
+        elif len(self.locations) > 1:
+            raise Exception("ERROR: RNA {0} is located on multiple molecules.  Can't automatically extract the residues.".format(self.id))
+
+        loc = self.location()        
+        segments = list()
 
         for cds in self.CDSs():
-            residues += cds.get_residues()
+            segments.append(cds.get_residues())
+
+        if loc.strand == -1:
+            segments = reversed(segments)
+
+        residues = ''
+
+        for segment in segments:
+            residues += segment
 
         return residues
     
