@@ -4,7 +4,8 @@
 This script reads a GFF3 file and FASTA file (or FASTA embedded in the GFF) and
 checks the translation of all CDS for internal stops.  The output is like:
 
-
+    Total mRNAs found:4091
+    mRNAs with embedded stops: 895
 
 The script checks and removes terminal stop codons, so these will not be reported
 if stops are found at the very end of the reading frame.
@@ -36,6 +37,9 @@ def main():
 
     total_mRNAs = 0
     mRNAs_with_stops = 0
+
+    # If this is set to the ID of any particular mRNA feature, the CDS and translation will be printed for it.
+    debug_mRNA = None
         
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
@@ -43,17 +47,14 @@ def main():
                 coding_seq = mRNA.get_CDS_residues()
                 total_mRNAs += 1
 
-                #if mRNA.id == 'TP04_0284.t01':
-                    #print("CDS:{0}".format(coding_seq))
+                if debug_mRNA is not None and mRNA.id == debug_mRNA:
+                    print("CDS:{0}".format(coding_seq))
 
                 if biocodeutils.translate(coding_seq).rstrip('*').count('*') > 0:
                     mRNAs_with_stops += 1
-                    #if mRNA.id == 'TP04_0284.t01':
-                        #print("TRANSLATION WITH STOP ({1}): {0}".format(biocodeutils.translate(coding_seq), mRNA.id) )
+                    if debug_mRNA is not None and mRNA.id == debug_mRNA:
+                        print("TRANSLATION WITH STOP ({1}): {0}".format(biocodeutils.translate(coding_seq), mRNA.id) )
 
-                    print("CDS:{0}".format(coding_seq))
-                    print("TRANSLATION WITH STOP ({1}): {0}".format(biocodeutils.translate(coding_seq), mRNA.id) )
-                    
 
     print("\nTotal mRNAs found:{0}".format(total_mRNAs))
     print("mRNAs with embedded stops: {0}".format(mRNAs_with_stops))
