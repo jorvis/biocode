@@ -22,6 +22,13 @@ http://sphinx-doc.org/
 class LocatableThing:
     '''
     Base class for any Things that are locatable on other Things, such as genes on contigs.
+
+    You can use direct comparisons between LocatableThings to compare coordinates, such as:
+
+        if gene1 < gene2:
+
+    These comparisons are based on the fmin coordinates of each Biothing on their first
+    located object.
     '''
     def __init__( self, locations=None ):
         self.locations = locations
