@@ -210,6 +210,12 @@ def get_gff3_features(gff3_file):
             parent_feat.add_CDS(CDS)
             features[feat_id] = CDS
 
+        elif cols[2] == 'polypeptide':
+            polypeptide = biothings.Polypeptide(id=feat_id, parent=parent_feat)
+            polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            parent_feat.add_polypeptide(polypeptide)
+            features[feat_id] = polypeptide
+
     return (assemblies, features)
 
 
