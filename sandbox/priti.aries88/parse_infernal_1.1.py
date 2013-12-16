@@ -1,5 +1,72 @@
 #!/usr/bin/env python3
+"""
+========
+OVERVIEW
+========
 
+The script takes Infernal tool's output file as input and converts it to valid gff3 format file.
+
+
+=====
+INPUT
+=====
+
+Options
+-------
+-i --input_file       required
+    Path to infernal output file.
+
+-r --rfam_file        optional 
+    Path to rfam file for mapping.
+
+-o  --output_file     required
+    Path to output file.
+
+
+======
+OUTPUT
+======
+
+Script generates a Gff3 file.
+
+##gff-version 3
+jcf7180000084962	Infernal_1.1	gene	6021	6093	58.0	+	.	ID=gene.1
+jcf7180000084962	Infernal_1.1	tRNA	6021	6093	58.0	+	.	ID=gene.1.tRNA.1;Parent=gene.1;product_name=tRNA;Rfam_ID=tRNA
+jcf7180000084962	Infernal_1.1	exon	6021	6093	58.0	+	.	ID=gene.1.tRNA.1.exon.1;Parent=gene.1.tRNA.1
+jcf7180000084965	Infernal_1.1	gene	1231	1383	146.2	+	.	ID=gene.2
+jcf7180000084965	Infernal_1.1	rRNA	1231	1383	146.2	+	.	ID=gene.2.rRNA.1;Parent=gene.2;product_name=5.8S ribosomal RNA;Rfam_ID=5_8S_rRNA
+jcf7180000084965	Infernal_1.1	exon	1231	1383	146.2	+	.	ID=gene.2.rRNA.1.exon.1;Parent=gene.2.rRNA.1
+jcf7180000085019	Infernal_1.1	gene	18847	18919	51.2	-	.	ID=gene.3
+jcf7180000085019	Infernal_1.1	tRNA	18847	18919	51.2	-	.	ID=gene.3.tRNA.1;Parent=gene.3;product_name=tRNA;Rfam_ID=tRNA
+jcf7180000085019	Infernal_1.1	exon	18847	18919	51.2	-	.	ID=gene.3.tRNA.1.exon.1;Parent=gene.3.tRNA.1
+jcf7180000085019	Infernal_1.1	gene	87416	87488	51.2	-	.	ID=gene.4
+jcf7180000085019	Infernal_1.1	tRNA	87416	87488	51.2	-	.	ID=gene.4.tRNA.1;Parent=gene.4;product_name=tRNA;Rfam_ID=tRNA
+jcf7180000085019	Infernal_1.1	exon	87416	87488	51.2	-	.	ID=gene.4.tRNA.1.exon.1;Parent=gene.4.tRNA.1
+
+====
+NOTE
+====
+The script takes in rfam file, which is optional. Make sure that rfam.db file is located in the same directory as the script.
+
+=====
+USAGE
+=====
+
+python3 biocode/sandbox/priti.aries88/parse_infernal_1.1.py --i genome.scf.infernal.out  --o genome.gff3
+
+biocode/sandbox/priti.aries88/ directory should also have rfam.db file.
+
+======
+Author
+======
+
+Priti Kumari
+Bioinformatics Software Engineer 
+Institute for Genome Sciences
+University of Maryland
+Baltimore, Maryland 21201
+
+"""
 #import biothings
 import argparse
 import os

@@ -1,5 +1,81 @@
 #!/usr/bin/env python3.2
 
+"""
+========
+OVERVIEW
+========
+
+The script compares two gff3 file at base, exon and gene level and outputs the positive 
+predictive value(PPV) and sensitivity(SN). The first input will be treated as a known gff3 file
+and second as the predicted gff3 file. The PPV/SN in the output will be for predicted gff3 with
+respect to the known gff3.
+
+
+=====
+INPUT
+=====
+
+Options
+-------
+-a1 --ANNOTATION_1       required
+    Path to first annotation file(known).
+
+-a2 --ANNOTATION_2       required
+    Path to second annotation file(predicted).
+
+-o  --output_dir          required
+    Path to output directory.
+
+
+======
+OUTPUT
+======
+
+Script generates a summary.txt file in the output directory.
+Summary.txt is a tab delimited file with following headers :
+
+Feature    Known    Predicted    True_predicted    SN    PPV
+Gene
+Exon
+Base
+
+No. of predicted gene overlapping  0 known gene (new gene):  0
+No. of predicted gene overlapping > 1 known gene:  115
+No. of predicted gene overlaping 1 known gene :  4057
+No. of known gene overlapping > 1 predicted gene :  115
+No. of known gene overlapping 1 predicted gene :  4057
+No. of known gene overlapping 0 predicted gene (gene missing) :  0
+
+
+The summary will also be printed in the console.
+
+
+====
+NOTE
+====
+
+Both the input annotation file should be in the correct gff3 format.
+http://www.sequenceontology.org/gff3.shtml
+
+Examples :
+chr1   genbank   gene    1    3000    .    -    .    ID=gene1
+chr1   genbank   mRNA    10   2900    .    -    .    ID=mrna1;Parent=gene1
+chr1   genbank   exon    10   1000    .    -    .    ID=exon1;Parent=mrna1
+
+
+======
+Author
+======
+
+Priti Kumari
+Bioinformatics Software Engineer 
+Institute for Genome Sciences
+University of Maryland
+Baltimore, Maryland 21201
+
+"""
+
+
 import argparse
 import os
 import fileinput
@@ -274,6 +350,7 @@ def process_files(args):
     fout.write("Gene\t"+str(annotated_gene)+"\t"+str(predicted_gene)+"\t"+str(true_pred_gene)+"\t"+str(gene_sn)+"\t"+str(gene_sp)+"\n")
    # fout.write("mRNA\t"+str(annotated_mrna)+"\t"+str(predicted_mrna)+"\t"+str(true_pred_mrna)+"\t"+str(mrna_sn)+"\t"+str(mrna_sp)+"\n")
     fout.write("Exon\t"+str(annotated_exon)+"\t"+str(predicted_exon)+"\t"+str(true_pred_exon)+"\t"+str(exon_sn)+"\t"+str(exon_sp)+"\n")
+    fout.write("Base\t"+str(a_base)+"\t"+str(p_base)+"\t"+str(true_base)+"\t"+str(base_sn)+"\t"+str(base_sp)+"\n\n")
     
     new_gene = 0
     gene_merge = 0
@@ -402,7 +479,33 @@ def process_files(args):
     print ("7. No. of known gene overlapping 1 predicted gene : ",gene)
     print ("8. No. of known gene overlapping 0 predicted gene (gene missing) : ",gene_missing)
 
-        
+
+    fout.write ("1. No. of predicted gene overlapping  0 known gene (new gene): "+str(new_gene)+"\n")
+    fout.write ("2. No. of predicted gene overlapping > 1 known gene by at least 50%: "+str(gene_merge)+"\n")
+    fout.write ("3. No. of altered predicted gene: "+str(altered_pred)+"\n")
+    fout.write ("4. No. of predicted gene overlaping 1 known gene : "+str(gene_found)+"\n")
+    fout.write ("5. No. of known gene overlapping > 1 predicted gene by at least 50% : "+str(gene_split)+"\n")
+    fout.write ("6. No. of altered known gene: "+str(altered_known)+"\n")
+    fout.write ("7. No. of known gene overlapping 1 predicted gene : "+str(gene)+"\n")
+    fout.write ("8. No. of known gene overlapping 0 predicted gene (gene missing) : "+str(gene_missing)+"\n")
+
+    
+    fout.close()
+    ft1.close()
+    ft2.close()
+    ft3.close()
+    ft4.close()
+    ft5.close()
+    ft6.close()
+    ft7.close()
+    ft8.close()
+    ft9.close()
+
+
+    #Clean up
+    cmd = "rm " + args.output_dir + "/*.bed"
+    os.system(cmd)
+
 
 
     
