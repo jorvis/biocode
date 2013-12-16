@@ -517,6 +517,18 @@ class RNA( LocatableThing ):
     def add_polypeptide(self, polypeptide):
         self.children['polypeptide'].append(polypeptide)
 
+    def delete_CDS(self, cds_to_remove):
+        idx = 0
+
+        for cds in self.children['CDS']:
+            if cds.id == cds_to_remove.id:
+                del self.children['CDS'][idx]
+                break
+            
+            idx += 1
+        else:
+            raise Exception("ERROR: Attempt to delete a CDS ({0}) which wasn't found as a child of this RNA ({1}".format(cds.id, self.id))
+        
     def exons(self):
         return self.children['exon']
 
