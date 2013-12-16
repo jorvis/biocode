@@ -27,8 +27,8 @@ class LocatableThing:
 
         if gene1 < gene2:
 
-    These comparisons are based on the fmin coordinates of each Biothing on their first
-    located object.
+    These comparisons depend on both objects sharing locations on the same object.
+
     '''
     def __init__( self, locations=None ):
         self.locations = locations
@@ -37,22 +37,22 @@ class LocatableThing:
             self.locations = list()
 
     def __lt__(self, other):
-        return self.locations[0].fmin < other.locations[0].fmin
+        return self.is_on_min_side_of(thing=other)
 
     def __le__(self, other):
-        return self.locations[0].fmin <= other.locations[0].fmin
+        return self.overlaps_min_side_of( thing=other )
 
     def __eq__(self, other):
-        return self.locations[0].fmin == other.locations[0].fmin
+        return self.has_same_coordinates_as(thing=other)
 
     def __ne__(self, other):
-        return self.locations[0].fmin != other.locations[0].fmin
+        return not self.has_same_coordinates_as(thing=other)
 
     def __gt__(self, other):
-        return self.locations[0].fmin > other.locations[0].fmin
+        return self.is_on_max_side_of(thing=other)
 
     def __ge__(self, other):
-        return self.locations[0].fmin >= other.locations[0].fmin
+        return self.overlaps_max_side_of( thing=other )
 
     def contained_within( self, thing ):
         '''
@@ -83,15 +83,69 @@ class LocatableThing:
 
         for this_loc in self.locations:
             for other_loc in other.locations:
-                ## are the molecules the same and on the one requested?
-                if this_loc.on.id == other_loc.on.id == on.id:
+                # are the molecules the same?
+                if this_loc.on.id == other_loc.on.id:
+                    # if a specific molecule was requested, is this it?
+                    if on is not None and on.id != this_loc.on.id:
+                        continue
+                    
                     if this_loc.fmin == other_loc.fmin and this_loc.fmax == other_loc.fmax:
-                        print("VALIDATE: {0} has same coordinates as {1} on {2}".format(self.id, other.id, on.id) )
                         return True
 
-        ## if we got here, there wasn't a match
+        # if we got here, there wasn't a match
         return False
 
+    def is_on_max_side_of( self, thing=None, on=None ):
+        '''
+        Returns True/False depending on whether the calling LocatableThing object has a location
+        relative to the passed thing that is completely past its fmax coordinate, like this:
+
+            this :                                           fmin---------------fmax
+            thing:            fmin-------------------fmax
+
+        Checks both to make sure they're both located on the same molecule before comparing coordinates,
+        ignoring strandedness.  If you pass the 'on' argument, locations will be checked against
+        that specific object.
+        '''
+        for this_loc in self.locations:
+            for other_loc in thing.locations:
+                # are the molecules the same?
+                if this_loc.on.id == other_loc.on.id:
+                    # if a specific molecule was requested, is this it?
+                    if on is not None and on.id != this_loc.on.id:
+                        continue
+                    
+                    if this_loc.fmin > other_loc.fmax:
+                        return True
+
+        # if we got here, there wasn't a match
+        return False
+    
+    def is_on_min_side_of( self, thing=None, on=None ):
+        '''
+        Returns True/False depending on whether the calling LocatableThing object has a location
+        relative to the passed thing that is completely before its fmin coordinate, like this:
+
+            this :     fmin---------------fmax
+            thing:                                fmin-------------------fmax
+
+        Checks both to make sure they're both located on the same molecule before comparing coordinates,
+        ignoring strandedness.  If you pass the 'on' argument, locations will be checked against
+        that specific object.
+        '''
+        for this_loc in self.locations:
+            for other_loc in thing.locations:
+                # are the molecules the same?
+                if this_loc.on.id == other_loc.on.id:
+                    # if a specific molecule was requested, is this it?
+                    if on is not None and on.id != this_loc.on.id:
+                        continue
+                    
+                    if this_loc.fmax < other_loc.fmin:
+                        return True
+
+        # if we got here, there wasn't a match
+        return False
 
     def locate_on( self, target=None, fmin=None, fmax=None, phase=None, strand=None ):
         '''
@@ -153,6 +207,59 @@ class LocatableThing:
 
         return loc_found
 
+    def overlaps_max_side_of( self, thing=None, on=None ):
+        '''
+        Returns True/False depending on whether the two LocatableThing objects have
+        even a single overlapping Location on the same molecule, specifically with
+        respect to the fmax coordinate of the passed object.  Like this:
+
+            this :                         fmin---------------fmax
+            thing:            fmin-------------------fmax
+
+        Checks both to make sure they're both located on the same molecule before comparing coordinates,
+        ignoring strandedness.  If you pass the 'on' argument, locations will be checked against
+        that specific object.
+        '''
+        for this_loc in self.locations:
+            for other_loc in thing.locations:
+                # are the molecules the same?
+                if this_loc.on.id == other_loc.on.id:
+                    # if a specific molecule was requested, is this it?
+                    if on is not None and on.id != this_loc.on.id:
+                        continue
+                    
+                    if this_loc.fmin < other_loc.fmax and this_loc.fmax > other_loc.fmax:
+                        return True
+
+        # if we got here, there wasn't a match
+        return False
+
+    def overlaps_min_side_of( self, thing=None, on=None ):
+        '''
+        Returns True/False depending on whether the two LocatableThing objects have
+        even a single overlapping Location on the same molecule, specifically with
+        respect to the fmin coordinate of the passed object.  Like this:
+
+            this :    fmin---------------fmax
+            thing:            fmin-------------------fmax
+
+        Checks both to make sure they're both located on the same molecule before comparing coordinates,
+        ignoring strandedness.  If you pass the 'on' argument, locations will be checked against
+        that specific object.
+        '''
+        for this_loc in self.locations:
+            for other_loc in thing.locations:
+                # are the molecules the same?
+                if this_loc.on.id == other_loc.on.id:
+                    # if a specific molecule was requested, is this it?
+                    if on is not None and on.id != this_loc.on.id:
+                        continue
+                    
+                    if this_loc.fmin < other_loc.fmin and this_loc.fmax > other_loc.fmin:
+                        return True
+
+        # if we got here, there wasn't a match
+        return False
 
     def overlaps_with( self, thing ):
         '''
