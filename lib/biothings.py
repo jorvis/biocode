@@ -26,6 +26,20 @@ class LocatableThing:
     You can use direct comparisons between LocatableThings to compare coordinates, such as:
 
         if gene1 < gene2:
+            # do stuff
+
+    These might not be what you first expect.  They are comparisons of the entire ranges
+    of each feature and have the following meanings.  Keep in mind that these are all
+    based on fmin and fmax coordinates, so strandedness isn't taken into account:
+
+        thing1 > thing2 : The entire thing1 is to the right of thing2
+        thing1 < thing2 : The entire thing1 is to the left of thing2
+        thing1 >= thing2: The thing1 overlaps thing2 on the right end
+        thing1 <= thing2: The thing1 overlaps thing2 on the left end
+        thing1 == thing2: The two things share the exact same coordinates
+
+    Here 'right' means past the fmax of the first feature and left means past the fmin.
+    For visual examples, see the documentation for the functions that implement each.
 
     These comparisons depend on both objects sharing locations on the same object.
 
