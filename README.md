@@ -55,7 +55,7 @@ and those responsible will be sacked.
 Contributing
 ============
 
-If you'd like to contribute code to this collection have a look at the RequirementsAndConventionGuide.md 
+If you'd like to contribute code to this collection have a look at the [Requirements And Convention Guide](https://github.com/jorvis/biocode/blob/master/RequirementsAndConventionGuide.md) 
 and then submit a pull request once your code is ready.  We'll check your script 
 and pull it into the production directories.  If you're not that confident yet 
 we'll happily pull in your sandbox directory if you'd like to add your code to the 
