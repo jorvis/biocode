@@ -52,18 +52,23 @@ Author: Joshua Orvis (jorvis AT gmail)
 
 import argparse
 import re
+import sys
 
 def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
-    parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
+    parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
     parser.add_argument('-d', '--detect_direction', action='store_true', help='Pass this flag to auto-detect the mate pair direction.  See full documentation for more info' )
     parser.add_argument('-w', '--width', type=int, required=False, help='Defines the width (or number of bases) on each FASTA sequence line' )
     args = parser.parse_args()
-    ofh = open(args.output_file,'w')
 
+    if args.output_file is None:
+        ofh = sys.stdout
+    else:
+        ofh = open( args.output_file, 'wt' )
+    
     line_count = 0
     record_count = 0
     last_header = None
