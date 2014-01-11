@@ -553,6 +553,8 @@ class RNA( LocatableThing ):
         #
         # This method was added for consistency of usage and naming, but it really returns an array
         #  of the CDS fragments in spliced genes.  If you want the contiguous sequence, use get_CDS_residues()
+        #
+        # Note that this is not guaranteed to return the CDSs in sorted chromosomal order
         return self.children['CDS']
 
     def get_CDS_residues(self):
