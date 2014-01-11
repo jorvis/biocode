@@ -96,14 +96,20 @@ def main():
                 locus_tag = feat.qualifiers['locus_tag'][0]
                 exon_count_by_RNA[current_RNA.id] += 1
                 cds_id = "{0}.CDS.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-                CDS = biothings.CDS( id=cds_id, parent=current_RNA )
-                CDS.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand, phase=0 )
-                current_RNA.add_CDS(CDS)
 
-                exon_id = "{0}.exon.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-                exon = biothings.Exon( id=exon_id, parent=current_RNA )
-                exon.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
-                current_RNA.add_exon(exon)
+                for loc in feat.location.parts:
+                    subfmin = int(loc.start)
+                    subfmax = int(loc.end)
+                    
+                    CDS = biothings.CDS( id=cds_id, parent=current_RNA )
+                    CDS.locate_on( target=current_assembly, fmin=subfmin, fmax=subfmax, strand=strand, phase=0 )
+                    current_RNA.add_CDS(CDS)
+
+                    exon_id = "{0}.exon.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
+                    exon = biothings.Exon( id=exon_id, parent=current_RNA )
+                    exon.locate_on( target=current_assembly, fmin=subfmin, fmax=subfmax, strand=strand )
+                    current_RNA.add_exon(exon)
+                    exon_count_by_RNA[current_RNA.id] += 1
                 
                 product = feat.qualifiers['product'][0]
 
