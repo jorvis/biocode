@@ -23,6 +23,7 @@ import os
 from Bio import SeqIO
 import biothings
 import biocodegff
+import biocodeutils
 
 def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
@@ -43,12 +44,19 @@ def main():
     rna_count_by_gene = defaultdict(int)
     exon_count_by_RNA = defaultdict(int)
 
+    seqs_pending_writes = False
+
     # each gb_record is a SeqRecord object
     for gb_record in SeqIO.parse(open(args.input_file, "r"), "genbank"):
         mol_id = gb_record.name
 
         if mol_id not in assemblies:
             assemblies[mol_id] = biothings.Assembly( id=mol_id )
+
+        if len(str(gb_record.seq)) > 0:
+            seqs_pending_writes = True
+            assemblies[mol_id].residues = str(gb_record.seq)
+            assemblies[mol_id].length = len(str(gb_record.seq))
 
         current_assembly = assemblies[mol_id]
             
@@ -96,14 +104,25 @@ def main():
                 locus_tag = feat.qualifiers['locus_tag'][0]
                 exon_count_by_RNA[current_RNA.id] += 1
                 cds_id = "{0}.CDS.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-
+                current_CDS_phase = 0
+                
                 for loc in feat.location.parts:
                     subfmin = int(loc.start)
                     subfmax = int(loc.end)
                     
                     CDS = biothings.CDS( id=cds_id, parent=current_RNA )
-                    CDS.locate_on( target=current_assembly, fmin=subfmin, fmax=subfmax, strand=strand, phase=0 )
+                    CDS.locate_on( target=current_assembly, fmin=subfmin, fmax=subfmax, strand=strand, phase=current_CDS_phase )
                     current_RNA.add_CDS(CDS)
+
+                    # calculate the starting phase for the next CDS feature (in case there is one)
+                    # 0 + 6 = 0     TTGCAT
+                    # 0 + 7 = 2     TTGCATG
+                    # 1 + 6 = 1     TTGCAT
+                    # 2 + 7 = 1     TTGCATG
+                    # general: 3 - ((length - previous phase) % 3)
+                    current_CDS_phase = 3 - (((subfmax - subfmin) - current_CDS_phase) % 3)
+                    if current_CDS_phase == 3:
+                        current_CDS_phase = 0
 
                     exon_id = "{0}.exon.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
                     exon = biothings.Exon( id=exon_id, parent=current_RNA )
@@ -119,7 +138,13 @@ def main():
         # don't forget to do the last gene, if there were any
         if current_gene is not None:
             gene.print_as(fh=ofh, source='GenBank', format='gff3')
-            
+
+
+    if seqs_pending_writes is True:
+        ofh.write("##FASTA\n")
+        for assembly_id in assemblies:
+            ofh.write(">{0}\n".format(assembly_id))
+            ofh.write("{0}\n".format(biocodeutils.wrapped_fasta(assemblies[assembly_id].residues)))
 
 if __name__ == '__main__':
     main()
