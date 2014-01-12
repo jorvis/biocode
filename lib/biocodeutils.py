@@ -167,3 +167,15 @@ def fasta_dict_from_file( file ):
 
     return seqs
     
+def wrapped_fasta(string, every=60):
+    """
+    Pass a string of residues (nucleotide or polypeptides) that has NO whitespace and
+    this will return another string with new line characters inserted every N residues.
+
+    N is specified with the 'every' parameter with a default of 60.  For example:
+
+    new_fasta = wrapped_fasta(some_string, every=60)
+    
+    This runs orders of magnitude faster than using the textwrap module.
+    """
+    return '\n'.join(string[i:i+every] for i in range(0, len(string), every))

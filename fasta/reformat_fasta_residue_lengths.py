@@ -35,13 +35,8 @@ def main():
     seqs = biocodeutils.fasta_dict_from_file( args.input )
 
     for seq_id in seqs:
-        seq_wrapped = wrapped(seqs[seq_id]['s'], every=args.width)
+        seq_wrapped = biocodeutils.wrapped_fasta(seqs[seq_id]['s'], every=args.width)
         fout.write(">{0} {1}\n{2}\n".format(seq_id, seqs[seq_id]['h'], seq_wrapped))
-
-
-def wrapped(string, every=60):
-    ''' this runs orders of magnitude faster than using the textwrap module '''
-    return '\n'.join(string[i:i+every] for i in range(0, len(string), every))
 
 
 if __name__ == '__main__':
