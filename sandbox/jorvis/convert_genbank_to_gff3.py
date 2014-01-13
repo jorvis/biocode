@@ -40,7 +40,7 @@ def main():
     ## output will either be a file or STDOUT
     ofh = sys.stdout
     if args.output_file is not None:
-        ofh = open(args.output, 'wt')
+        ofh = open(args.output_file, 'wt')
 
     ofh.write("##gff-version 3\n")
 
