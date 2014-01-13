@@ -67,6 +67,17 @@ def main():
 
             gene.print_as(fh=fout, source=args.source, format='gff3')
 
+    fasta_header_written = False
+
+    for assembly_id in assemblies:
+        if assemblies[assembly_id].length > 0:
+            if fasta_header_written is False:
+                fout.write("##FASTA\n")
+                fasta_header_written = True
+
+            fout.write(">{0}\n".format(assemblies[assembly_id].id) )
+            fout.write("{0}\n".format(biocodeutils.wrapped_fasta(assemblies[assembly_id].residues)))
+
 def check_and_update_phase(CDS):
     loc = CDS.location()
     CDS.get_residues()
