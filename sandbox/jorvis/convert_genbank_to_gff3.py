@@ -84,6 +84,8 @@ def main():
                 raise Exception("ERROR: unstranded feature encountered: {0}".format(feat))
 
             #print("{0} located at {1}-{2} strand:{3}".format( locus_tag, fmin, fmax, strand ) )
+            if feat.type == 'source':
+                continue
             
             if feat.type == 'gene':
                 # print the previous gene (if there is one)
@@ -106,7 +108,37 @@ def main():
                 current_RNA = mRNA
 
                 if feat_id in exon_count_by_RNA:
-                    raise Exception( "ERROR: two different mRNAs found with same ID: {0}".format(feat_id) )
+                    raise Exception( "ERROR: two different RNAs found with same ID: {0}".format(feat_id) )
+                else:
+                    exon_count_by_RNA[feat_id] = 0
+
+            elif feat.type == 'tRNA':
+                locus_tag = feat.qualifiers['locus_tag'][0]
+                rna_count_by_gene[locus_tag] += 1
+                feat_id = "{0}.tRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
+                
+                tRNA = biothings.tRNA( id=feat_id, parent=current_gene )
+                tRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                gene.add_tRNA(tRNA)
+                current_RNA = tRNA
+
+                if feat_id in exon_count_by_RNA:
+                    raise Exception( "ERROR: two different RNAs found with same ID: {0}".format(feat_id) )
+                else:
+                    exon_count_by_RNA[feat_id] = 0
+
+            elif feat.type == 'rRNA':
+                locus_tag = feat.qualifiers['locus_tag'][0]
+                rna_count_by_gene[locus_tag] += 1
+                feat_id = "{0}.rRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
+                
+                rRNA = biothings.rRNA( id=feat_id, parent=current_gene )
+                rRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                gene.add_rRNA(rRNA)
+                current_RNA = rRNA
+
+                if feat_id in exon_count_by_RNA:
+                    raise Exception( "ERROR: two different RNAs found with same ID: {0}".format(feat_id) )
                 else:
                     exon_count_by_RNA[feat_id] = 0
             
