@@ -20,6 +20,7 @@ Author: Joshua Orvis (jorvis AT gmail)
 import argparse
 from collections import defaultdict
 import os
+import sys
 from Bio import SeqIO
 import biothings
 import biocodegff
@@ -30,10 +31,17 @@ def main():
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GBK file' )
-    parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output GFF file to be created' )
+    parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output GFF file to be created' )
+    parser.add_argument('--with_fasta', dest='fasta', action='store_true', help='Include the FASTA section with genomic sequence at end of file.  (default)' )
+    parser.add_argument('--no_fasta', dest='fasta', action='store_false' )
+    parser.set_defaults(fasta=True)
     args = parser.parse_args()
 
-    ofh = open(args.output_file, 'wt')
+    ## output will either be a file or STDOUT
+    ofh = sys.stdout
+    if args.output_file is not None:
+        ofh = open(args.output, 'wt')
+
     ofh.write("##gff-version 3\n")
 
     assemblies = dict()
@@ -139,12 +147,12 @@ def main():
         if current_gene is not None:
             gene.print_as(fh=ofh, source='GenBank', format='gff3')
 
-
-    if seqs_pending_writes is True:
-        ofh.write("##FASTA\n")
-        for assembly_id in assemblies:
-            ofh.write(">{0}\n".format(assembly_id))
-            ofh.write("{0}\n".format(biocodeutils.wrapped_fasta(assemblies[assembly_id].residues)))
+    if args.fasta is True:
+        if seqs_pending_writes is True:
+            ofh.write("##FASTA\n")
+            for assembly_id in assemblies:
+                ofh.write(">{0}\n".format(assembly_id))
+                ofh.write("{0}\n".format(biocodeutils.wrapped_fasta(assemblies[assembly_id].residues)))
 
 if __name__ == '__main__':
     main()
