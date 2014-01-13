@@ -54,6 +54,8 @@ def main():
 
     seqs_pending_writes = False
 
+    features_skipped_count = 0
+
     # each gb_record is a SeqRecord object
     for gb_record in SeqIO.parse(open(args.input_file, "r"), "genbank"):
         mol_id = gb_record.name
@@ -142,6 +144,7 @@ def main():
 
             else:
                 print("WARNING: The following feature was skipped:\n{0}".format(feat))
+                features_skipped_count += 1
 
         # don't forget to do the last gene, if there were any
         if current_gene is not None:
@@ -153,6 +156,9 @@ def main():
             for assembly_id in assemblies:
                 ofh.write(">{0}\n".format(assembly_id))
                 ofh.write("{0}\n".format(biocodeutils.wrapped_fasta(assemblies[assembly_id].residues)))
+
+    if features_skipped_count > 0:
+        print("Warning: {0} unsupported feature types were skipped".format(features_skipped_count))
 
 if __name__ == '__main__':
     main()
