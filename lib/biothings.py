@@ -566,7 +566,8 @@ class RNA( LocatableThing ):
         loc = self.location()        
         segments = list()
 
-        for cds in self.CDSs():
+        # these MUST be handled in a sorted order
+        for cds in sorted(self.CDSs()):
             segments.append(cds.get_residues())
 
         if loc.strand == -1:
