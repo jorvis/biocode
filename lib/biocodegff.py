@@ -173,7 +173,7 @@ def get_gff3_features(gff3_file):
             rstrand = 1
         else:
             rstrand = 0
-            
+
         if cols[2] == 'gene':
             gene = biothings.Gene(id=feat_id)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
@@ -215,6 +215,8 @@ def get_gff3_features(gff3_file):
             polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_polypeptide(polypeptide)
             features[feat_id] = polypeptide
+
+        features[feat_id].length = rfmax - rfmin
 
     return (assemblies, features)
 
