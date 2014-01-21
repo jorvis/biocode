@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
 '''
 This script is used if you want to filter a FASTA file by IDs but also maintain any relationships 
