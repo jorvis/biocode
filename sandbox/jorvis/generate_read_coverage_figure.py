@@ -73,7 +73,6 @@ def main():
             mol_length_bin = int(len(molecules[cols[0]]['s']) / args.mol_bin_size)
             median_size = np.median(current_molecule_coverages)
             data_bins[mol_length_bin][median_size] += 1
-            molecule_limit -= 1
 
             # reset
             current_molecule_id = cols[0]
