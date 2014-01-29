@@ -23,7 +23,7 @@ In my testing, this was generated like this:
  IMAGE SIZE
 
  The X and Y size of the resulting image is going to be a product of the --mol_size_limit and --mol_bin_size
- parameters.
+ parameters.  
 
   
 """
@@ -59,9 +59,6 @@ def main():
     current_molecule_id = None
     current_molecule_coverages = list()
 
-    ## For development purposes - limits the number of records parsed
-    molecule_limit = 10000
-    
     ## These files are usually huge.  For scalability, operations performed within this
     #  loop should be limited.
     for line in open(args.input_file):
@@ -77,9 +74,6 @@ def main():
             median_size = np.median(current_molecule_coverages)
             data_bins[mol_length_bin][median_size] += 1
             molecule_limit -= 1
-
-            #if molecule_limit <= 0:
-                #break
 
             # reset
             current_molecule_id = cols[0]
@@ -108,11 +102,11 @@ def main():
 
     plt.xlabel('Molecule length')
     plt.ylabel('Median depth of coverage')
-    #plt.xlim(0,6000)
-    #plt.ylim(0,8000)
+    #plt.xlim(0,2000)
+    #plt.ylim(0,500)
     plt.scatter(x, y, s=r, alpha=0.5)
-    plt.show()
-    #plt.savefig(args.output_file)
+    #plt.show()
+    plt.savefig(args.output_file)
     
 
 
