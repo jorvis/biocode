@@ -58,6 +58,9 @@ def main():
 
     current_molecule_id = None
     current_molecule_coverages = list()
+
+    ## For development purposes - limits the number of records parsed
+    molecule_limit = 10000
     
     ## These files are usually huge.  For scalability, operations performed within this
     #  loop should be limited.
@@ -73,6 +76,10 @@ def main():
             mol_length_bin = int(len(molecules[cols[0]]['s']) / args.mol_bin_size)
             median_size = np.median(current_molecule_coverages)
             data_bins[mol_length_bin][median_size] += 1
+            molecule_limit -= 1
+
+            #if molecule_limit <= 0:
+                #break
 
             # reset
             current_molecule_id = cols[0]
@@ -88,12 +95,24 @@ def main():
     median_size = np.median(current_molecule_coverages)
     data_bins[mol_length_bin][median_size] += 1
 
-    ## now generate the plot data
+    ## now generate the plot data - x,y positions and radii
     x = list()
     y = list()
+    r = list()
 
     for bin_size in data_bins:
-        LEFT OFF HERE
+        for cov in data_bins[bin_size]:
+            x.append(bin_size)
+            y.append(cov)
+            r.append(data_bins[bin_size][cov])
+
+    plt.xlabel('Molecule length')
+    plt.ylabel('Median depth of coverage')
+    #plt.xlim(0,6000)
+    #plt.ylim(0,8000)
+    plt.scatter(x, y, s=r, alpha=0.5)
+    plt.show()
+    #plt.savefig(args.output_file)
     
 
 
