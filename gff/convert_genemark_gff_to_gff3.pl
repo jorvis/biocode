@@ -1,7 +1,4 @@
-#!/usr/bin/perl
-
-eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
+#!/usr/bin/env perl
 
 ################################################################################
 ### POD Documentation
@@ -15,8 +12,8 @@ eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
 
 =head1 SYNOPSIS
 
-    convert_genemark_gff_to_gff3.pl   --a1 <annotation> [--o outdir]
-                                      [--o outdir] [--v]
+    convert_genemark_gff_to_gff3.pl   -a <--annotation> 
+                                      [-o <--outdir>] [--v]
 
     parameters in [] are optional
     do NOT type the carets when specifying options
@@ -27,11 +24,11 @@ eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
 
 =head1 OPTIONS
     
-    --a1 <annotation>      = Annotation file.
+    -a <--annotation>      = Annotation file.
 
-    --o <output dir>       = /path/to/output directory. Optional.[PWD]
+    -o <--outdir>       = /path/to/output directory. Optional.[PWD]
 
-    --v                    = generate runtime messages. Optional
+    -v                    = generate runtime messages. Optional
 
 =head1 DESCRIPTION
 
@@ -75,8 +72,9 @@ my %hCmdLineOption = ();
 my $sHelpHeader = "\nThis is ".PROGRAM."\n";
 
 GetOptions( \%hCmdLineOption,
-            'outdir|o=s', 'annotation1|a1=s',
-	    'verbose|v', 'debug',
+            'outdir|o=s',
+            'annotation|a=s',
+            'verbose|v', 'debug',
             'help', 
             'man') or pod2usage(2);
 
@@ -124,12 +122,12 @@ if (defined $hCmdLineOption{'outdir'}) {
 $sOutDir = File::Spec->canonpath($sOutDir);
 
 
-($_, $_, $prefix) = File::Spec->splitpath($hCmdLineOption{'annotation1'}) ;
+($_, $_, $prefix) = File::Spec->splitpath($hCmdLineOption{'annotation'}) ;
 $prefix =~ s/\.gtf//;
 $prefix =~ s/\.gff//;
 
 print "Reading annotation file ...\n\n" ;
-open($fh, "<$hCmdLineOption{'annotation1'}") or die "Cannot open the annotation file.";
+open($fh, "<$hCmdLineOption{'annotation'}") or die "Cannot open the annotation file.";
 open( $ftemp , ">$sOutDir/temp.gff3") or die "Error.. Cannot open file for writing.";
 open( $fout , ">$sOutDir/$prefix\.gff3") or die "Error.. Cannot open file for writing.";
 print $fout "##gff-version 3\n";
@@ -290,7 +288,7 @@ sub check_parameters {
     my $phOptions = shift;
     
     ## make sure input files provided
-    if (! (defined $phOptions->{'annotation1'}) ) {
+    if (! (defined $phOptions->{'annotation'}) ) {
 	pod2usage( -msg => $sHelpHeader, -exitval => 1);
     }
 
