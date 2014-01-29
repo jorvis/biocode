@@ -20,11 +20,13 @@ In my testing, this was generated like this:
   samtools mpileup -f Trinity.fasta XUMTA_20131112.bowtie.sorted.mappedonly.bam > XUMTA_20131112.bowtie.sorted.mappedonly.mpileup
 
   
- IMAGE SIZE
+OUTPUT
 
  The X and Y size of the resulting image is going to be a product of the --mol_size_limit and --mol_bin_size
- parameters.  
+ parameters.
 
+ If you pass a value of 'plot' to the -o parameter it will invoke the interactive plot viewer rather
+ than writing an output file.  (You can still save a file from within the viewer)
   
 """
 
@@ -69,10 +71,10 @@ def main():
             current_molecule_coverages = [0] * len(molecules[cols[0]]['s'])
 
         if cols[0] != current_molecule_id:
-            print("DEBUG: Here I'd report results for {0}".format(current_molecule_id))
-            mol_length_bin = int(len(molecules[cols[0]]['s']) / args.mol_bin_size)
+            mol_length_bin = int(len(molecules[current_molecule_id]['s']) / args.mol_bin_size)
             median_size = np.median(current_molecule_coverages)
             data_bins[mol_length_bin][median_size] += 1
+            print("DEBUG: molecule {0} appeared to be {1} bp in length with median coverage of {2}".format(current_molecule_id, len(molecules[current_molecule_id]['s']), median_size))
 
             # reset
             current_molecule_id = cols[0]
@@ -104,8 +106,11 @@ def main():
     #plt.xlim(0,2000)
     #plt.ylim(0,500)
     plt.scatter(x, y, s=r, alpha=0.5)
-    #plt.show()
-    plt.savefig(args.output_file)
+
+    if args.output_file == 'plot':
+        plt.show()
+    else:
+        plt.savefig(args.output_file)
     
 
 
