@@ -101,8 +101,8 @@ def main():
             # initialize this assembly if we haven't seen it yet
             if mol_id not in assemblies:
                 assemblies[mol_id] = biothings.Assembly( id=mol_id )
-                last_assembly = current_assembly
-                current_assembly = assemblies[mol_id]
+
+            current_assembly = assemblies[mol_id]
                 
             feat_id = "cegma.gene.{0}".format(next_id_nums['gene'])
             next_id_nums['gene'] += 1
