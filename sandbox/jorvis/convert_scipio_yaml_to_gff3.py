@@ -62,6 +62,7 @@ Example:
 
 import argparse
 import os
+import sys
 import yaml
 
 
@@ -72,12 +73,34 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
     args = parser.parse_args()
 
+    print("WARNING: This script is incomplete and is replaced by yaml2gff.1.4.pl from the Scipio distribution")
+
     ## output will either be a file or STDOUT
     ofh = sys.stdout
     if args.output_file is not None:
         ofh = open(args.output_file, 'wt')
 
+    ofh.write("##gff-version 3\n")
+    
+    stream = open(args.input_file, 'r')
+    yamldata = yaml.load(stream)
 
+    for prot_id in yamldata:
+        matches = yamldata[prot_id]
+        #print("Match: ({0})".format(prot_id))
+        #print(repr(matches))
+
+        for match in matches:
+            #print(repr(match))
+            for matching in match['matchings']:
+                if matching['type'] == 'exon':
+                    ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t.\t{7}\n".format( \
+                            match['target'], 'Scipio', 'nucleotide_to_protein_match', \
+                            matching['dna_start'], matching['dna_end'], match['score'], \
+                            match['strand'], \
+                            "ID={0};Target={1}".format(match['ID'], prot_id)
+                            ))
+        
 
 if __name__ == '__main__':
     main()
