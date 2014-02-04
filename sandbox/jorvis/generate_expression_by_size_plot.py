@@ -28,12 +28,16 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input pileup file' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-t', '--title', type=str, required=False, help='Plot title' )
+    parser.add_argument('-g', '--graph_using', type=str, required=False, default='TPM', help='TPM or FPKM' )
     args = parser.parse_args()
 
     x = list()
     y = list()
     skipped_datapoints = 0
     total_datapoints = 0
+
+    if args.graph_using not in ['TPM', 'FPKM']:
+        raise Exception("ERROR: --graph_using value must be either TPM or FPKM")
 
     for line in open(args.input_file):
         cols = line.split("\t")
@@ -42,28 +46,42 @@ def main():
             continue
 
         tpm = float(cols[5])
+        fpkm = float(cols[6])
         total_datapoints += 1
-
-        if tpm > 0:
-            x.append(int(cols[2]))
-            y.append(tpm)
+        
+        if args.graph_using == 'TPM':
+            if tpm > 0:
+                x.append(int(cols[2]))
+                y.append(tpm)
+            else:
+                skipped_datapoints += 1
         else:
-            skipped_datapoints += 1
+            if fpkm > 0:
+                x.append(int(cols[2]))
+                y.append(fpkm)
+            else:
+                skipped_datapoints += 1
 
-    print("LOG: {0}/{1} data points were skipped because the TPM value was 0.0".format(skipped_datapoints, total_datapoints))
-
+    if args.graph_using == 'TPM':
+        print("LOG: {0}/{1} data points were skipped because the TPM value was 0.0".format(skipped_datapoints, total_datapoints))
+    else:
+        print("LOG: {0}/{1} data points were skipped because the FPKM value was 0.0".format(skipped_datapoints, total_datapoints))
+        
     fig = plt.figure()
 
     if args.title is not None:
         fig.suptitle(args.title)
                         
     plt.xlabel('Molecule length')
-    plt.ylabel('log TPM')   
+
+    if args.graph_using == 'TPM':
+        plt.ylabel('log TPM')
+    else:
+        plt.ylabel('log FPKM')
+        
     ax = plt.gca()
     ax.plot(x, y, 'o', c='blue', alpha=0.05, markeredgecolor='none')
     ax.set_yscale('log')
-    #ax.set_xscale('log')
-    
 
     if args.output_file == 'plot':
         plt.show()
