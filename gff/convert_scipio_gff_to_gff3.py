@@ -26,12 +26,12 @@ Example input:
 
 Example output:
     jcf7180000788868        Scipio  protein_match   29004   30616   .       +       .       ID=Scipio.match.4
-    jcf7180000788868        Scipio  match_part      29004   29234   0.644   +       0       ID=4604;Parent=Scipio.match.4;Query=jgi|Conco1|10118|gm1.8358_g 42 122;Mismatches=54 56 57 60 63 66 77 78 82 83 89 104 115 118;Gap=M74 I1 M2 I3 M1
-    jcf7180000788868        Scipio  match_part      29288   29420   0.644   +       0       ID=4604;Parent=Scipio.match.4;Query=jgi|Conco1|10118|gm1.8358_g 123 166;Mismatches=144 146 152 160 163 165
-    jcf7180000788868        Scipio  match_part      29475   29784   0.644   +       2       ID=4604;Parent=Scipio.match.4;Query=jgi|Conco1|10118|gm1.8358_g 167 270;Mismatches=177 180 181 184 191 192 224 246 256 268
-    jcf7180000788868        Scipio  match_part      29839   30075   0.644   +       1       ID=4604;Parent=Scipio.match.4;Query=jgi|Conco1|10118|gm1.8358_g 271 349;Mismatches=281 284 310 314 315 331
-    jcf7180000788868        Scipio  match_part      30136   30182   0.644   +       1       ID=4604;Parent=Scipio.match.4;Query=jgi|Conco1|10118|gm1.8358_g 350 364;Mismatches=359
-    jcf7180000788868        Scipio  match_part      30312   30616   0.644   +       2       ID=4604;Parent=Scipio.match.4;Query=jgi|Conco1|10118|gm1.8358_g 365 466;Mismatches=365 377 383 384 385 388 403 406 407 410 414 416 417 419 420 426 459 461 463 465
+    jcf7180000788868        Scipio  match_part      29004   29234   0.644   +       0       ID=4604;Parent=Scipio.match.4;Target=jgi|Conco1|10118|gm1.8358_g 42 122;Mismatches=54 56 57 60 63 66 77 78 82 83 89 104 115 118;Gap=M74 I1 M2 I3 M1
+    jcf7180000788868        Scipio  match_part      29288   29420   0.644   +       0       ID=4604;Parent=Scipio.match.4;Target=jgi|Conco1|10118|gm1.8358_g 123 166;Mismatches=144 146 152 160 163 165
+    jcf7180000788868        Scipio  match_part      29475   29784   0.644   +       2       ID=4604;Parent=Scipio.match.4;Target=jgi|Conco1|10118|gm1.8358_g 167 270;Mismatches=177 180 181 184 191 192 224 246 256 268
+    jcf7180000788868        Scipio  match_part      29839   30075   0.644   +       1       ID=4604;Parent=Scipio.match.4;Target=jgi|Conco1|10118|gm1.8358_g 271 349;Mismatches=281 284 310 314 315 331
+    jcf7180000788868        Scipio  match_part      30136   30182   0.644   +       1       ID=4604;Parent=Scipio.match.4;Target=jgi|Conco1|10118|gm1.8358_g 350 364;Mismatches=359
+    jcf7180000788868        Scipio  match_part      30312   30616   0.644   +       2       ID=4604;Parent=Scipio.match.4;Target=jgi|Conco1|10118|gm1.8358_g 365 466;Mismatches=365 377 383 384 385 388 403 406 407 410 414 416 417 419 420 426 459 461 463 465
 
 Future development possibilities:
 - Add an output mode for exporting alignments as gene models or match/match_parts
@@ -90,7 +90,7 @@ def main():
         cols[2] = 'match_part'
 
         # set a Parent feature
-        cols[8] = cols[8].replace(';Query', ';Parent=' + match_atts['id'] + ';Query')
+        cols[8] = cols[8].replace(';Query', ';Parent=' + match_atts['id'] + ';Target')
 
         line = "\t".join(cols)
         
