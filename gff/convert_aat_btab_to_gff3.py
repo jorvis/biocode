@@ -50,7 +50,8 @@ def main():
 
     ofh = open(args.output_file, 'w')
     ofh.write("##gff-version 3\n")
-    
+
+    last_contig_id = None
     current_chain_number = 1
     gene_segments = []
 
@@ -108,13 +109,16 @@ def main():
             else:
                 segment_strand = '+'
 
-            match_id = get_next_id('match', args.name_prefix)
+            if last_contig_id is None or last_contig_id != cols[0] or (last_contig_id == cols[0] and chain_num != current_chain_num):
+                match_id = get_next_id('match', args.name_prefix)
+                current_chain_num = chain_num
+                
             data_column = "ID={0};Target={1} {2} {3};Name={4}".format(match_id, segment['hit_id'], hit_min, hit_max, hit_product)
             ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
                     segment['contig_id'], algorithm, MATCH_TERM, segment_min, segment_max, '.', segment_strand, \
                     '.', data_column ))
         else:
-            if chain_num != current_chain_number:
+            if last_contig_id is not None and last_contig_id != cols[0] or (last_contig_id == cols[0] and chain_num != current_chain_number):
                 chain_pct_id = global_pct_id( gene_segments )
 
                 # this is a new chain
@@ -128,6 +132,8 @@ def main():
                 gene_segments = []
 
             gene_segments.append( segment )
+
+        last_contig_id = cols[0]
     
     ## make sure to do the last one
     if args.export_mode == 'match':
