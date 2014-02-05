@@ -27,8 +27,9 @@ def main():
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input pileup file' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
-    parser.add_argument('-t', '--title', type=str, required=False, help='Plot title' )
     parser.add_argument('-g', '--graph_using', type=str, required=False, default='TPM', help='TPM or FPKM' )
+    parser.add_argument('-t', '--title', type=str, required=False, help='Plot title' )
+    parser.add_argument('-m', '--max_size', type=int, required=False, help='Ignore transcripts over this size (limits X-axis)' )
     args = parser.parse_args()
 
     x = list()
@@ -45,19 +46,24 @@ def main():
         if cols[0] == 'transcript_id' and cols[1] == 'gene_id':
             continue
 
+        transcript_size = int(cols[2])
+
+        if args.max_size is not None and transcript_size > args.max_size:
+            continue
+        
         tpm = float(cols[5])
         fpkm = float(cols[6])
         total_datapoints += 1
         
         if args.graph_using == 'TPM':
             if tpm > 0:
-                x.append(int(cols[2]))
+                x.append(transcript_size)
                 y.append(tpm)
             else:
                 skipped_datapoints += 1
         else:
             if fpkm > 0:
-                x.append(int(cols[2]))
+                x.append(transcript_size)
                 y.append(fpkm)
             else:
                 skipped_datapoints += 1
@@ -75,9 +81,9 @@ def main():
     plt.xlabel('Molecule length')
 
     if args.graph_using == 'TPM':
-        plt.ylabel('log TPM')
+        plt.ylabel('TPM')
     else:
-        plt.ylabel('log FPKM')
+        plt.ylabel('FPKM')
         
     ax = plt.gca()
     ax.plot(x, y, 'o', c='blue', alpha=0.05, markeredgecolor='none')
