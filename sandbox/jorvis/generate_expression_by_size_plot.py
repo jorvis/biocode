@@ -30,6 +30,7 @@ def main():
     parser.add_argument('-g', '--graph_using', type=str, required=False, default='TPM', help='TPM or FPKM' )
     parser.add_argument('-t', '--title', type=str, required=False, help='Plot title' )
     parser.add_argument('-m', '--max_size', type=int, required=False, help='Ignore transcripts over this size (limits X-axis)' )
+    parser.add_argument('-a', '--alpha_factor', type=float, required=False, default=0.05, help='Sets the opacity factor for overlapping dots')
     args = parser.parse_args()
 
     x = list()
@@ -86,7 +87,7 @@ def main():
         plt.ylabel('FPKM')
         
     ax = plt.gca()
-    ax.plot(x, y, 'o', c='blue', alpha=0.05, markeredgecolor='none')
+    ax.plot(x, y, 'o', c='blue', alpha=args.alpha_factor, markeredgecolor='none')
     ax.set_yscale('log')
 
     if args.output_file == 'plot':
