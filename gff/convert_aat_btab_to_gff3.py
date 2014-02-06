@@ -71,7 +71,13 @@ def main():
         if m:
             hit_product = m.group(1)
         else:
-            hit_product = None
+            ## now try this convention (but strip off everything after the GN=):
+            #  DNA-directed RNA polymerase subunit beta OS=Plasmodium falciparum (isolate 3D7) GN=rpoB PE=3 SV=2
+            m = re.search("(.+) OS=(.+?) GN=", segment['product'])
+            if m:
+                hit_product = "{0} [{1}]".format(m.group(1), m.group(2))
+            else:
+                hit_product = None
         
         if algorithm is None:
             algorithm = os.path.basename(cols[3])
