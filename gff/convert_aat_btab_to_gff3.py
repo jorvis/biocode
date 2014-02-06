@@ -41,7 +41,7 @@ def main():
     parser.add_argument('-d', '--perc_identity_cutoff', type=float, required=False, help='Filters on the percent identity of over the length of the alignment' )
     parser.add_argument('-s', '--perc_similarity_cutoff', type=float, required=False, help='Filters on the percent similarity of over the length of the alignment' )
     parser.add_argument('-m', '--max_intron_cutoff', type=int, required=False, help='Excludes alignment chains which propose an intron greater than this value' )
-    parser.add_argument('-e', '--export_mode', type=str, required=False, default='model', help='Controls whether chains are modeled as genes or match regions' )
+    parser.add_argument('-e', '--export_mode', type=str, required=False, default='model', help='Controls whether chains are modeled as genes or match regions. (match or model)' )
     
     args = parser.parse_args()
     algorithm = None
