@@ -192,7 +192,16 @@ def parse_blast_evidence( polypeptides, blast_org, blast_list, cursor, eval_cuto
                     
                 # save it, unless the gene product name has already changed from the default
                 if annot.product_name == DEFAULT_PRODUCT_NAME:
-                    annot.product_name = cols[15]
+                    # current hack until DB is updated:
+                    # some products look like this:
+                    #    Coatomer subunit gamma-2 OS=Bos taurus GN=COPG2 PE=2 SV=1
+                    # take off everything after the OS=
+                    m = re.search("(.+) OS=", cols[15])
+
+                    if m:
+                        annot.product_name = m.group(1)
+                    else:
+                        annot.product_name = cols[15]
 
                 # if no EC numbers have been set, they can inherit from this
                 if len(annot.ec_numbers) == 0:
