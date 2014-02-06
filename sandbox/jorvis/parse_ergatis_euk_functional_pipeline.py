@@ -98,11 +98,12 @@ def write_gff3_results( f, polypeptides, assemblies, features, genomic_fasta ):
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
             for mRNA in gene.mRNAs():
+                # the polypeptide ID will be the same as the mRNA one but with the type changed
+                polypeptide_id = mRNA.id.replace('mRNA', 'polypeptide')
+                
                 # add polypeptides to the mRNAs
-                if mRNA.id in polypeptides:
-                    poly = polypeptides[mRNA.id]
-                    poly.id = "{0}.polypeptide".format(poly.id)
-                    mRNA.add_polypeptide(poly)
+                if polypeptide_id in polypeptides:
+                    mRNA.add_polypeptide( polypeptides[polypeptide_id] )
             
             gene.print_as(fh=f, source='IGS', format='gff3')
 
