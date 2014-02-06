@@ -16,11 +16,36 @@ jcf7180000787896        nap     CDS     1       103     .       +       0       
 jcf7180000787896        nap     exon    870     1729    .       +       .       ID=exon.000002;Parent=mRNA.000001
 jcf7180000787896        nap     CDS     870     1729    .       +       0       ID=exon.000002;Parent=mRNA.000010
 
-On the other hand, if you specify --export_mode=match you'll get:
+On the other hand, if you specify --export_mode=match you'll get individual rows where the feature
+type is 'nucleotide_to_protein_match' and where the ID attributes of each chain are shared across
+multiple segments.
 
 
-Note that chain membership is (intentionally) lost in this mode, and all segments appear as
-individual, distinct matches.
+
+INPUT BTAB
+
+BTAB from nap has these columns:
+
+0	qry name	cpa1.assem.1
+1	date	Jan 25 2005
+2	query length	15235
+3	analysis tool	/usr/local/bin/nap
+4	database	/usr/local/db/panda/AllGroup/AllGroup.niaa
+5	db match accession	GB|BAA97098.1|8777580|AP002460
+6	qry start	5416
+7	qry stop	5280
+8	hit start	1
+9	hit stop	46
+10	percent identity	28.888889
+11	percent similarity	60.000000
+12	domain score	70
+13	chain number	1
+14	segment number	1
+15	db match name	unnamed protein product; gene_id:F1D9.26 unknown protein {Arabidopsis thaliana;}
+16	???	-1
+17	qry strand	Minus
+18	total score	260
+
 
 """
 
