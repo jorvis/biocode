@@ -54,6 +54,11 @@ feature lines is important.
 WARNING: this script does not currently handle multiple features on different lines with the same
 ID value.  They'll simply be collapsed, which is doubtfully the desired behavior.
 
+Remember that if you have a file which is nothing but match features with no parental
+relationships you can easily do a sort on the command line like this:
+
+    sort -t $'\t' -k 1,1 -k 4n,4 -k 5n,5 foo.gff3 > foo.sorted.gff3
+
 Any other FASTA or non-columnar lines will be placed at the end of the output file.
 
 =head1  CONTACT
