@@ -7,20 +7,11 @@ Example input:
 jcf7180000787896        Aug 28 2013     16242   /usr/local/packages/aat/nap     /usr/local/projects/mucormycosis/protein_alignments/fungi_jgi/fungi_jgi.faa     jgi|Rhior3|10928|RO3G_01207     1       103     1162    1198    25.000000       41.666667       15      1       1               -1      Plus    1484
 jcf7180000787896        Aug 28 2013     16242   /usr/local/packages/aat/nap     /usr/local/projects/mucormycosis/protein_alignments/fungi_jgi/fungi_jgi.faa     jgi|Rhior3|10928|RO3G_01207     870     1729    1198    1484    91.958042       93.356643       1384    1       2               -1      Plus    1484
 
-The output here depends on the mode requested.  If --export_mode=model (default), then it is:
-
-jcf7180000787896        nap     gene    1       1729    .       +       .       ID=gene.000001
-jcf7180000787896        nap     mRNA    1       1729    .       +       .       ID=mRNA.000001;Parent=gene.000001
-jcf7180000787896        nap     exon    1       103     .       +       .       ID=exon.000001;Parent=mRNA.000001
-jcf7180000787896        nap     CDS     1       103     .       +       0       ID=exon.000001;Parent=mRNA.000001
-jcf7180000787896        nap     exon    870     1729    .       +       .       ID=exon.000002;Parent=mRNA.000001
-jcf7180000787896        nap     CDS     870     1729    .       +       0       ID=exon.000002;Parent=mRNA.000010
+The output here depends on the export mode requested.  See the OUPUT section below.
 
 On the other hand, if you specify --export_mode=match you'll get individual rows where the feature
 type is 'nucleotide_to_protein_match' and where the ID attributes of each chain are shared across
-multiple segments.
-
-
+multiple segments.  This is the expected format for tools like EVM (EVidenceModeler).
 
 INPUT BTAB
 
@@ -47,14 +38,44 @@ BTAB from nap has these columns:
 18	total score	260
 
 
+OUTPUT --export_mode=model (the default)
+
+The output will look like:
+
+jcf7180000787896        nap     gene    1       1729    .       +       .       ID=gene.000001
+jcf7180000787896        nap     mRNA    1       1729    .       +       .       ID=mRNA.000001;Parent=gene.000001
+jcf7180000787896        nap     exon    1       103     .       +       .       ID=exon.000001;Parent=mRNA.000001
+jcf7180000787896        nap     CDS     1       103     .       +       0       ID=exon.000001;Parent=mRNA.000001
+jcf7180000787896        nap     exon    870     1729    .       +       .       ID=exon.000002;Parent=mRNA.000001
+jcf7180000787896        nap     CDS     870     1729    .       +       0       ID=exon.000002;Parent=mRNA.000010
+
+
+OUTPUT --export_mode=match
+
+Using this value, you'll get individual rows where the feature type is 'nucleotide_to_protein_match' 
+and where the ID attributes of each chain are shared across multiple segments.  This is the expected 
+format for tools like EVM (EVidenceModeler).
+
+EXAMPLE HERE
+
+
+OUTPUT --export_mode=match_and_parts
+
+The GFF3 specification provides two different ways of modeling alignments.  The first ('match' mode above)
+uses the same type where each segment of the aligment shares the same ID.  The other instead uses
+a parent feature (still a nucleotide_to_protein_match) but uses subfeature 'match_part' rows to model
+each segment of the match.  These each of unique IDs.
+
+
 """
 
 import argparse
 import os
 import re
+from operator import itemgetter
 
-next_ids = {'gene':1, 'mRNA':1, 'exon':1, 'CDS':1, 'match':1 }
-MATCH_TERM = 'nucleotide_to_protein_match'
+next_ids = {'gene':1, 'mRNA':1, 'exon':1, 'CDS':1, 'nucleotide_to_protein_match':1, 'match_part':1 }
+MATCH_ONLY_TERM = 'nucleotide_to_protein_match'
 
 def main():
     parser = argparse.ArgumentParser( description='AAT (nap/gap2) converter to GFF3 format')
@@ -66,7 +87,7 @@ def main():
     parser.add_argument('-d', '--perc_identity_cutoff', type=float, required=False, help='Filters on the percent identity of over the length of the alignment' )
     parser.add_argument('-s', '--perc_similarity_cutoff', type=float, required=False, help='Filters on the percent similarity of over the length of the alignment' )
     parser.add_argument('-m', '--max_intron_cutoff', type=int, required=False, help='Excludes alignment chains which propose an intron greater than this value' )
-    parser.add_argument('-e', '--export_mode', type=str, required=False, default='model', help='Controls whether chains are modeled as genes or match regions. (match or model)' )
+    parser.add_argument('-e', '--export_mode', type=str, required=False, default='model', help='Controls whether chains are modeled as genes or match regions. (match, match_and_parts, or model)' )
     
     args = parser.parse_args()
     algorithm = None
@@ -119,22 +140,6 @@ def main():
             hit_min = min( segment['hit_start'], segment['hit_end'] )
             hit_max = max( segment['hit_start'], segment['hit_end'] )
 
-            ############################
-            # custom filters for Joana:
-            #keep = False
-            #protein_hit_length = hit_max - hit_min + 1
-            #if protein_hit_length >= 20 and protein_hit_length < 50 and segment['pct_sim'] >= 90:
-            #    keep = True
-            #elif protein_hit_length >= 50 and protein_hit_length < 100 and segment['pct_sim'] >= 60:
-            #    keep = True
-            #elif protein_hit_length >= 100:
-            #    keep = True
-
-            #if keep is False:
-            #    continue
-            ############################
-            
-            
             if segment['strand'] == 'Minus':
                 segment_strand = '-'
             else:
@@ -146,7 +151,7 @@ def main():
                 
             data_column = "ID={0};Target={1} {2} {3};Name={4}".format(match_id, segment['hit_id'], hit_min, hit_max, hit_product)
             ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
-                    segment['contig_id'], algorithm, MATCH_TERM, segment_min, segment_max, '.', segment_strand, \
+                    segment['contig_id'], algorithm, MATCH_ONLY_TERM, segment_min, segment_max, '.', segment_strand, \
                     '.', data_column ))
         else:
             if last_contig_id is not None and last_contig_id != cols[0] or (last_contig_id == cols[0] and chain_num != current_chain_number):
@@ -154,8 +159,10 @@ def main():
 
                 # this is a new chain
                 total_chains += 1
-                exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
-                                        args.perc_similarity_cutoff, args.max_intron_cutoff )
+
+                exported = export_segments( args.export_mode, gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                                            args.perc_similarity_cutoff, args.max_intron_cutoff )
+                
                 if exported is True:
                     chains_exported += 1
 
@@ -168,11 +175,14 @@ def main():
     
     ## make sure to do the last one
     if args.export_mode == 'match':
+        ## do nothing, we've already exported it while looping
         pass
     else:
         total_chains += 1
-        exported = export_gene( gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
-                                args.perc_similarity_cutoff, args.max_intron_cutoff )
+
+        exported = export_segments( args.export_mode, gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                                    args.perc_similarity_cutoff, args.max_intron_cutoff )
+
         if exported is True:
             chains_exported += 1
 
@@ -229,11 +239,7 @@ def global_pct_sim( segments ):
     return (similar_residues / match_length) * 100
 
 
-def export_match():
-    pass
-
-
-def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_sim_cutoff, max_intron_cutoff ):
+def export_segments( mode, segments, out, chn_num, source, prefix, perc_id_cutoff, perc_sim_cutoff, max_intron_cutoff ):
     contig_min = None
     contig_max = None
     contig_id  = None
@@ -290,42 +296,67 @@ def export_gene( segments, out, chn_num, source, prefix, perc_id_cutoff, perc_si
     
     #print("Exported chain: ({0}) min:({1}) max({2})".format(chn_num, contig_min, contig_max))
     
-    ## write the gene feature
-    gene_id = get_next_id('gene', prefix)
-    data_column = "ID={0};Target={1} {2} {3}".format(gene_id, hit_id, hit_min, hit_max)
-    out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
-            contig_id, source, 'gene', contig_min, contig_max, '.', segment_strand, '.', data_column
-            ) )
-
-    ## write the mRNA
-    mRNA_id = get_next_id('mRNA', prefix)
-    data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(mRNA_id, gene_id, hit_id, hit_min, hit_max)
-    out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
-            contig_id, source, 'mRNA', contig_min, contig_max, '.', segment_strand, '.', data_column
-            ) )
-
-    ## write the exons and CDS
-    for segment in segments:
-        exon_id = get_next_id('exon', prefix)
-        exon_start = min( segment['contig_start'], segment['contig_end'] )
-        exon_hit_start = min(segment['hit_start'], segment['hit_end'])
-        exon_end   = max( segment['contig_start'], segment['contig_end'] )
-        exon_hit_end = max( segment['hit_start'], segment['hit_end'] )
-
-        data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(exon_id, mRNA_id, hit_id, \
-                exon_hit_start, exon_hit_end)
+    if mode == 'model':
+        ## write the gene feature
+        gene_id = get_next_id('gene', prefix)
+        data_column = "ID={0};Target={1} {2} {3}".format(gene_id, hit_id, hit_min, hit_max)
         out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
-                contig_id, source, 'exon', exon_start, exon_end, \
-                '.', segment_strand, '.', data_column 
+                contig_id, source, 'gene', contig_min, contig_max, '.', segment_strand, '.', data_column
                 ) )
 
-        CDS_id = get_next_id('CDS', prefix)
-        data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(exon_id, mRNA_id, hit_id, \
-                exon_hit_start, exon_hit_end)
+        ## write the mRNA
+        mRNA_id = get_next_id('mRNA', prefix)
+        data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(mRNA_id, gene_id, hit_id, hit_min, hit_max)
         out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
-                contig_id, source, 'CDS', exon_start, exon_end, \
-                '.', segment_strand, 0, data_column 
+                contig_id, source, 'mRNA', contig_min, contig_max, '.', segment_strand, '.', data_column
                 ) )
+
+        ## write the exons and CDS
+        for segment in sorted(segments, key=itemgetter('contig_start')):
+            exon_id = get_next_id('exon', prefix)
+            exon_start = min( segment['contig_start'], segment['contig_end'] )
+            exon_hit_start = min(segment['hit_start'], segment['hit_end'])
+            exon_end   = max( segment['contig_start'], segment['contig_end'] )
+            exon_hit_end = max( segment['hit_start'], segment['hit_end'] )
+
+            data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(exon_id, mRNA_id, hit_id, \
+                    exon_hit_start, exon_hit_end)
+            out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
+                    contig_id, source, 'exon', exon_start, exon_end, \
+                    '.', segment_strand, '.', data_column 
+                    ) )
+
+            CDS_id = get_next_id('CDS', prefix)
+            data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(exon_id, mRNA_id, hit_id, \
+                    exon_hit_start, exon_hit_end)
+            out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
+                    contig_id, source, 'CDS', exon_start, exon_end, \
+                    '.', segment_strand, 0, data_column 
+                    ) )
+
+    elif mode == 'match_and_parts':
+        ## write the match feature
+        match_id = get_next_id('nucleotide_to_protein_match', prefix)
+        data_column = "ID={0};Target={1} {2} {3}".format(match_id, hit_id, hit_min, hit_max)
+        out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
+                    contig_id, source, 'nucleotide_to_protein_match', contig_min, contig_max, '.', segment_strand, '.', data_column ) )
+
+        ## now write the match parts
+        for segment in sorted(segments, key=itemgetter('contig_start')):
+            mp_id = get_next_id('match_part', prefix)
+            mp_start = min( segment['contig_start'], segment['contig_end'] )
+            mp_hit_start = min(segment['hit_start'], segment['hit_end'])
+            mp_end = max( segment['contig_start'], segment['contig_end'] )
+            mp_hit_end = max( segment['hit_start'], segment['hit_end'] )
+            
+            data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(mp_id, match_id, hit_id, \
+                    mp_hit_start, mp_hit_end)
+            out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format(contig_id, source, 'match_part', mp_start, mp_end, '.', \
+                                                                              segment_strand, '.', data_column ) )
+            
+
+    else:
+        raise Exception( "ERROR: valid export modes are 'model', 'match', or 'match_and_parts'" )
 
     return True
 
