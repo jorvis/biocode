@@ -424,24 +424,6 @@ class Exon( LocatableThing ):
         self.length = length
 
 
-class Intron( LocatableThing ):
-    '''
-    Usually not represented directly.  Rather, these are generated on the fly
-    as needed when the RNA.introns() method is called.
-
-    There are some issues to resolve here.  For example, what's the parentage
-    of an intron?  What are conceivable children?
-    
-    SO definition (2013-05-22): "A region of a primary transcript that is transcribed, but 
-    removed from within the transcript by splicing together the sequences (exons) on either 
-    side of it."
-    '''
-    def __init__( self, id=None, locations=None, length=None ):
-        super().__init__(locations)
-        self.id = id
-        self.length = length
-        
-
 class Gene( LocatableThing ):
     '''
     SO definition (2013-05-22): "A region (or regions) that includes all of the sequence 
@@ -469,7 +451,7 @@ class Gene( LocatableThing ):
 
     def mRNAs(self):
         return self.children['mRNA']
-    
+
     '''
     Prints the gene as a GFF3 entry, with all children.  Is printed to STDOUT
     unless the fh option is passed.  Really, only checks are done here before
@@ -489,6 +471,24 @@ class Gene( LocatableThing ):
             biocodegff.print_biogene( gene=self, fh=fh, source=source )
         else:
             raise Exception("ERROR: the print_as method only accepts values of 'text' or 'gff3'")
+
+
+class Intron( LocatableThing ):
+    '''
+    Usually not represented directly.  Rather, these are generated on the fly
+    as needed when the RNA.introns() method is called.
+
+    There are some issues to resolve here.  For example, what's the parentage
+    of an intron?  What are conceivable children?
+    
+    SO definition (2013-05-22): "A region of a primary transcript that is transcribed, but 
+    removed from within the transcript by splicing together the sequences (exons) on either 
+    side of it."
+    '''
+    def __init__( self, id=None, locations=None, length=None ):
+        super().__init__(locations)
+        self.id = id
+        self.length = length
         
 
 class Polypeptide( LocatableThing ):
@@ -651,7 +651,7 @@ class tRNA( RNA ):
 
 #############################
 ## Private help functions
-##   Hopefully this isn't too un-pythonic.  These were to aide in abstraction within classes
+##   Hopefully this isn't too un-pythonic.  These were to aid in abstraction within classes
 #############################
 
 def _initialize_type_list( children, feattype ):
