@@ -146,7 +146,7 @@ def main():
                 segment_strand = '+'
 
             if last_contig_id is None or last_contig_id != cols[0] or (last_contig_id == cols[0] and chain_num != current_chain_num):
-                match_id = get_next_id('match', args.name_prefix)
+                match_id = get_next_id(MATCH_ONLY_TERM, args.name_prefix)
                 current_chain_num = chain_num
                 
             data_column = "ID={0};Target={1} {2} {3};Name={4}".format(match_id, segment['hit_id'], hit_min, hit_max, hit_product)
