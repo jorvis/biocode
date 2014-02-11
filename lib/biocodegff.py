@@ -417,6 +417,61 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             columns[8] = build_column_9( id=polypeptide.id, parent=mRNA.parent.id, other=assertions )
             fh.write( "\t".join(columns) + "\n" )
 
+
+def print_biomatch( match=None, fh=None, source=None, on=None, mode=None ):
+    '''
+    This method accepts a Match object located on an Assembly object (from biothings.py) and prints
+    the feature graph for that gene in GFF3 format.  How this is printed depends on the mode passed,
+    but both modes suggested by the GFF3 specification are supported.
+
+    mode=parts : Default.  In this mode, only MatchPart segments are printed but each shares the
+    ID of the parent Match feature to indicate aligned segments.  The type for each row is the
+    value of the parent Match.subclass.
+
+    mode=match_and_parts : In this mode, both Match and MatchPart features are printed, with
+    parent/child relationships explicitly defined and no shared IDs among any of the features.
+    '''
+    ## handle defaults
+    if source is None:
+        source = '.'
+
+    if mode is None:
+        mode = 'parts'
+
+    ## we can auto-detect the molecule if the user didn't pass one and if there's only one.
+    if on is None:
+        on = match.location().on
+
+    match_loc = match.location_on( on )
+    strand = '0'
+
+    if match_loc.strand == 1:
+        strand = '+'
+    elif match_loc.strand == -1:
+        strand = '-'
+
+    if mode == 'match_and_parts':
+        columns = ['.']*9
+        columns[0:3] = [match_loc.on.id, source, match.subclass]
+        columns[3:7] = [str(match_loc.fmin + 1), str(match_loc.fmax), '.', strand]
+        columns[8] = build_column_9( id=match.id, parent=None, other=None )
+        fh.write( "\t".join(columns) + "\n" )
+
+    for mp in match.parts:
+        columns = ['.']*9
+        mp_loc = mp.location_on(on)
+        columns[3:7] = [str(mp_loc.fmin + 1), str(mp_loc.fmax), '.', strand]
+
+        if mode == 'parts':
+            columns[0:3] = [mp_loc.on.id, source, match.subclass]
+            columns[8] = build_column_9( id=match.id, parent=None, other=None )
+        elif mode == 'match_and_parts':
+            columns[0:3] = [mp_loc.on.id, source, 'match_part']
+            columns[8] = build_column_9( id=mp.id, parent=match.id, other=None )
+            
+        fh.write( "\t".join(columns) + "\n" )
+
+
 def _reunite_children( fg, mol_id, kids ):
     sys.stderr.write("WARNING: biocodegff._reunite_children called but not yet implemented.  You are ahead of your time.\n")
     pass
