@@ -491,6 +491,52 @@ class Intron( LocatableThing ):
         self.length = length
         
 
+class Match( LocatableThing ):
+    '''
+    Represents a generic match object, usually used to represent pairwise alignments.
+    The sequence ontology provides a host of specific match terms, but I'm using this
+    as a lightweight implementation of them all rather than explicitly creating
+    dozens of subclasses.  Instead, create a Match object and simply set any more
+    specific term using Match.class
+    
+    Future mod: Add Annotation object to store info on the match?
+    '''
+    
+    def __init__( self, id=None, subclass=None, locations=None, parts=None, length=None ):
+        super().__init__(locations)
+        self.id = id
+        self.subclass = subclass   # allows you to define specific classes (cDNA_match, etc.)
+        self.parts = parts   # these are MatchPart objects
+        self.length = length
+
+        if self.subclass is None:
+            self.subclass = 'match'
+
+        if self.parts is None:
+            self.parts = list()
+
+    def add_part(self, part):
+        self.parts.append(part)
+
+    def print_as(self, fh=None, source=None, format=None):
+        if format == 'text':
+            _print_thing(self, fh=fh)
+        elif format == 'gff3':
+            # mode could be passed here to print both GFF3-supported representations (already implemented)
+            biocodegff.print_biomatch( match=self, fh=fh, source=source )
+        else:
+            raise Exception("ERROR: You attempted to print a Match with unrecognized format:{0}".format(format))
+
+
+class MatchPart( LocatableThing ):
+    """ Future mod: Add Annotation object to store info on the match? """
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(locations)
+        self.id = id
+        self.parent = parent  # this should be a Match object
+        self.length = length
+
+
 class Polypeptide( LocatableThing ):
     '''
     SO definition (2013-05-22): "A sequence of amino acids linked by peptide bonds which may lack 
