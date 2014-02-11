@@ -15,7 +15,7 @@ tp.assembly.567468735.1	Cufflinks	exon	22213	23755	124	-	.	gene_id "CUFF.5"; tra
 tp.assembly.567468735.1	Cufflinks	exon	23887	25044	124	-	.	gene_id "CUFF.5"; transcript_id "CUFF.5.2"; exon_number "2"; FPKM "17.7850894771"; frac "0.322877"; conf_lo "16.994111"; conf_hi "18.576068"; cov "93.732896";
 tp.assembly.567468735.1	Cufflinks	exon	25287	28599	124	-	.	gene_id "CUFF.5"; transcript_id "CUFF.5.2"; exon_number "3"; FPKM "17.7850894771"; frac "0.322877"; conf_lo "16.994111"; conf_hi "18.576068"; cov "93.732896";
 
-OUTPUT example:
+OUTPUT example (--export_mode=model):
 
 tp.assembly.567468735.1 Cufflinks       gene    20970   21966   .       -       .       ID=CUFF.4
 tp.assembly.567468735.1 Cufflinks       mRNA    20970   21966   .       -       .       ID=CUFF.4.1;Parent=CUFF.4
@@ -39,7 +39,12 @@ Caveats:
 - Notice that the input defined above describes multiple isoforms for the same gene.  Some downstream
   GFF3 parsers may not support this (though they should.)
 - This script currently skips all attributes in the last column of the input GTF except for
-  the gene_id and transcript_id.  
+  the gene_id and transcript_id.
+
+OUTPUT example (--export_mode=cDNA_match):
+
+This type of output is required for tools like EVM.  It has only cDNA_match features which are
+segmented.  Each segment shares the same ID
 
 Author: Joshua Orvis (jorvis AT gmail)
 """
@@ -58,6 +63,7 @@ def main():
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GTF file' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output GFF file to be created' )
+    parser.add_argument('-e', '--export_mode', type=str, required=False, default='model', help='Export mode for results (model or cDNA_match)' )
     args = parser.parse_args()
 
     ## output will either be a file or STDOUT
@@ -71,6 +77,8 @@ def main():
     current_assembly = None
     current_gene = None
     current_RNA = None
+    
+    current_match = None
 
     rna_count_by_gene = defaultdict(int)
     exon_count_by_RNA = defaultdict(int)
@@ -97,46 +105,69 @@ def main():
 
         # this makes it look like GFF column 9 so I can use biocodeutils.column_9_value(str, key)
         col9 = col9.replace(' "', '="')
-        gene_id = biocodegff.column_9_value(col9, 'gene_id').replace('"', '')
+        gene_id       = biocodegff.column_9_value(col9, 'gene_id').replace('"', '')
         transcript_id = biocodegff.column_9_value(col9, 'transcript_id').replace('"', '')
         
         if ftype == 'transcript':
-            if current_gene is not None and current_gene.id != gene_id:
-                gene.print_as(fh=ofh, source='Cufflinks', format='gff3')
+            if args.export_mode == 'model':
+                if current_gene is not None and current_gene.id != gene_id:
+                    gene.print_as(fh=ofh, source='Cufflinks', format='gff3')
 
-            if current_gene is None or current_gene.id != gene_id:
-                gene = biothings.Gene( id=gene_id )
-                gene.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
-                current_gene = gene
+                if current_gene is None or current_gene.id != gene_id:
+                    gene = biothings.Gene( id=gene_id )
+                    gene.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                    current_gene = gene
 
-            mRNA = biothings.mRNA( id=transcript_id, parent=current_gene )
-            mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
-            gene.add_mRNA(mRNA)
-            current_RNA = mRNA
-            exon_count_by_RNA[transcript_id] = 0
-            current_CDS_phase = 0
+                mRNA = biothings.mRNA( id=transcript_id, parent=current_gene )
+                mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                gene.add_mRNA(mRNA)
+                current_RNA = mRNA
+                exon_count_by_RNA[transcript_id] = 0
+                current_CDS_phase = 0
+
+            elif args.export_mode == 'cDNA_match':
+                if current_match is not None and current_match.id != transcript_id:
+                    match.print_as( fh=ofh, source='Cufflinks', format='gff3' )
+                
+                match = biothings.Match( id=transcript_id, subclass='cDNA_match', length=fmax - fmin )
+                match.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                current_match = match
             
         elif ftype == 'exon':
-            exon_count_by_RNA[transcript_id] += 1
-
-            cds_id = "{0}.CDS.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-            CDS = biothings.CDS( id=cds_id, parent=current_RNA )
-            CDS.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand, phase=current_CDS_phase )
-            current_RNA.add_CDS(CDS)
-
-             # calculate the starting phase for the next CDS feature (in case there is one)
-            current_CDS_phase = 3 - (((fmax - fmin) - current_CDS_phase) % 3)
-            if current_CDS_phase == 3:
-                current_CDS_phase = 0
+            exon_number = biocodegff.column_9_value(col9, 'exon_number').replace('"', '')
             
-            exon_id = "{0}.exon.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-            exon = biothings.Exon( id=exon_id, parent=current_RNA )
-            exon.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
-            current_RNA.add_exon(exon)
+            if args.export_mode == 'model':
+                exon_count_by_RNA[transcript_id] += 1
+
+                cds_id = "{0}.CDS.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
+                CDS = biothings.CDS( id=cds_id, parent=current_RNA )
+                CDS.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand, phase=current_CDS_phase )
+                current_RNA.add_CDS(CDS)
+
+                 # calculate the starting phase for the next CDS feature (in case there is one)
+                current_CDS_phase = 3 - (((fmax - fmin) - current_CDS_phase) % 3)
+                if current_CDS_phase == 3:
+                    current_CDS_phase = 0
+
+                exon_id = "{0}.exon.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
+                exon = biothings.Exon( id=exon_id, parent=current_RNA )
+                exon.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                current_RNA.add_exon(exon)
+                
+            elif args.export_mode == 'cDNA_match':
+                mp_id = "{0}.match_part.{1}".format(transcript_id, exon_number)
+                mp = biothings.MatchPart( id=mp_id, parent=current_match, length=fmax - fmin )
+                mp.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                current_match.add_part(mp)
 
     # don't forget to do the last gene, if there were any
-    if current_gene is not None:
-        gene.print_as(fh=ofh, source='GenBank', format='gff3')
+    if args.export_mode == 'model':
+        if current_gene is not None:
+            gene.print_as(fh=ofh, source='GenBank', format='gff3')
+            
+    elif args.export_mode == 'cDNA_match':
+        if current_match is not None:
+            match.print_as( fh=ofh, source='Cufflinks', format='gff3' )
 
 
 if __name__ == '__main__':
