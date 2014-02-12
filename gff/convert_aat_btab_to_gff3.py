@@ -7,7 +7,7 @@ Example input:
 jcf7180000787896        Aug 28 2013     16242   /usr/local/packages/aat/nap     /usr/local/projects/mucormycosis/protein_alignments/fungi_jgi/fungi_jgi.faa     jgi|Rhior3|10928|RO3G_01207     1       103     1162    1198    25.000000       41.666667       15      1       1               -1      Plus    1484
 jcf7180000787896        Aug 28 2013     16242   /usr/local/packages/aat/nap     /usr/local/projects/mucormycosis/protein_alignments/fungi_jgi/fungi_jgi.faa     jgi|Rhior3|10928|RO3G_01207     870     1729    1198    1484    91.958042       93.356643       1384    1       2               -1      Plus    1484
 
-The output here depends on the export mode requested.  See the OUPUT section below.
+The output here depends on the export mode requested.  See the OUTPUT section below.
 
 On the other hand, if you specify --export_mode=match you'll get individual rows where the feature
 type is 'nucleotide_to_protein_match' and where the ID attributes of each chain are shared across
