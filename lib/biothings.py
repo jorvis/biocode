@@ -221,6 +221,27 @@ class LocatableThing:
 
         return loc_found
 
+    def overlap_size( self, thing ):
+        '''
+        Returns True/False depending on whether the two LocatableThing objects have
+        even a single overlapping Location on the same molecule.
+
+        Checks both to make sure they're both located on the same molecule before comparing coordinates,
+        ignoring strandedness.
+        '''
+        ## see if either are located on the same thing
+        for ref_location in self.locations:
+            for qry_location in thing.locations:
+                if ref_location.on.id == qry_location.on.id:
+                    ## if so, see if they have overlapping coordinates
+                    ## it's easier to negate an overlap
+                    if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
+                        return False
+
+        ## if there were an overlap we would have reached it when looping, so now return False
+        return True
+
+    
     def overlaps_max_side_of( self, thing=None, on=None ):
         '''
         Returns True/False depending on whether the two LocatableThing objects have
@@ -275,6 +296,7 @@ class LocatableThing:
         # if we got here, there wasn't a match
         return False
 
+    
     def overlaps_with( self, thing ):
         '''
         Returns True/False depending on whether the two LocatableThing objects have
@@ -283,17 +305,23 @@ class LocatableThing:
         Checks both to make sure they're both located on the same molecule before comparing coordinates,
         ignoring strandedness.
         '''
+        common_location_found = False
+        
         ## see if either are located on the same thing
         for ref_location in self.locations:
             for qry_location in thing.locations:
                 if ref_location.on.id == qry_location.on.id:
+                    common_location_found = True
+                    
                     ## if so, see if they have overlapping coordinates
                     ## it's easier to negate an overlap
                     if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
                         return False
 
-        ## if there were an overlap we would have reached it when looping, so now return False
-        return True
+        if common_location_found == True:
+            return True
+        else:
+            return False
 
 
 class Location:
