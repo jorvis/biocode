@@ -69,6 +69,17 @@ def main():
 
 ###########################################################################################
 
+    if features['TP03_0012.t01_exon-auto15079'].overlaps_with(features['TP03_0012.t01_polypeptide']):
+        print("INFO: overlaps_with() positive check successful")
+    else:
+        print("ERROR: overlaps_with() positive check unsuccessful")
+
+    if features['TP03_0002'].overlaps_with(features['TP03_0010']):
+        print("ERROR: overlaps_with() negative check unsuccessful")
+    else:
+        print("INFO: overlaps_with() negative check successful")
+
+
 if __name__ == '__main__':
     main()
 
