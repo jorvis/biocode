@@ -10,19 +10,22 @@ def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
 
     ## output file to be written
-    parser.add_argument('-o1a', '--organism1_annotation', type=str, required=True, help='Annotation GFF for organism 1' )
-    parser.add_argument('-o1p', '--organism1_protein_alignments', type=str, required=True, help='Path to AAT GFF3 (match/match_part)' )
+    parser.add_argument('-a', '--organism1_annotation', type=str, required=True, help='Annotation GFF for organism 1' )
+    parser.add_argument('-p', '--organism1_protein_alignments', type=str, required=True, help='Path to AAT GFF3 (match/match_part)' )
+    parser.add_argument('-b', '--organism1_blast_alignments', type=str, required=True, help='Path to BLASTp btab file vs.organism 2 proteins' )
     #parser.add_argument('-o2a', '--organism2_annotation', type=str, required=True, help='Annotation GFF for organism 2' )
     args = parser.parse_args()
 
     print("INFO: Parsing organism1 annotation")
     (assemblies, features) = biocodegff.get_gff3_features( args.organism1_annotation )
+    #(assemblies_org2, features_org2) = biocodegff.get_gff3_features( args.organism2_annotation )
     # keys are assembly IDs, value for each is a list of matches on them
     aat_matches = dict()
     aat_match_count = 0
 
     ## IDs of features in organism 1 which overlap AAT
     o1_with_aat = list()
+    o1_with_o2 = list()
 
     print("INFO: Parsing organism1 protein alignments")
     for line in open(args.organism1_protein_alignments):
@@ -67,8 +70,22 @@ def main():
                         o1_with_aat.append(mRNA.id)
                         break   # only need to see if one matched
 
-    print("INFO: Found {0} mRNAs in organism 1 with overlapping AAT coordinates".format(len(o1_with_aat)))
-            
+    print("INFO: Found {0} mRNAs in org1 with overlapping fungi AAT coordinates".format(len(o1_with_aat)))
+
+    # key=org1_transcript_id, value=org2_transcript_id
+    top_blast_hits = dict()
+
+    print("INFO: parsing BLAST results vs. org2")
+    for line in open(args.organism1_blast_alignments):
+        cols = line.split("\t")
+        top_blast_hits[cols[0]] = cols[5]
+
+    print("INFO: Comparing overlap between AAT-matched proteins and BLAST ones")
+    for o1_mRNA_id in o1_with_aat:
+        if o1_mRNA_id in top_blast_hits:
+            o1_with_o2.append(o1_mRNA_id)
+
+    print("INFO: Found {0} mRNAs in org1 with overlapping AAT coordinates and BLAST hit to org2".format(len(o1_with_o2)))
 
 
 if __name__ == '__main__':
