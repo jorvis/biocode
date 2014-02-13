@@ -69,6 +69,9 @@ def main():
             for mRNA in gene.mRNAs():
                 for aat_match in aat_matches[assembly_id]:
                     if mRNA.overlaps_with(aat_match):
+                        overlap_size = mRNA.overlap_size_with(aat_match)
+                        print("DEBUG: {0} ({1}) overlaps with {2} ({3})".format(mRNA.id, mRNA.length, aat_match.id, aat_match.length)))
+                        
                         o1_with_aat.append(mRNA.id)
                         break   # only need to see if one matched
 
