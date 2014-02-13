@@ -5,7 +5,8 @@ This script reports some basic statistics about a GFF3 file.  It was
 written with an initial focus on gene-structure containing content,
 though can be expanded as desired.
 
-The output is a tab-delimited file where the first column is the
+The output is a tab-delimited file where the first column is the description
+of a statistic and the second is the value.
 
 Follow the GFF3 specification!
 
@@ -35,10 +36,14 @@ def main():
 
     type_counts = defaultdict(int)
     type_lengths = defaultdict(int)
+    assembly_lengths_found = False
         
     for assembly_id in assemblies:
         type_counts['assembly'] += 1
-        type_lengths['assembly'] += assemblies[assembly_id].length
+
+        if assemblies[assembly_id].length is not None:
+            type_lengths['assembly'] += assemblies[assembly_id].length
+            assembly_lengths_found = True
         
         for gene in assemblies[assembly_id].genes():
             type_counts['gene'] += 1
@@ -63,7 +68,11 @@ def main():
     ofh.write("exon count\t{0}\n".format(type_counts['exon']))
     ofh.write("CDS count\t{0}\n".format(type_counts['CDS fragments']))
 
-    ofh.write("Assembly length\t{0}\n".format(type_lengths['assembly']))
+    if assembly_lengths_found:
+        ofh.write("Assembly length\t{0}\n".format(type_lengths['assembly']))
+    else:
+        ofh.write("Assembly length\tN/A (no FASTA data in GFF?)\n")
+        
     ofh.write("Gene length\t{0}\n".format(type_lengths['gene']))
     ofh.write("mRNA length\t{0}\n".format(type_lengths['mRNA']))
     ofh.write("exon length\t{0}\n".format(type_lengths['exon']))
