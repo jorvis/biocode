@@ -13,6 +13,8 @@ def main():
     parser.add_argument('-a', '--organism1_annotation', type=str, required=True, help='Annotation GFF for organism 1' )
     parser.add_argument('-p', '--organism1_protein_alignments', type=str, required=True, help='Path to AAT GFF3 (match/match_part)' )
     parser.add_argument('-b', '--organism1_blast_alignments', type=str, required=True, help='Path to BLASTp btab file vs.organism 2 proteins' )
+    parser.add_argument('-be', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='BLAST e-value cutoff' )
+    parser.add_argument('-bpi', '--blast_percent_identity_cutoff', type=float, required=False, default=0, help='BLAST %identity cutoff' )
     #parser.add_argument('-o2a', '--organism2_annotation', type=str, required=True, help='Annotation GFF for organism 2' )
     args = parser.parse_args()
 
@@ -78,6 +80,14 @@ def main():
     print("INFO: parsing BLAST results vs. org2")
     for line in open(args.organism1_blast_alignments):
         cols = line.split("\t")
+
+        if float(cols[19]) > args.blast_eval_cutoff:
+            continue
+
+        if float(cols[10]) < args.blast_percent_identity_cutoff:
+            continue
+        
+        # if we survived until here, this one's good.
         top_blast_hits[cols[0]] = cols[5]
 
     print("INFO: Comparing overlap between AAT-matched proteins and BLAST ones")
