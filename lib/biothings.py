@@ -221,27 +221,46 @@ class LocatableThing:
 
         return loc_found
 
-    def overlap_size( self, thing ):
+    def overlap_size_with( self, thing ):
         '''
-        Returns True/False depending on whether the two LocatableThing objects have
-        even a single overlapping Location on the same molecule.
+        Returns None if no overlap found or not found on same molecule, else returns the number
+        of overlapping bases between the two features.
 
         Checks both to make sure they're both located on the same molecule before comparing coordinates,
         ignoring strandedness.
+
+        Warning: Does not check child features, which may be significant.  If you want to compare
+        the exons of a transcript with the segmented match_parts of an alignment, for example
+        this would only compare their overall ranges (assuming you passed transcript and match features
+        for the comparison.)
         '''
-        ## see if either are located on the same thing
-        for ref_location in self.locations:
-            for qry_location in thing.locations:
-                if ref_location.on.id == qry_location.on.id:
-                    ## if so, see if they have overlapping coordinates
-                    ## it's easier to negate an overlap
-                    if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
-                        return False
+        locs = self.shared_molecule_locations_with(thing)
 
-        ## if there were an overlap we would have reached it when looping, so now return False
-        return True
+        if locs is None:
+            return None
 
-    
+        ref_location = locs[0]
+        qry_location = locs[1]
+
+        ## first catch any which don't overlap. this makes the other tests easier
+        if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
+            return None
+        # overlap on right end of ref, left of qry
+        elif ref_location.fmax >= qry_location.fmin:
+            return ref_location.fmax - qry_location.fmin
+        # overlap on left end of ref, right of qry
+        elif ref_location.fmin <= qry_location.fmax:
+            return qry_location.fmax - ref_location.fmin
+        # is the reference contained within the qry?
+        elif ref_location.fmin >= qry_location.fmin and ref_location.fmax <= qry_location.fmax:
+            return ref_location.fmax - ref_location.fmin
+        # is the query contained within the ref?
+        elif qry_location.fmin >= ref_location.fmin and qry_location.fmax <= ref_location.fmax:
+            return qry_location.fmax - qry_location.fmin
+        else:
+            raise Exception("ERROR: uncaught orientation in overlap_size_with between {0} and {1}".format(self.id, thing.id))
+        
+        
     def overlaps_max_side_of( self, thing=None, on=None ):
         '''
         Returns True/False depending on whether the two LocatableThing objects have
@@ -322,6 +341,16 @@ class LocatableThing:
             return True
         else:
             return False
+
+    def shared_molecule_locations_with( self, thing ):
+        ## see if either are located on the same thing
+        for ref_location in self.locations:
+            for qry_location in thing.locations:
+                if ref_location.on.id == qry_location.on.id:
+                    return [ref_location, qry_location]
+
+        ## if we got this far, one wasn't found
+        return None
 
 
 class Location:
