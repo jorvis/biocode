@@ -251,13 +251,13 @@ class LocatableThing:
         # overlap on right end of ref, left of qry
         # ref:   -------------------
         # qry:            -------------------
-        elif ref_location.fmax <= qry_location.fmax:
+        elif ref_location.fmax <= qry_location.fmax and ref_location.fmin < qry_location.fmin:
             return ref_location.fmax - qry_location.fmin
         
         # overlap on left end of ref, right of qry
         # ref:           -------------------
         # qry:   -------------------
-        elif ref_location.fmin >= qry_location.fmin:
+        elif ref_location.fmin >= qry_location.fmin and ref_location.fmax > qry_location.fmax:
             return qry_location.fmax - ref_location.fmin
         
         # is the reference contained within the qry?
