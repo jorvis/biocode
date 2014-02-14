@@ -625,14 +625,25 @@ class RNA( LocatableThing ):
         self.children = _initialize_type_list(self.children, 'CDS')
         self.children = _initialize_type_list(self.children, 'polypeptide')
 
+    def add_CDS(self, cds):
+        self.children['CDS'].append(cds)
+        
     def add_exon(self, exon):
         self.children['exon'].append(exon)
 
-    def add_CDS(self, cds):
-        self.children['CDS'].append(cds)
-
     def add_polypeptide(self, polypeptide):
         self.children['polypeptide'].append(polypeptide)
+
+    def CDSs(self):
+        ## Why not "CDSes"?  As a grammarian, this gave me fits.  There are many references
+        #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
+        #  http://oxforddictionaries.com/definition/american_english/SOS
+        #
+        # This method was added for consistency of usage and naming, but it really returns an array
+        #  of the CDS fragments in spliced genes.  If you want the contiguous sequence, use get_CDS_residues()
+        #
+        # Note that this is not guaranteed to return the CDSs in sorted chromosomal order
+        return self.children['CDS']
 
     def delete_CDS(self, cds_to_remove):
         idx = 0
@@ -648,17 +659,6 @@ class RNA( LocatableThing ):
         
     def exons(self):
         return self.children['exon']
-
-    def CDSs(self):
-        ## Why not "CDSes"?  As a grammarian, this gave me fits.  There are many references
-        #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
-        #  http://oxforddictionaries.com/definition/american_english/SOS
-        #
-        # This method was added for consistency of usage and naming, but it really returns an array
-        #  of the CDS fragments in spliced genes.  If you want the contiguous sequence, use get_CDS_residues()
-        #
-        # Note that this is not guaranteed to return the CDSs in sorted chromosomal order
-        return self.children['CDS']
 
     def get_CDS_residues(self):
         if len(self.locations) == 0:
@@ -683,9 +683,12 @@ class RNA( LocatableThing ):
 
         return residues
     
-    def polypeptides(self):
-        return self.children['polypeptide']
-
+    def has_introns( self ):
+        if len( self.exons() ) > 1:
+            return True
+        else:
+            return False
+    
     def introns(self, on=None):
         '''
         Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
@@ -714,11 +717,8 @@ class RNA( LocatableThing ):
 
         return intron_objs
     
-    def has_introns( self ):
-        if len( self.exons() ) > 1:
-            return True
-        else:
-            return False
+    def polypeptides(self):
+        return self.children['polypeptide']
 
         
 class mRNA( RNA ):
