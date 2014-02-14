@@ -240,21 +240,35 @@ class LocatableThing:
             return None
 
         ref_location = locs[0]
+        #print("DEBUG: ref location is {0}-{1}".format(ref_location.fmin, ref_location.fmax) )
         qry_location = locs[1]
+        #print("DEBUG: qry location is {0}-{1}".format(qry_location.fmin, qry_location.fmax) )
 
         ## first catch any which don't overlap. this makes the other tests easier
         if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
             return None
+        
         # overlap on right end of ref, left of qry
-        elif ref_location.fmax >= qry_location.fmin:
+        # ref:   -------------------
+        # qry:            -------------------
+        elif ref_location.fmax <= qry_location.fmax:
             return ref_location.fmax - qry_location.fmin
+        
         # overlap on left end of ref, right of qry
-        elif ref_location.fmin <= qry_location.fmax:
+        # ref:           -------------------
+        # qry:   -------------------
+        elif ref_location.fmin >= qry_location.fmin:
             return qry_location.fmax - ref_location.fmin
+        
         # is the reference contained within the qry?
+        # ref:      ------------
+        # qry:   -------------------        
         elif ref_location.fmin >= qry_location.fmin and ref_location.fmax <= qry_location.fmax:
             return ref_location.fmax - ref_location.fmin
+        
         # is the query contained within the ref?
+        # ref:   -------------------
+        # qry:      -------------    
         elif qry_location.fmin >= ref_location.fmin and qry_location.fmax <= ref_location.fmax:
             return qry_location.fmax - qry_location.fmin
         else:
