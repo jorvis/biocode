@@ -79,6 +79,20 @@ def main():
     else:
         print("INFO: overlaps_with() negative check successful")
 
+###########################################################################################
+    overlap_size = features['TP03_0012.t01_polypeptide'].overlap_size_with(features['TP03_0012.t01_CDS-auto15079'])
+
+    if overlap_size == 224:
+        print("INFO: overlap_size_with() positive check successful")
+    else:
+        print("ERROR: overlap_size_with() positive check unsuccessful (overlap returned: {0})".format(overlap_size))
+
+    if features['TP03_0012.t01_polypeptide'].overlap_size_with(features['TP03_0012.t01_CDS-auto15085']) == 224:
+        print("INFO: overlap_size_with() negative check unsuccessful")
+    else:
+        print("ERROR: overlap_size_with() negative check successful")
+        
+
 
 if __name__ == '__main__':
     main()
