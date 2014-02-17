@@ -573,10 +573,11 @@ class Match( LocatableThing ):
     Future mod: Add Annotation object to store info on the match?
     '''
     
-    def __init__( self, id=None, subclass=None, locations=None, parts=None, length=None ):
+    def __init__( self, id=None, subclass=None, target_id=None, locations=None, parts=None, length=None ):
         super().__init__(locations)
         self.id = id
         self.subclass = subclass   # allows you to define specific classes (cDNA_match, etc.)
+        self.target_id = target_id
         self.parts = parts   # these are MatchPart objects
         self.length = length
 
