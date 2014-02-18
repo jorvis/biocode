@@ -649,6 +649,9 @@ class RNA( LocatableThing ):
     def add_polypeptide(self, polypeptide):
         self.children['polypeptide'].append(polypeptide)
 
+    def CDS_count(self):
+        return len(self.CDSs())
+        
     def CDSs(self):
         ## Why not "CDSes"?  As a grammarian, this gave me fits.  There are many references
         #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
@@ -671,6 +674,9 @@ class RNA( LocatableThing ):
             idx += 1
         else:
             raise Exception("ERROR: Attempt to delete a CDS ({0}) which wasn't found as a child of this RNA ({1}".format(cds.id, self.id))
+
+    def exon_count(self):
+        return len(self.exons())
         
     def exons(self):
         return self.children['exon']
