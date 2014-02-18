@@ -511,6 +511,9 @@ class Gene( LocatableThing ):
         self.children = _initialize_type_list(self.children, 'rRNA')
         self.children = _initialize_type_list(self.children, 'tRNA')
 
+    def __hash__(self):
+        return hash(self.id)
+    
     def add_mRNA(self, rna):
         self.children['mRNA'].append(rna)
     
@@ -639,6 +642,9 @@ class RNA( LocatableThing ):
         self.children = _initialize_type_list(self.children, 'exon')
         self.children = _initialize_type_list(self.children, 'CDS')
         self.children = _initialize_type_list(self.children, 'polypeptide')
+
+    def __hash__(self):
+        return hash(self.id)
 
     def add_CDS(self, cds):
         self.children['CDS'].append(cds)
