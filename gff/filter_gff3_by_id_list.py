@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-This script is used if you want to filter a FASTA file by IDs but also maintain any relationships 
+This script is used if you want to filter a GFF3 file by IDs but also maintain any relationships 
 defined within the file.  That is, if you have a list of mRNA identifiers and want to keep them, 
 but also wanted to keep any associated exons, CDS, etc.
 
