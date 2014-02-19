@@ -523,6 +523,9 @@ class Gene( LocatableThing ):
     def add_tRNA(self, rna):
         self.children['tRNA'].append(rna)
 
+    def mRNA_count(self):
+        return len(self.mRNAs())
+        
     def mRNAs(self):
         return self.children['mRNA']
 
@@ -546,6 +549,12 @@ class Gene( LocatableThing ):
         else:
             raise Exception("ERROR: the print_as method only accepts values of 'text' or 'gff3'")
 
+    def remove_mRNA(self, rna):
+        if rna in self.children['mRNA']:
+            self.children['mRNA'].remove(rna)
+        else:
+            raise Exception("ERROR: Can't remove mRNA {0} from gene {1} because it wasn't found".format(rna.id, self.id))
+    
 
 class Intron( LocatableThing ):
     '''
