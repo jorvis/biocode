@@ -24,7 +24,6 @@ NODE_19891_length_98951_cov_9.347667    nap     match_part      41560   41601   
 def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
 
-    ## output file to be written
     parser.add_argument('-a', '--organism1_annotation', type=str, required=True, help='Annotation GFF for organism 1' )
     parser.add_argument('-p', '--organism1_aat_alignments', type=str, required=True, help='Path to AAT GFF3 (match/match_part)' )
     parser.add_argument('-aatdb', '--aat_fasta_db', type=str, required=True, help='Path to FASTA database that was used in AAT' )
@@ -32,7 +31,7 @@ def main():
     parser.add_argument('-be', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='BLAST e-value cutoff' )
     parser.add_argument('-bpi', '--blast_percent_identity_cutoff', type=float, required=False, default=0, help='BLAST %identity cutoff' )
     parser.add_argument('-ppc', '--aat_percent_coverage_cutoff', type=float, required=False, default=0, help='% coverage of the query protein by the AAT match' )
-    #parser.add_argument('-o2a', '--organism2_annotation', type=str, required=True, help='Annotation GFF for organism 2' )
+    parser.add_argument('-o', '--output_id_list', type=str, required=True, help='List of IDs from organism1 that passed' )
     args = parser.parse_args()
 
     print("INFO: Parsing organism1 annotation")
@@ -152,6 +151,10 @@ def main():
             o1_with_o2.append(o1_mRNA_id)
 
     print("INFO: Found {0} mRNAs in org1 with overlapping AAT coordinates and BLAST hit to org2".format(len(o1_with_o2)))
+
+    id_list_fh = open(args.output_id_list, 'wt')
+    for mRNA_id in o1_with_o2:
+        id_list_fh.write("{0}\n".format(mRNA_id))
 
 
 if __name__ == '__main__':
