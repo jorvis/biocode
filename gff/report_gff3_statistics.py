@@ -8,6 +8,9 @@ though can be expanded as desired.
 The output is a tab-delimited file where the first column is the description
 of a statistic and the second is the value.
 
+Warning:  If you parse this output you'll need to skip blank lines and any
+which begin with the # symbol.
+
 Follow the GFF3 specification!
 
 Author:  Joshua Orvis
@@ -37,6 +40,9 @@ def main():
     type_counts = defaultdict(int)
     type_lengths = defaultdict(int)
     assembly_lengths_found = False
+
+    # key is number of exons, value is number of mRNAs with that many
+    CDS_profile = defaultdict(int)
         
     for assembly_id in assemblies:
         type_counts['assembly'] += 1
@@ -52,6 +58,7 @@ def main():
             for mRNA in gene.mRNAs():
                 type_counts['mRNA'] += 1
                 type_lengths['mRNA'] += mRNA.length
+                CDS_profile[mRNA.CDS_count()] += 1
 
                 for exon in mRNA.exons():
                     type_counts['exon'] += 1
@@ -67,20 +74,29 @@ def main():
         ofh.write("Assembly length\t{0}\n".format(type_lengths['assembly']))
     else:
         ofh.write("Assembly length\tN/A (no FASTA data in GFF?)\n")
+
+    mRNAs_per_gene_mean = type_counts['mRNA'] / type_counts['gene']
+    exons_per_mRNA_mean = type_counts['exon'] / type_counts['mRNA']
+    CDS_per_mRNA_mean = type_counts['CDS fragments'] / type_counts['mRNA']
     
-    
-    ofh.write("Gene count\t{0}\n".format(type_counts['gene']))
+    ofh.write("\nGene count\t{0}\n".format(type_counts['gene']))
     ofh.write("Gene length (sum)\t{0}\n".format(type_lengths['gene']))
     
-    ofh.write("mRNA count\t{0}\n".format(type_counts['mRNA']))
+    ofh.write("\nmRNA count\t{0}\n".format(type_counts['mRNA']))
     ofh.write("mRNA length (sum)\t{0}\n".format(type_lengths['mRNA']))
+    ofh.write("mRNAs per gene (mean)\t{:.3}\n".format(mRNAs_per_gene_mean) )
     
-    ofh.write("exon count\t{0}\n".format(type_counts['exon']))
+    ofh.write("\nexon count\t{0}\n".format(type_counts['exon']))
     ofh.write("exon length (sum)\t{0}\n".format(type_lengths['exon']))
+    ofh.write("exons per mRNA (mean)\t{:.3}\n".format(exons_per_mRNA_mean) )
 
-    ofh.write("CDS count\t{0}\n".format(type_counts['CDS fragments']))
+    ofh.write("\nCDS count\t{0}\n".format(type_counts['CDS fragments']))
     ofh.write("CDS fragment length (sum)\t{0}\n".format(type_lengths['CDS fragments']))
-        
+    ofh.write("CDS per mRNA (mean)\t{:.3}\n".format(CDS_per_mRNA_mean) )
+    
+    ofh.write("\n# CDS fragment composition profile\n")
+    for cds_count in sorted(CDS_profile):
+        ofh.write("mRNAs with {0} CDS\t{1}\n".format(cds_count, CDS_profile[cds_count]) )
 
 if __name__ == '__main__':
     main()
