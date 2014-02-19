@@ -63,20 +63,23 @@ def main():
                     
 
     ofh.write("Assembly count\t{0}\n".format(type_counts['assembly']))
-    ofh.write("Gene count\t{0}\n".format(type_counts['gene']))
-    ofh.write("mRNA count\t{0}\n".format(type_counts['mRNA']))
-    ofh.write("exon count\t{0}\n".format(type_counts['exon']))
-    ofh.write("CDS count\t{0}\n".format(type_counts['CDS fragments']))
-
     if assembly_lengths_found:
         ofh.write("Assembly length\t{0}\n".format(type_lengths['assembly']))
     else:
         ofh.write("Assembly length\tN/A (no FASTA data in GFF?)\n")
-        
-    ofh.write("Gene length\t{0}\n".format(type_lengths['gene']))
-    ofh.write("mRNA length\t{0}\n".format(type_lengths['mRNA']))
-    ofh.write("exon length\t{0}\n".format(type_lengths['exon']))
-    ofh.write("CDS fragment length\t{0}\n".format(type_lengths['CDS fragments']))
+    
+    
+    ofh.write("Gene count\t{0}\n".format(type_counts['gene']))
+    ofh.write("Gene length (sum)\t{0}\n".format(type_lengths['gene']))
+    
+    ofh.write("mRNA count\t{0}\n".format(type_counts['mRNA']))
+    ofh.write("mRNA length (sum)\t{0}\n".format(type_lengths['mRNA']))
+    
+    ofh.write("exon count\t{0}\n".format(type_counts['exon']))
+    ofh.write("exon length (sum)\t{0}\n".format(type_lengths['exon']))
+
+    ofh.write("CDS count\t{0}\n".format(type_counts['CDS fragments']))
+    ofh.write("CDS fragment length (sum)\t{0}\n".format(type_lengths['CDS fragments']))
         
 
 if __name__ == '__main__':
