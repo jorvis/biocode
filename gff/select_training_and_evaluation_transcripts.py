@@ -81,44 +81,18 @@ def main():
     export_mRNAs_to_file(evaluation_mRNAs, args.output_evaluation_file)
     
     
-def export_mRNAs_to_file( mRNAs2keep, f ):
+def export_mRNAs_to_file( mRNAs, f ):
     fh = open(f, 'wt')
     fh.write("##gff-version 3\n")
 
     genes_to_print = list()
 
-    for mRNA in mRNAs2keep:
+    for mRNA in mRNAs:
         if mRNA.parent not in genes_to_print:
             genes_to_print.append(mRNA.parent)
 
-    print("DEBUG: genes_to_print count: {0}".format(len(genes_to_print)) )
-
     for gene in sorted(genes_to_print):
-        # ERRORS HERE.  Extra mRNAs get exported, even if I try to make this next line be a list copy.
-        mRNAs_to_check = list(gene.mRNAs())
-        mRNAs_to_check_count = len(mRNAs_to_check)
-
-        print("DEBUG: checking {0} mRNAs for gene {1}".format(mRNAs_to_check_count, gene.id) )
-        for mRNA in mRNAs_to_check:
-            print("\tneed to check: {0}".format(mRNA.id) )
-        
-        for mRNA in mRNAs_to_check:
-            print("\tchecking mRNA {0}".format(mRNA.id) )
-            mRNAs_to_check_count -= 1
-            
-            if mRNA not in mRNAs2keep:
-                print("\t\tremoving mRNA {0}".format(mRNA.id))
-                gene.remove_mRNA(mRNA)
-            else:
-                print("\t\tkeeping mRNA {0}".format(mRNA.id))
-
-        if mRNAs_to_check_count != 0:
-            print("ERROR! mRNAs_checked != mRNAs_to_check")
-
-        for mRNA in gene.mRNAs():
-            if mRNA not in mRNAs2keep:
-                print("ERROR: failed to remove mRNA {0}".format(mRNA.id))
-
+        gene.children['mRNA'] = [item for item in gene.children['mRNA'] if item in mRNAs]
         gene.print_as(fh=fh, source='SOURCE', format='gff3')
 
 if __name__ == '__main__':
