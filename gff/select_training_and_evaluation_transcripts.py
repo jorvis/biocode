@@ -37,6 +37,9 @@ def main():
     parser.set_defaults(retain_composition=False)
     args = parser.parse_args()
 
+    if args.retain_composition is True:
+        raise Exception("ERROR: --retain_composition option not yet implemented")
+
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
 
     # key: exon count, value = list of mRNA objects with that count
@@ -85,16 +88,29 @@ def export_mRNAs_to_file( mRNAs, f ):
     fh = open(f, 'wt')
     fh.write("##gff-version 3\n")
 
+    mRNA_ids = dict()
     genes_to_print = list()
 
     for mRNA in mRNAs:
+        mRNA_ids[mRNA.id] = 1
         if mRNA.parent not in genes_to_print:
             genes_to_print.append(mRNA.parent)
 
     for gene in sorted(genes_to_print):
-        gene.children['mRNA'] = [item for item in gene.children['mRNA'] if item in mRNAs]
-        gene.print_as(fh=fh, source='SOURCE', format='gff3')
+        mRNAs_to_keep = []
+        original_mRNAs = []
 
+        for mRNA in gene.mRNAs():
+            original_mRNAs.append(mRNA)
+            
+            if mRNA.id in mRNA_ids:
+                mRNAs_to_keep.append(mRNA)
+
+        gene.children['mRNA'] = mRNAs_to_keep
+        gene.print_as(fh=fh, source='SOURCE', format='gff3')
+        gene.children['mRNA'] = original_mRNAs
+
+    
 if __name__ == '__main__':
     main()
 
