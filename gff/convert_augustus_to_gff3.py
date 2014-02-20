@@ -21,7 +21,7 @@ gene model, defined here:
 http://www.sequenceontology.org/gff3.shtml
 
 WARNING: The augustus output format appears to change pretty frequently.  I've provided
-an example of the expected input below, and the version I tested with is 2.7
+an example of the expected input below, and the versions I tested with are 2.7 and 3.0.1
 
 WARNING: Only the gene/transcript/CDS rows are kept (and exon rows are created).  All
 others are discarded.
@@ -112,6 +112,9 @@ def main():
             mol_id = cols[0]
             feat_type = cols[2]
 
+            if feat_type not in ['gene', 'transcript', 'CDS']:
+                continue
+
             ## The output format is GTF by default and (mostly) GFF if the --gff option is used.
             #   If GTF is detected, let's start by transforming the 9th column into GFF so the
             #   libraries can use it
@@ -121,25 +124,24 @@ def main():
             m_gene = re.match('(g\d+)', cols[8])
             m_transcript = re.match('((g\d+).t\d+)', cols[8])
             m_CDS = re.match('transcript_id "(g\d+.t\d+)"; gene_id "g\d+";', cols[8])
-            
-            if feat_type == 'gene':
-                if m_gene:
-                    cols[8] = "ID={0}".format(m_gene.group(1))
-                else:
-                    raise Exception("ERROR: GTF detected but gene row has bad 9th column format: {0}".format(cols[8]))
-            elif feat_type == 'transcript':
-                if m_transcript:
-                    cols[8] = "ID={0};Parent={1}".format(m_transcript.group(1), m_transcript.group(2))
-                else:
-                    raise Exception("ERROR: GTF detected but transcript row has bad 9th column format: {0}".format(cols[8]))
-            elif feat_type == 'CDS':
-                if m_CDS:
-                    cols[8] = "ID={0}.cds;Parent={0}".format(m_CDS.group(1))
-                else:
-                    raise Exception("ERROR: GTF detected but CDS row has bad 9th column format: {0}".format(cols[8]))
-            else:
-                ## we only currently care about gene/transcript and CDS feature rows
-                continue
+
+            # the input can be in GTF or GFF.  We need to reformat the 9th column for the GTF entries
+            if not cols[8].startswith('ID') and not cols[8].startswith('Parent'):
+                if feat_type == 'gene':
+                    if m_gene:
+                        cols[8] = "ID={0}".format(m_gene.group(1))
+                    else:
+                        raise Exception("ERROR: GTF detected but gene row has bad 9th column format: {0}".format(cols[8]))
+                elif feat_type == 'transcript':
+                    if m_transcript:
+                        cols[8] = "ID={0};Parent={1}".format(m_transcript.group(1), m_transcript.group(2))
+                    else:
+                        raise Exception("ERROR: GTF detected but transcript row has bad 9th column format: {0}".format(cols[8]))
+                elif feat_type == 'CDS':
+                    if m_CDS:
+                        cols[8] = "ID={0}.cds;Parent={0}".format(m_CDS.group(1))
+                    else:
+                        raise Exception("ERROR: GTF detected but CDS row has bad 9th column format: {0}".format(cols[8]))
 
             feat_id = biocodegff.column_9_value(cols[8], 'ID')
 
