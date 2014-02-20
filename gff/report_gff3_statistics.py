@@ -94,9 +94,10 @@ def main():
     ofh.write("CDS fragment length (sum)\t{0}\n".format(type_lengths['CDS fragments']))
     ofh.write("CDS per mRNA (mean)\t{:.3}\n".format(CDS_per_mRNA_mean) )
     
-    ofh.write("\n# CDS fragment composition profile\n")
+    ofh.write("\n# CDS fragment composition profile: count<tab>percentage\n")
     for cds_count in sorted(CDS_profile):
-        ofh.write("mRNAs with {0} CDS\t{1}\n".format(cds_count, CDS_profile[cds_count]) )
+        perc = (CDS_profile[cds_count] / type_counts['mRNA']) * 100
+        ofh.write("mRNAs with {0} CDS\t{1}\t{2:.3}\n".format(cds_count, CDS_profile[cds_count], perc) )
 
 if __name__ == '__main__':
     main()
