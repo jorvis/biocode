@@ -31,8 +31,12 @@ def main():
     parser.add_argument('-be', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='BLAST e-value cutoff' )
     parser.add_argument('-bpi', '--blast_percent_identity_cutoff', type=float, required=False, default=0, help='BLAST %identity cutoff' )
     parser.add_argument('-ppc', '--aat_percent_coverage_cutoff', type=float, required=False, default=0, help='% coverage of the query protein by the AAT match' )
-    parser.add_argument('-o', '--output_id_list', type=str, required=True, help='List of IDs from organism1 that passed' )
+    parser.add_argument('-o', '--output_id_list', type=str, required=False, help='List of IDs from organism1 that passed' )
     args = parser.parse_args()
+
+    ## if the output file wasn't passed build one from the other parameters
+    if args.output_id_list is None:
+        args.output_id_list = "training_ids.be_{0}.bpi_{1}.ppc_{2}.list".format(args.blast_eval_cutoff, args.blast_percent_identity_cutoff, args.aat_percent_coverage_cutoff)
 
     print("INFO: Parsing organism1 annotation")
     (assemblies, features) = biocodegff.get_gff3_features( args.organism1_annotation )
