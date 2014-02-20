@@ -75,24 +75,34 @@ def main():
     else:
         ofh.write("Assembly length\tN/A (no FASTA data in GFF?)\n")
 
+    gene_length_mean = type_lengths['gene'] / type_counts['gene']
+    mRNA_length_mean = type_lengths['mRNA'] / type_counts['mRNA']
+    exon_length_mean = type_lengths['exon'] / type_counts['exon']
+    CDS_length_mean = type_lengths['CDS fragments'] / type_counts['CDS fragments']
+
     mRNAs_per_gene_mean = type_counts['mRNA'] / type_counts['gene']
     exons_per_mRNA_mean = type_counts['exon'] / type_counts['mRNA']
     CDS_per_mRNA_mean = type_counts['CDS fragments'] / type_counts['mRNA']
     
     ofh.write("\nGene count\t{0}\n".format(type_counts['gene']))
+    ofh.write("Gene length (mean)\t{0:.1f}\n".format(gene_length_mean))
     ofh.write("Gene length (sum)\t{0}\n".format(type_lengths['gene']))
     
+    
     ofh.write("\nmRNA count\t{0}\n".format(type_counts['mRNA']))
+    ofh.write("mRNA length (mean)\t{0:.1f}\n".format(mRNA_length_mean))
     ofh.write("mRNA length (sum)\t{0}\n".format(type_lengths['mRNA']))
-    ofh.write("mRNAs per gene (mean)\t{:.3}\n".format(mRNAs_per_gene_mean) )
+    ofh.write("mRNAs per gene (mean)\t{:.1f}\n".format(mRNAs_per_gene_mean) )
     
     ofh.write("\nexon count\t{0}\n".format(type_counts['exon']))
+    ofh.write("exon length (mean)\t{0:.1f}\n".format(exon_length_mean))
     ofh.write("exon length (sum)\t{0}\n".format(type_lengths['exon']))
-    ofh.write("exons per mRNA (mean)\t{:.3}\n".format(exons_per_mRNA_mean) )
+    ofh.write("exons per mRNA (mean)\t{:.1f}\n".format(exons_per_mRNA_mean) )
 
     ofh.write("\nCDS count\t{0}\n".format(type_counts['CDS fragments']))
+    ofh.write("CDS length (mean)\t{0:.1f}\n".format(CDS_length_mean))
     ofh.write("CDS fragment length (sum)\t{0}\n".format(type_lengths['CDS fragments']))
-    ofh.write("CDS per mRNA (mean)\t{:.3}\n".format(CDS_per_mRNA_mean) )
+    ofh.write("CDS per mRNA (mean)\t{:.1f}\n".format(CDS_per_mRNA_mean) )
     
     ofh.write("\n# CDS fragment composition profile: count<tab>percentage\n")
     for cds_count in sorted(CDS_profile):
