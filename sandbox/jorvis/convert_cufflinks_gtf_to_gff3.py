@@ -43,8 +43,17 @@ Caveats:
 
 OUTPUT example (--export_mode=cDNA_match):
 
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      4       3995    .       -       .       ID=CUFF.1.1
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      5052    6630    .       -       .       ID=CUFF.2.1
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      7857    10480   .       -       .       ID=CUFF.3.1
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      10101   10426   .       +       .       ID=CUFF.4.1
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      10447   10752   .       +       .       ID=CUFF.4.1
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      10775   10894   .       +       .       ID=CUFF.4.1
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      10916   11185   .       +       .       ID=CUFF.4.1
+ChromosomeIII_BmicrotiR1        Cufflinks       cDNA_match      11207   11275   .       +       .       ID=CUFF.4.1
+
 This type of output is required for tools like EVM.  It has only cDNA_match features which are
-segmented.  Each segment shares the same ID
+segmented.  Each segment shares the same ID but has no explicit Parent groupings.
 
 Author: Joshua Orvis (jorvis AT gmail)
 """
@@ -58,7 +67,7 @@ import biocodegff
 import biocodeutils
 
 def main():
-    parser = argparse.ArgumentParser( description='A GTF -> GFF3 conversion script')
+    parser = argparse.ArgumentParser( description='A GTF -> GFF3 conversion script for Cufflinks output')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GTF file' )
@@ -66,6 +75,9 @@ def main():
     parser.add_argument('-e', '--export_mode', type=str, required=False, default='model', help='Export mode for results (model or cDNA_match)' )
     args = parser.parse_args()
 
+    if args.export_mode not in ['model', 'cDNA_match']:
+        raise Exception("ERROR: the only valid values for --export_mode are 'model' or 'cDNA_match'")
+    
     ## output will either be a file or STDOUT
     ofh = sys.stdout
     if args.output_file is not None:
