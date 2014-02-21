@@ -236,7 +236,7 @@ class LocatableThing:
         '''
         locs = self.shared_molecule_locations_with(thing)
 
-        if locs is None:
+        if locs[0] is None:
             return None
 
         ref_location = locs[0]
@@ -364,7 +364,7 @@ class LocatableThing:
                     return [ref_location, qry_location]
 
         ## if we got this far, one wasn't found
-        return None
+        return [None, None]
 
 
 class Location:
@@ -599,6 +599,24 @@ class Match( LocatableThing ):
         if self.parts is None:
             self.parts = list()
 
+    #def __repr__(self):
+    #    '''
+    #    Prints a string representation of the match along with it's match_parts
+    #    '''
+    #    lines = list()
+    #    lines.append("Match - id:{0}, subclass:{1}, target_id:{2}, length:{3}".format( \
+    #                  self.id, self.subclass, self.target_id, self.length))
+    #    lines.append("\tlocations: {0}".format(len(self.locations)) )
+    #    lines.append("\tmatch_parts: {0}".format(len(self.parts)) )
+
+    #    for mp in self.parts:
+    #        print(mp)
+    #        lines.append("\t\tMatchPart - id:{0}, parent_id:{1}, length{2}".format( \
+    #                  mp.id, mp.parent.id, mp.length))
+    #        lines.append("\t\t\tlocations: {0}".format(len(self.locations)) )
+
+    #    return "\n".join(lines)
+
     def add_part(self, part):
         self.parts.append(part)
 
@@ -619,6 +637,18 @@ class MatchPart( LocatableThing ):
         self.id = id
         self.parent = parent  # this should be a Match object
         self.length = length
+
+    #def __repr__(self):
+    #    '''
+    #    Prints a string representation of the match_part along with it's locations
+    #    '''
+    #    lines = list()
+    #    lines.append("MatchPart - id:{0}, parent_id:{1}, length{2}".format( \
+    #                  self.id, self.parent.id, self.length))
+    #    lines.append("\tlocations: {0}".format(len(self.locations)) )
+
+    #    return "\n".join(lines)
+        
 
 
 class Polypeptide( LocatableThing ):
