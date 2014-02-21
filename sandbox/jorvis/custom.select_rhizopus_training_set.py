@@ -19,6 +19,10 @@ NODE_19891_length_98951_cov_9.347667    nap     nucleotide_to_protein_match     
 NODE_19891_length_98951_cov_9.347667    nap     match_part      35357   35498   .       +       .       ID=match_part.493339;Parent=nucleotide_to_protein_match.158742;Target=jgi|Copci1|10482|CC1G_12482T0 317 364a
 NODE_19891_length_98951_cov_9.347667    nap     match_part      36352   36741   .       +       .       ID=match_part.493340;Parent=nucleotide_to_protein_match.158742;Target=jgi|Copci1|10482|CC1G_12482T0 365 490
 NODE_19891_length_98951_cov_9.347667    nap     match_part      41560   41601   .       +       .       ID=match_part.493341;Parent=nucleotide_to_protein_match.158742;Target=jgi|Copci1|10482|CC1G_12482T0 491 504
+
+Test command:
+~/git/biocode/sandbox/jorvis/custom.select_rhizopus_training_set.py -a 99-892.augustus.gff3 -p aat.fungi_jgi.match_and_parts.gff3 -aatdb fungi_jgi.faa -b augustus_blast_vs_99-880.btab -be 1e-30 -bpi 75 -ppc 80
+
 """
 
 def main():
@@ -34,6 +38,8 @@ def main():
     parser.add_argument('-o', '--output_id_list', type=str, required=False, help='List of IDs from organism1 that passed' )
     args = parser.parse_args()
 
+    debugging_transcript = None
+    
     ## if the output file wasn't passed build one from the other parameters
     if args.output_id_list is None:
         args.output_id_list = "training_ids.be_{0}.bpi_{1}.ppc_{2}.list".format(args.blast_eval_cutoff, args.blast_percent_identity_cutoff, args.aat_percent_coverage_cutoff)
@@ -53,7 +59,7 @@ def main():
     o1_with_aat = list()
     o1_with_o2 = list()
 
-    print("INFO: Parsing organism1 protein alignments")
+    print("INFO: Parsing organism1 AAT protein alignments")
     for line in open(args.organism1_aat_alignments):
         cols = line.split("\t")
 
@@ -89,8 +95,8 @@ def main():
         elif cols[2] == 'match_part':
             parent_id = biocodegff.column_9_value(cols[8], 'Parent').replace('"', '')
             match_part = biothings.MatchPart( id=feature_id, parent=parent_id, length=fmax - fmin )
+            match_part.locate_on( target=assemblies[assembly_id], fmin=fmin, fmax=fmax, strand=strand )
             current_match.add_part(match_part)
-
 
     print("INFO: Parsed {0} protein alignment chains".format(aat_match_count))
 
@@ -104,7 +110,14 @@ def main():
         for gene in assembly.genes():
             for mRNA in gene.mRNAs():
 
+                if debugging_transcript is not None:
+                    if mRNA.id == debugging_transcript:
+                        print("DEBUG: processing debugging transcript: {0}".format(mRNA.id))
+                    else:
+                        continue
+
                 for aat_match in aat_matches[assembly_id]:
+                    #print("DEBUG: about to call overlap_size_with {0} and {1}, which has {2} segments".format(mRNA.id, aat_match.id, len(aat_match.parts)) )
                     overlap_size = mRNA.overlap_size_with(aat_match)
 
                     if overlap_size is not None:
@@ -116,17 +129,19 @@ def main():
                         if aat_match.target_id not in aat_seqs:
                             raise Exception("ERROR: Found match with target ID ({0}) but didn't find a FASTA entry for it via -aatdb".format(aat_match.target_id))
 
-                        # 
                         # this is a protein length, so x3
                         match_target_length = len(aat_seqs[aat_match.target_id]['s']) * 3
-                        
-                        mRNA_percent_coverage = (overlap_size / mRNA.length) * 100
-                        target_percent_coverage = (overlap_size / match_target_length) * 100
 
-                        #if mRNA_percent_coverage >= args.aat_percent_coverage_cutoff and target_percent_coverage >= args.aat_percent_coverage_cutoff:
-                        if mRNA_percent_coverage == 100 and target_percent_coverage == 100:
+                        (mRNA_percent_coverage, target_percent_coverage) = calculate_fragmented_coverage(mRNA, aat_match, match_target_length)
+
+                        #print("DEBUG: mRNA_percent_coverage:{0}".format(mRNA_percent_coverage) )
+                        #print("DEBUG: match_percent_coverage:{0}".format(target_percent_coverage) )
+                        
+                        if mRNA_percent_coverage >= args.aat_percent_coverage_cutoff and target_percent_coverage >= args.aat_percent_coverage_cutoff:
                             o1_with_aat.append(mRNA.id)
-                            #print("DEBUG: {0}:({1}) overlaps (size:{2}) {3}:({4}), match target id:{5}, length:{6}".format(mRNA.id, mRNA.length, overlap_size, aat_match.id, aat_match.length, aat_match.target_id, match_target_length) )
+                            #print("DEBUG: {0}:({1}) overlaps (size:{2}) {3}:({4}), match target id:{5}, length:{6}".format( \
+                            #        mRNA.id, mRNA.length, overlap_size, aat_match.id, aat_match.length, \
+                            #        aat_match.target_id, match_target_length) )
                             #print("\tmRNA % cov: {0}".format(mRNA_percent_coverage))
                             #print("\ttarget % cov: {0}".format(target_percent_coverage))
                             break   # only need to see if one matched
@@ -159,6 +174,49 @@ def main():
     id_list_fh = open(args.output_id_list, 'wt')
     for mRNA_id in o1_with_o2:
         id_list_fh.write("{0}\n".format(mRNA_id))
+
+
+def calculate_fragmented_coverage( rna, match, match_part_length ):
+    """
+    This will not return a correct value if there are overlapping segments of a
+    match, which shouldn't happen anyway.
+    """
+    if not rna.overlaps_with( match ):
+        raise Exception("ERROR: {0} and {1} were expected to overlap but don't seem to".format(CDS.id, mp.id))
+
+    rna_part_length = 0
+
+    rna_parts_bases_covered = 0
+    match_parts_bases_covered = 0
+
+    for CDS in rna.CDSs():
+        rna_part_length += CDS.length
+        
+        for mp in match.parts:
+            (rna_loc, match_loc) = rna.shared_molecule_locations_with( mp )
+
+            if rna_loc is None:
+                continue
+
+            overlap_size = CDS.overlap_size_with(mp)
+
+            if overlap_size is not None:
+                rna_parts_bases_covered += overlap_size
+                match_parts_bases_covered += overlap_size
+                #print("\tDEBUG: overlap: {0}:{1:.1f} - {2}:{3:.1f}".format(CDS.id, ((overlap_size/CDS.length)*100), mp.id, ((overlap_size/mp.length)*100)) )
+                break
+            #else:
+            #    print("\tDEBUG: {0} doesn't seem to overlap {1}".format(CDS.id, mp.id) )
+
+    rna_covered = (rna_parts_bases_covered / rna_part_length) * 100
+    match_covered = (match_parts_bases_covered / match_part_length) * 100
+
+    # Some buffer seems to be necessary.  I need to track this later.
+    #if rna_covered > 105 or match_covered > 105:
+    #    raise Exception("ERROR: coverage % logically too high between {0}:{1} and {2}:{3}:length-{4}".format(rna.id, rna_covered, match.id, match_covered, match_part_length) )
+    
+    return (rna_covered, match_covered)
+        
 
 
 if __name__ == '__main__':
