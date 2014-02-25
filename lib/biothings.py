@@ -656,11 +656,12 @@ class Polypeptide( LocatableThing ):
     SO definition (2013-05-22): "A sequence of amino acids linked by peptide bonds which may lack 
     appreciable tertiary structure and may not be liable to irreversible denaturation."
     '''
-    def __init__( self, id=None, locations=None, parent=None, length=None, annotation=None ):
+    def __init__( self, id=None, locations=None, parent=None, length=None, annotation=None, residues=None ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
         self.length = length
+        self.residues = residues
         
         ## this should be an instance of FunctionalAnnotation from bioannotation.py
         self.annotation = annotation
