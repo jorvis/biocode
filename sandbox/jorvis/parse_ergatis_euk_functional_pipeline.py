@@ -25,7 +25,7 @@ def main():
     parser.add_argument('-b', '--blast_btab_list', type=str, required=True, help='List of btab files from BLAST' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--unitprot_sprot_db', type=str, required=True, help='SQLite3 db with UNITPROT/SWISSPROT information' )
-    parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are "tab" or "gff3"' )
+    parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are: "tab", "fasta", "gff3"' )
     parser.add_argument('-s', '--source_gff', type=str, required=False, help='Source GFF file from which proteins were derived.  Required if you want to export any format other than tab-delimited.' )
     parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Optional output file path (else STDOUT)' )
@@ -70,6 +70,8 @@ def main():
 
     if args.format == 'tab':
         write_tab_results(fout, polypeptides)
+    elif args.format == 'fasta':
+        write_fasta_results(fout, polypeptides)
     elif args.format == 'gff3':
         write_gff3_results(fout, polypeptides, assemblies, features, args.genomic_fasta)
     
@@ -80,12 +82,12 @@ def main():
 
 def check_arguments( args ):
     # Check the acceptable values for format
-    if args.format not in ('tab', 'gff3'):
+    if args.format not in ('tab', 'gff3', 'fasta'):
         raise Exception("ERROR: The format provided ({0}) isn't supported.  Please check the documentation again.".format(args.format))
 
-    # The --source_gff argument is required unless --format=tab was specified
-    if args.source_gff is None and args.format != 'tab':
-        raise Exception("ERROR: You must pass the --source_gff argument unless --format=tab")
+    # The --source_gff argument is required if --format=gff3
+    if args.source_gff is None and args.format == 'gff3':
+        raise Exception("ERROR: You must pass the --source_gff argument if --format=gff3")
 
     # It doesn't make sense to pass --genomic_fasta if the --format isn't GFF3
     if args.genomic_fasta is not None and args.format != 'gff3':
@@ -114,6 +116,46 @@ def write_gff3_results( f, polypeptides, assemblies, features, genomic_fasta ):
             f.write(line)
 
 
+def write_fasta_results( f, polypeptides ):
+    """
+    Produces headers like:
+    >ID PRODUCT_NAME gene::GENE_SYMBOL ec::EC_NUMBERS go::GO_TERMS
+
+    Example:
+    
+    """
+    for polypeptide_id in polypeptides:
+        polypeptide = polypeptides[polypeptide_id]
+        go_string = ""
+        ec_string = ""
+
+        for go_annot in polypeptide.annotation.go_annotations:
+            go_string += "GO:{0},".format(go_annot.go_id)
+        
+        go_string = go_string.rstrip(',')
+
+        for ec_annot in polypeptide.annotation.ec_numbers:
+            ec_string += "{0},".format(ec_annot.number)
+        
+        ec_string = ec_string.rstrip(',')
+
+        header = "{0} {1}".format(polypeptide_id, polypeptide.annotation.product_name)
+
+        if polypeptide.annotation.gene_symbol is not None:
+            header = "{0} gene::{1}".format(header, polypeptide.annotation.gene_symbol)
+
+        if ec_string != "":
+            header = "{0} ec::{1}".format(header, ec_string)
+            
+        if go_string != "":
+            header = "{0} go::{1}".format(header, go_string)
+            
+        f.write( ">{0}\n".format( header ) )
+        f.write( "{0}\n".format( biocodeutils.wrapped_fasta(polypeptide.residues) ) )
+        
+        
+
+
 def write_tab_results( f, polypeptides ):
     f.write("# polypeptide ID\tpolypeptide_length\tgene_product_name\tGO_terms\tEC_nums\tgene_symbol\n")
 
@@ -124,11 +166,13 @@ def write_tab_results( f, polypeptides ):
 
         for go_annot in polypeptide.annotation.go_annotations:
             go_string += "GO:{0},".format(go_annot.go_id)
-            go_string = go_string.rstrip(',')
+        
+        go_string = go_string.rstrip(',')
 
         for ec_annot in polypeptide.annotation.ec_numbers:
             ec_string += "{0},".format(ec_annot.number)
-            ec_string = ec_string.rstrip(',')
+        
+        ec_string = ec_string.rstrip(',')
                 
         f.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format( \
                 polypeptide_id, polypeptide.length, polypeptide.annotation.product_name, go_string, ec_string, \
@@ -145,7 +189,7 @@ def initialize_polypeptides( fasta_file ):
     polypeptides = dict()
 
     for seq_id in seqs:
-        polypeptide = biothings.Polypeptide( id=seq_id, length=len(seqs[seq_id]['s']) )
+        polypeptide = biothings.Polypeptide( id=seq_id, length=len(seqs[seq_id]['s']), residues=seqs[seq_id]['s'] )
         annotation = bioannotation.FunctionalAnnotation(product_name=DEFAULT_PRODUCT_NAME)
         polypeptide.annotation = annotation
         
