@@ -131,8 +131,8 @@ def main():
 
     if args.pfam2go is not None:
         pfam2go = load_pfam2go(args.pfam2go)
-
-    print("DEBUG: loaded {0} pfam2go accessions".format(len(pfam2go)))
+        print("DEBUG: loaded {0} pfam2go accessions".format(len(pfam2go)))
+        
     #exit(0)
 
     # this creates it if it doesn't already exist
