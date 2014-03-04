@@ -133,14 +133,18 @@ def main():
         pfam2go = load_pfam2go(args.pfam2go)
         print("DEBUG: loaded {0} pfam2go accessions".format(len(pfam2go)))
         
-    #exit(0)
+    if os.path.isfile(args.output_db):
+        db_exists = True
+    else:
+        db_exists = False
 
     # this creates it if it doesn't already exist
     conn = sqlite3.connect(args.output_db)
     c = conn.cursor()
 
-    create_tables( c )
-    conn.commit()
+    if not db_exists:
+        create_tables( c )
+        conn.commit()
 
     # store attributes for each HMM as we encounter them.  These are inserted into the
     #  database at the end of each record
