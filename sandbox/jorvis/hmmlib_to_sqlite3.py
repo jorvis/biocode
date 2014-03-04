@@ -194,6 +194,7 @@ def add_hmm( atts, cur, pf2g ):
 
     accession = atts['ACC']
     version = None
+    ec_number = None
 
     # if this is a PFAM accession, split it into accession and version and
     #  set the isotype to 'pfam'
@@ -203,8 +204,6 @@ def add_hmm( atts, cur, pf2g ):
         accession = m.group(1)
         atts['IT'] = 'pfam'
 
-    print("INFO: adding hmm: {0}".format(atts['ACC']))
-        
     trusted_global = None
     trusted_domain = None
     noise_global = None
@@ -237,7 +236,31 @@ def add_hmm( atts, cur, pf2g ):
 
     # handle the product name.  if it contains NAME at the beginning, remove that
     product_name = atts['DESC']
-    product_name = product_name.rstrip( "{0}: ".format(atts['NAME']) )
+    m = re.match("{0}\: (.+)".format(atts['NAME']), product_name)
+    if m:
+        product_name = m.group(1)
+
+    # if the name ends in ' (EC 4.6.1.3)' capture that, then take it off
+    m = re.match("(.+) \(EC (\d+\.\d+\.\d+\.\d+)\)", product_name)
+    if m:
+        product_name = m.group(1)
+        ec_number = m.group(2)
+
+    # TIGRFAMS keep skipping the GS field and appending it to the beginning of the DESC
+    #  example:  DESC  argG: argininosuccinate synthase
+    # Let's make the rule that if the DESC starts with 7 or less consecutive non-whitespace
+    # characters, then a ": ", we'll strip all that off as the gene symbol.  TIGRFAM accessions only.
+    # If it's longer than 7 it appears they are appending what used to be the NAME, so strip it off.
+    if accession.startswith('TIGR'):
+        m = re.match("^(\S+)\: (.+)", product_name)
+        if m:
+            product_name = m.group(2)
+            
+            if atts['GS'] is None:
+                if len(m.group(1)) <= 7:
+                    atts['GS'] = m.group(1)
+                
+    print("INFO: adding hmm: {0} - {1} - {2}".format(accession, atts['NAME'], product_name))
 
     columns = "accession, version, name, hmm_com_name, hmm_len, hmm_comment, trusted_global_cutoff, trusted_domain_cutoff, " \
               "noise_global_cutoff, noise_domain_cutoff, gathering_global_cutoff, gathering_domain_cutoff, " \
@@ -254,6 +277,8 @@ def add_hmm( atts, cur, pf2g ):
         for go_id in pf2g[ accession ]:
             cur.execute("INSERT INTO hmm_go (hmm_id, go_id) values (?,?)", (hmm_id, go_id))
 
+    if ec_number is not None:
+        cur.execute("INSERT INTO hmm_ec (hmm_id, ec_id) values (?,?)", (hmm_id, ec_number))
 
 
 def create_tables( cursor ):
