@@ -129,7 +129,9 @@ def main():
     parser.add_argument('-o', '--output_db', type=str, required=True, help='Path to an output SQLite3 db to be created' )
     args = parser.parse_args()
 
-    if args.pfam2go is not None:
+    if args.pfam2go is None:
+        pfam2go = None
+    else:
         pfam2go = load_pfam2go(args.pfam2go)
         print("DEBUG: loaded {0} pfam2go accessions".format(len(pfam2go)))
         
@@ -248,7 +250,7 @@ def add_hmm( atts, cur, pf2g ):
     hmm_id = cur.lastrowid
 
     # if pfam2go was passed, does this accession have any associations?
-    if accession in pf2g:
+    if pf2g is not None and accession in pf2g:
         for go_id in pf2g[ accession ]:
             cur.execute("INSERT INTO hmm_go (hmm_id, go_id) values (?,?)", (hmm_id, go_id))
 
