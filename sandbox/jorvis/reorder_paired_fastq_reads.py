@@ -7,7 +7,7 @@ stripped from the ID in the read headers (but it will still work if they're pres
 Also, the reads pair members are not in pairwise order in the two files as they should be.
 
 This script takes these two files, adds the direction back, then orders them.  Any
-singletons are written out to separate files.
+singletons are written out to a separate file.
 
 The ID hashing requirements of the left read file dictate the amount of memory
 required to run this, which could be considerable.  Attempts are made to minimize
