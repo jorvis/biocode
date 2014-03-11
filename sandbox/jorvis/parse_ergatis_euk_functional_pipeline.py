@@ -22,9 +22,10 @@ def main():
     ## output file to be written
     parser.add_argument('-f', '--input_fasta', type=str, required=True, help='Protein FASTA file of source molecules' )
     parser.add_argument('-m', '--hmm_htab_list', type=str, required=True, help='List of htab files from hmmpfam3' )
-    parser.add_argument('-b', '--blast_btab_list', type=str, required=True, help='List of btab files from BLAST' )
+    parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=True, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
+    parser.add_argument('-bt', '--blast_trembl_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/Trembl' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
-    parser.add_argument('-u', '--unitprot_sprot_db', type=str, required=True, help='SQLite3 db with UNITPROT/SWISSPROT information' )
+    parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=True, help='SQLite3 db with UNIPROT/SWISSPROT information' )
     parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are: "tab", "fasta", "gff3"' )
     parser.add_argument('-s', '--source_gff', type=str, required=False, help='Source GFF file from which proteins were derived.  Required if you want to export any format other than tab-delimited.' )
     parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
@@ -40,7 +41,7 @@ def main():
     hmm_db_curs = hmm_db_conn.cursor()
 
     # connection to the UniProt_Sprot SQLite3 database
-    usp_db_conn = sqlite3.connect(args.unitprot_sprot_db)
+    usp_db_conn = sqlite3.connect(args.uniprot_sprot_db)
     usp_db_curs = usp_db_conn.cursor()
 
     # this is a dict of biothings.Polypeptide objects
@@ -58,9 +59,13 @@ def main():
     parse_hmm_evidence( polypeptides, args.hmm_htab_list, hmm_db_curs )
     hmm_db_curs.close()
 
-    print("INFO: parsing BLAST evidence")
-    parse_blast_evidence( polypeptides, polypeptide_blast_org, args.blast_btab_list, usp_db_curs, args.blast_eval_cutoff )
+    print("INFO: parsing BLAST (SWISS-PROT) evidence")
+    parse_sprot_blast_evidence( polypeptides, polypeptide_blast_org, args.blast_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff )
     usp_db_curs.close()
+
+    if args.blast_trembl_btab_list is not None:
+        print("INFO: parsing BLAST (TrEMBL) evidence")
+        parse_trembl_blast_evidence(polypeptides, args.blast_trembl_btab_list, args.blast_eval_cutoff)
 
     ## output will either be a file or STDOUT
     print("INFO: writing output")
@@ -92,6 +97,11 @@ def check_arguments( args ):
     # It doesn't make sense to pass --genomic_fasta if the --format isn't GFF3
     if args.genomic_fasta is not None and args.format != 'gff3':
         raise Exception("ERROR: Argument --genomic_fasta not valid unless --format=gff3")
+
+    # make sure all passed files are found before we do anything else:
+    for path in ( args.input_fasta, args.hmm_htab_list, args.blast_sprot_btab_list, args.hmm_db, args.uniprot_sprot_db ):
+        if not os.path.isfile( path ):
+            raise Exception("ERROR: You passed this file but the script failed to find it: {0}".format(path))
 
 
 def write_gff3_results( f, polypeptides, assemblies, features, genomic_fasta ):
@@ -201,8 +211,56 @@ def initialize_polypeptides( fasta_file ):
     
     return polypeptides
 
+def parse_trembl_blast_evidence(polypeptides, blast_list, eval_cutoff):
+    '''
+    Reads a list file of NCBI BLAST evidence against TrEMBL and a dict of polypeptides,
+    populating each with Annotation evidence where appropriate.  Only attaches evidence if
+    the product name is the default.
 
-def parse_blast_evidence( polypeptides, blast_org, blast_list, cursor, eval_cutoff ):
+    Currently only considers the top BLAST hit for each query.
+    '''
+    for file in biocodeutils.read_list_file(blast_list):
+        last_qry_id = None
+        
+        for line in open(file):
+            line = line.rstrip()
+            cols = line.split("\t")
+
+            # We're going to ignore any lines which have 'uncharacterized' in the name
+            if 'ncharacterized' in cols[15]:
+                continue
+            
+            this_qry_id = cols[0]
+
+            # skip this line if it doesn't meet the cutoff
+            if float(cols[19]) > eval_cutoff:
+                continue
+
+            # the BLAST hits are sorted already with the top hit for each query first
+            if last_qry_id != this_qry_id:
+                annot = polypeptides[this_qry_id].annotation
+
+                # get the accession from the cols[5]
+                #  then process for known accession types
+                accession = cols[5]
+
+                # save it, unless the gene product name has already changed from the default
+                if annot.product_name == DEFAULT_PRODUCT_NAME:
+                    # current hack until DB is updated:
+                    # some products look like this:
+                    #    Coatomer subunit gamma-2 OS=Bos taurus GN=COPG2 PE=2 SV=1
+                    # take off everything after the OS=
+                    m = re.search("(.+) OS=", cols[15])
+
+                    if m:
+                        annot.product_name = m.group(1)
+                    else:
+                        annot.product_name = cols[15]
+
+                # remember the ID we just saw
+                last_qry_id = this_qry_id
+
+def parse_sprot_blast_evidence( polypeptides, blast_org, blast_list, cursor, eval_cutoff ):
     '''
     Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
     each with Annotation evidence where appropriate.  Only attaches evidence if
