@@ -414,7 +414,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
 
             columns[2] = 'polypeptide'
             columns[3:5] = [str(polypeptide_loc.fmin + 1), str(polypeptide_loc.fmax)]
-            columns[8] = build_column_9( id=polypeptide.id, parent=mRNA.parent.id, other=assertions )
+            columns[8] = build_column_9( id=polypeptide.id, parent=polypeptide.parent.id, other=assertions )
             fh.write( "\t".join(columns) + "\n" )
 
 
