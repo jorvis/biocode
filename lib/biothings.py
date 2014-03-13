@@ -687,12 +687,15 @@ class RNA( LocatableThing ):
         return hash(self.id)
 
     def add_CDS(self, cds):
+        cds.parent = self
         self.children['CDS'].append(cds)
         
     def add_exon(self, exon):
+        exon.parent = self
         self.children['exon'].append(exon)
 
     def add_polypeptide(self, polypeptide):
+        polypeptide.parent = self
         self.children['polypeptide'].append(polypeptide)
 
     def CDS_count(self):
