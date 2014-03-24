@@ -31,6 +31,40 @@ def build_column_9( id=None, parent=None, other=None ):
     return colstring
 
 
+def build_column_9_from_dict( atts ):
+    """
+    Accepts a dict of key/value pairs to print in column 9 and joins them
+    into a single string, taking care to print the ID first, then Parent, if present.
+    """
+    colstring = ''
+
+    if 'ID' in atts:
+        colstring = "ID={0}".format(atts['ID'])
+        del atts['ID']
+
+    if 'Parent' in atts:
+        if len(colstring) > 0:
+            colstring += ';'
+
+        colstring += "Parent={0}".format(atts['Parent'])
+        del atts['Parent']
+
+    # now print the rest
+    for att in atts:
+        if len(colstring) > 0:
+            colstring += ';'
+
+        colstring += "{0}={1}".format(att, escape(atts[att]))
+        
+    return colstring
+
+
+def order_column_9(colstring):
+    c9 = column_9_dict(colstring)
+    colstring = build_column_9_from_dict(c9)
+    return colstring
+
+
 def set_column_9_value(colstring, key, val):
     """
     Pass a column 9 string and you can either set or update an existing
@@ -39,9 +73,9 @@ def set_column_9_value(colstring, key, val):
     c9 = column_9_dict(colstring)
     c9[key] = val
     colstring = ''
-    
+
     for att in c9:
-        if len(colstring) > 1:
+        if len(colstring) > 0:
             colstring += ';'
 
         colstring += "{0}={1}".format(att, escape(c9[att]))
