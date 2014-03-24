@@ -31,6 +31,52 @@ def build_column_9( id=None, parent=None, other=None ):
     return colstring
 
 
+def set_column_9_value(colstring, key, val):
+    """
+    Pass a column 9 string and you can either set or update an existing
+    value for it.  The full column 9 string is returned.
+    """
+    c9 = column_9_dict(colstring)
+    c9[key] = val
+    colstring = ''
+    
+    for att in c9:
+        if len(colstring) > 1:
+            colstring += ';'
+
+        colstring += "{0}={1}".format(att, escape(c9[att]))
+
+    return colstring
+    
+
+def column_9_dict(colstring):
+    '''
+    This was borrowed from the URL below and then modified for Python 3
+    ftp://ftp.informatics.jax.org/%2Fpub/mgigff/gff3.py
+    '''
+    SEMI	= ';'
+    COMMA	= ','
+    EQ	        = '='
+    WSP_RE = re.compile(r'^\s*$')
+    
+    if colstring == ".":
+        return {}
+    c9 = {}
+    for t in colstring.split(SEMI):
+        if WSP_RE.match(t):
+            continue
+        tt = t.split(EQ)
+        if len(tt) != 2:
+            raise Exception("Bad column 9 format: {0}".format(colstring) )
+        n = unquote(tt[0].strip())
+        [*v] = map(unquote, tt[1].strip().split(COMMA))
+        if len(v) == 1:
+            v = v[0]
+        c9[n] = v
+
+    return c9
+
+
 def column_9_value(value, key):
     '''
     Pass a case-sensitive key and this function will return the value,
