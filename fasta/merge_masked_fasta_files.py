@@ -11,6 +11,8 @@ two.
 
 This script checks that the identifiers are shared between the files and that the
 residue lengths for each with shared IDs are the same.
+
+NOTE: This only currently supports hard-masked input ('N' characters)
 """
 
 import argparse
