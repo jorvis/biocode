@@ -59,6 +59,7 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to parse' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-p', '--perc_identity_cutoff', type=float, required=False, help='Filters on the perc identity of each HSP' )
+    parser.add_argument('-cf', '--custom_filter', action='store_true', help='Applies a custom set of filters defined by a certain PI.  These are not the droids you are looking for.')
     
     args = parser.parse_args()
     algorithm = 'TBLASTN'
@@ -88,7 +89,7 @@ def main():
         if qry_id != current_qry_id or sbj_id != current_sbj_id:
             # this is a new chain, export the previous one
             if current_qry_id is not None:
-                export_match( current_match_parts, ofh, algorithm, args.perc_identity_cutoff )
+                export_match( current_match_parts, ofh, algorithm, args.perc_identity_cutoff, args.custom_filter )
                 
             current_match_parts = list()
             current_qry_id = qry_id
@@ -98,13 +99,13 @@ def main():
     
     ## make sure to do the last one
     if current_qry_id is not None:
-        export_match( current_match_parts, ofh, algorithm, args.perc_identity_cutoff )
+        export_match( current_match_parts, ofh, algorithm, args.perc_identity_cutoff, args.custom_filter )
 
     
 
 
 
-def export_match( segments, out, source, perc_id_cutoff ):
+def export_match( segments, out, source, perc_id_cutoff, custom_filter_requested ):
     contig_min = None
     contig_max = None
     contig_id  = None
@@ -132,10 +133,21 @@ def export_match( segments, out, source, perc_id_cutoff ):
         if hit_id is None:
             hit_id = segment['hit_id']
 
+    match_length = contig_max - contig_min
+    pct_id = global_pct_id( segments )
+
+    if custom_filter_requested == True:
+        criteria_met = False
+        if (match_length <= 20 and pct_id >= 80) or \
+           (match_length > 20 and match_length <= 50 and pct_id >= 60) or \
+           (match_length > 50 and pct_id > 40):
+            criteria_met = True
+
+        if criteria_met == False:
+            return False
+
     ## does this score above any user-defined cutoffs.
     if perc_id_cutoff is not None:
-        pct_id = global_pct_id( segments )
-
         if pct_id < perc_id_cutoff:
             return False
 
@@ -165,6 +177,46 @@ def export_match( segments, out, source, perc_id_cutoff ):
                 ) )
 
     return True
+
+
+def global_pct_id( segments ):
+    """
+    Calculated like this:
+    
+    10bp @ 50% id = 5 matching residues, 10 total residues
+    10bp @ 80% id = 8 matching residues, 10 total residues
+                   13 matching residues, 20 total residues
+                   ---------------------------------------
+                   13 / 20 * 100 = 65%
+
+    """
+    match_length = 0
+    identical_residues = 0
+    
+    for segment in segments:
+        segment_length = abs(segment['qry_start'] - segment['qry_end']) + 1
+        match_length += segment_length
+        matched_residues = segment_length * (segment['pct_id'] / 100)
+        identical_residues += matched_residues
+
+    return (identical_residues / match_length) * 100
+
+
+def global_pct_sim( segments ):
+    """
+    Calculated as in global_pct_id(), but with the percent similarity field
+    """
+    match_length = 0
+    similar_residues = 0
+    
+    for segment in segments:
+        segment_length = abs(segment['contig_start'] - segment['contig_end']) + 1
+        match_length += segment_length
+        matched_residues = segment_length * (segment['pct_sim'] / 100)
+        similar_residues += matched_residues
+
+    return (similar_residues / match_length) * 100
+
 
 if __name__ == '__main__':
     main()
