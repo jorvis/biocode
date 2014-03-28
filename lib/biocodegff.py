@@ -1,6 +1,7 @@
 import re
 import biothings
 import bioannotation
+import sys
 from urllib.parse import unquote, quote
 
 def build_column_9( id=None, parent=None, other=None ):
@@ -295,6 +296,10 @@ def get_gff3_features(gff3_file):
             polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_polypeptide(polypeptide)
             features[feat_id] = polypeptide
+
+        else:
+            sys.stderr.write( "Skipping feature {0} with type {1}\n".format(feat_id, cols[2]) )
+            continue
 
         features[feat_id].length = rfmax - rfmin
 
