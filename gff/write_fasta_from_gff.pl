@@ -94,7 +94,7 @@ my %coords = ();
 
 my %molecules = ();
 
-open(my $gffin_fh, $options{gff}) || die "failed to open output gff file: $options{gff}: $!";
+open(my $gffin_fh, $options{gff}) || die "failed to open input gff file: $options{gff}: $!";
 open(my $fastaout_fh, ">$options{output}") || die "failed to create FASTA output file: $!";
 
 my $in_fasta = 0;
