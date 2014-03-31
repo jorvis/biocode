@@ -90,7 +90,7 @@ print "##gff-version 3\n";
 ## globals
 my $i=1;
 ## parse the file
-
+print "##gff-version 3\n";
 foreach my $line (<$ifh>){
 	my @cols = split /[\t]/, $line;
 	chomp @cols;
@@ -100,10 +100,14 @@ foreach my $line (<$ifh>){
 	my $target = $cols[4];
 	my $score = $cols[8];
 	if ($start < $stop){
-		print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t.\t+\t$score\tID=$target\_$i\n";
+		print "$contig\ttRNAScan-SE\tgene\t$start\t$stop\t$score\t+\t.\tID=$target\_$i\n";
+		print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t$score\t+\t.\tID=$target\_$i\_tRNA;Parent=$target\_$i\n";
+		print "$contig\ttRNAScan-SE\texon\t$start\t$stop\t$score\t+\t.\tID=$target\_$i\_exon;Parent=$target\_$i\_tRNA\n";
 		$i++;
 	}else{
-                print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t.\t-\t$score\tID=$target\_$i\n";
+		print "$contig\ttRNAScan-SE\tgene\t$start\t$stop\t$score\t-\t.\tID=$target\_$i\n";
+                print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t$score\t-\t.\tID=$target\_$i\_tRNA;Parent=$target\_$i\n";
+                print "$contig\ttRNAScan-SE\texon\t$start\t$stop\t$score\t-\t.\tID=$target\_$i\_exon;Parent=$target\_$i\_tRNA\n";
 		$i++;
 	}
 }
