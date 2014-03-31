@@ -32,6 +32,7 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to the input GFF3' )
     parser.add_argument('-g', '--genome_fasta', type=str, required=False, help='Optional.  You must specify this unless the FASTA sequences for the molecules are embedded in the GFF')
     parser.add_argument('-p', '--print_n_with_stops', type=int, required=False, default=0, help='Optional.  Pass the number of sequences with internal stops you want printed (usually for debugging purposes)' )
+    parser.add_argument('-o', '--output_fasta', type=str, required=False, help='Optional.  Writes an output (translated) FASTA file for all those features which had internal stops')
     args = parser.parse_args()
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
@@ -45,6 +46,11 @@ def main():
 
     # If this is set to the ID of any particular mRNA feature, the CDS and translation will be printed for it.
     debug_mRNA = None
+
+    fasta_out_fh = None
+    
+    if args.output_fasta is not None:
+        fasta_out_fh = open(args.output_fasta, 'wt')
         
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
@@ -57,13 +63,20 @@ def main():
 
                 if biocodeutils.translate(coding_seq).rstrip('*').count('*') > 0:
                     mRNAs_with_stops += 1
+                    translated_seq = biocodeutils.translate(coding_seq)
+
+                    if fasta_out_fh is not None:
+                        loc = mRNA.location_on(assemblies[assembly_id])
+                        fasta_out_fh.write(">{0} {1} {2}-{3} ({4})\n".format(mRNA.id, assembly_id, loc.fmin + 1, loc.fmax, loc.strand) )
+                        fasta_out_fh.write("{0}\n".format(biocodeutils.wrapped_fasta(translated_seq)))
+                    
                     if debug_mRNA is not None and mRNA.id == debug_mRNA:
-                        print("TRANSLATION WITH STOP ({1}): {0}".format(biocodeutils.translate(coding_seq), mRNA.id) )
+                        print("TRANSLATION WITH STOP ({1}): {0}".format(translated_seq, mRNA.id) )
 
                     if mRNAs_with_stops <= args.print_n_with_stops:
                         print("\nmRNA id: {0}".format(mRNA.id) )
                         print("\tCDS:{0}".format(coding_seq))
-                        print("\tTRANSLATION WITH STOP ({1}): {0}".format(biocodeutils.translate(coding_seq), mRNA.id) )
+                        print("\tTRANSLATION WITH STOP ({1}): {0}".format(translated_seq, mRNA.id) )
 
 
     print("\nTotal mRNAs found:{0}".format(total_mRNAs))
