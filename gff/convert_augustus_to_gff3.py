@@ -80,7 +80,7 @@ def main():
     exon_count_by_mRNA = dict()
     
     fout = open(args.output, mode='wt', encoding='utf-8')
-    fout.write("##gff-version 3")
+    fout.write("##gff-version 3\n")
 
     for line in open(args.input):
         if line.startswith("#"):
