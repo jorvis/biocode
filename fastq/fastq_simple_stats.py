@@ -8,6 +8,7 @@ $ ./fastq_simple_stats.py my.fastq
 Total sequence entries: 277971801
 Total bases: 28353123702
 Avg sequence length: 102.0
+GC percentage: 44.5
 
 Contact: jorvis@gmail.com
 """
@@ -38,6 +39,7 @@ def main():
     ## values that will be reported
     entry_count = 0
     total_bases = 0
+    gc_count    = 0
     
     line_number = 0
 
@@ -64,6 +66,8 @@ def main():
                     raise Exception("Error, expected every 4th line to start with @ and this one didn't: {0}".format(line) )
             elif line_number % 4 == 2:
                 total_bases += len(line)
+                gc_count += line.count('G')
+                gc_count += line.count('C')
 
 
     avg_entry_length = total_bases / entry_count
@@ -71,6 +75,8 @@ def main():
     fout.write("Total sequence entries: {0}\n".format(entry_count))
     fout.write("Total bases: {0}\n".format(total_bases))
     fout.write("Avg sequence length: {0:.1f}\n".format(avg_entry_length))
+    fout.write("GC percentage: {0:.1f}\n".format( (gc_count / total_bases) * 100))
+    
 
 if __name__ == '__main__':
     main()
