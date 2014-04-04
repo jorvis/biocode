@@ -95,6 +95,11 @@ foreach my $line (<$ifh>){
 	my @cols = split /[\t]/, $line;
 	chomp @cols;
 	my $contig = $cols[0];
+    
+    if ($contig =~ /^(.+?)\s+$/) {
+        $contig = $1;
+    }
+
 	my $start = $cols[2];
 	my $stop = $cols[3];
 	my $target = $cols[4];
