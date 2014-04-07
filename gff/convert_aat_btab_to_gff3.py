@@ -311,7 +311,9 @@ def export_segments( mode, segments, out, chn_num, source, prefix, perc_id_cutof
                 contig_id, source, 'mRNA', contig_min, contig_max, '.', segment_strand, '.', data_column
                 ) )
 
-        ## write the exons and CDS
+        ## write the exons and CD
+        CDS_id = get_next_id('CDS', prefix)
+        
         for segment in sorted(segments, key=itemgetter('contig_start')):
             exon_id = get_next_id('exon', prefix)
             exon_start = min( segment['contig_start'], segment['contig_end'] )
@@ -326,8 +328,7 @@ def export_segments( mode, segments, out, chn_num, source, prefix, perc_id_cutof
                     '.', segment_strand, '.', data_column 
                     ) )
 
-            CDS_id = get_next_id('CDS', prefix)
-            data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(exon_id, mRNA_id, hit_id, \
+            data_column = "ID={0};Parent={1};Target={2} {3} {4}".format(CDS_id, mRNA_id, hit_id, \
                     exon_hit_start, exon_hit_end)
             out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
                     contig_id, source, 'CDS', exon_start, exon_end, \
