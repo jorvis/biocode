@@ -3,6 +3,8 @@ import re
 import sys
 import string
 
+import biocodeutils
+
 ## used for nt reverse complements
 _nt_comp_table = bytes.maketrans(b'ACBDGHKMNSRUTWVYacbdghkmnsrutwvy', \
                                  b'TGVHCDMKNSYAAWBRtgvhcdmknsyaawbr')
@@ -166,6 +168,17 @@ def fasta_dict_from_file( file ):
     seqs[current_id] = {'h':current_header, 's':current_seq}
 
     return seqs
+
+def add_assembly_fasta(mols, fasta_file):
+    fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
+
+    for mol_id in mols:
+        # check if the FASTA file provides sequence for this
+        if mol_id in fasta_seqs:
+            mol = mols[mol_id]
+            mol.residues = fasta_seqs[mol_id]['s']
+            mol.length   = len(mol.residues)
+
     
 def wrapped_fasta(string, every=60):
     """
