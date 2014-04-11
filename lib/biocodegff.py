@@ -170,7 +170,7 @@ def unescape(s):
     return unquote(s)
 
 
-def get_gff3_features(gff3_file):
+def get_gff3_features(gff3_file, assemblies=None):
     '''
     Parses the passed GFF3 file and returns two dicts, loaded with biocode.biothings objects:
 
@@ -182,8 +182,12 @@ def get_gff3_features(gff3_file):
 
     See the documentation for each feature type in biocode.biothings for more info
     '''
-    
-    assemblies = dict()
+
+    if assemblies is None:
+        assemblies = dict()
+    else:
+        print("DEBUG: Assemblies passed")
+        
     features   = dict()
 
     # these are related to parsing any embedded FASTA
