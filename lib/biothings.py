@@ -529,6 +529,34 @@ class Gene( LocatableThing ):
     def mRNAs(self):
         return self.children['mRNA']
 
+    def shares_exon_structure_with( self, thing=None ):
+        """
+        This checks if two genes have only on mRNA and, if so, compares their internal
+        exon structure.  Returns True if they all match completely.
+        """
+        these_mRNAs = self.mRNAs()
+        other_mRNAs = self.mRNAs()
+        
+        if len(these_mRNAs) != 1 or len(other_mRNAs) != 1 or len(these_mRNAs[0].exons()) != len(other_mRNAs[0].exons()):
+            return False;
+
+        exon_matches_found = 0
+        ref_exon_count = 0
+
+        for ref_exon in these_mRNAs[0].exons():
+            ref_exon_count += 1
+            
+            for other_exon in other_mRNAs[0].exons():
+                if ref_exon.has_same_coordinates_as( thing=other_exon ):
+                    exon_matches_found += 1
+                    break
+
+        if exon_matches_found == ref_exon_count:
+            return True
+        else:
+            return False
+        
+
     '''
     Prints the gene as a GFF3 entry, with all children.  Is printed to STDOUT
     unless the fh option is passed.  Really, only checks are done here before
