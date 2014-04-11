@@ -185,8 +185,6 @@ def get_gff3_features(gff3_file, assemblies=None):
 
     if assemblies is None:
         assemblies = dict()
-    else:
-        print("DEBUG: Assemblies passed")
         
     features   = dict()
 
