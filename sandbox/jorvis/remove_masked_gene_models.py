@@ -40,6 +40,7 @@ def main():
     ## output file to be written
     parser.add_argument('-i', '--input_gff3', type=str, required=True, help='Path to the input GFF3' )
     parser.add_argument('-m', '--masked_fasta', type=str, required=True, help='FASTA with sequence masked with N characters')
+    parser.add_argument('-p', '--percent_repeat_coverage_cutoff', type=int, required=True, help='Genes with an mRNA covered by this percentage of repeats will be excluded' )
     parser.add_argument('-o', '--output_gff3', type=str, required=False, help='Path to GFF3 output file to be created')
     args = parser.parse_args()
 
@@ -61,7 +62,7 @@ def main():
                 n_count = coding_seq.count('N')
                 perc_repeat = (n_count / len(coding_seq)) * 100
 
-                if perc_repeat >= 10:
+                if perc_repeat >= args.percent_repeat_coverage_cutoff:
                     keep = False
 
             if keep == True:
