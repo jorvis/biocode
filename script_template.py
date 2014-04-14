@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+
+Put some general, high-level documentation here
+
+"""
+
 import argparse
 import os
 
