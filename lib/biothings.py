@@ -555,6 +555,33 @@ class Gene( LocatableThing ):
             return True
         else:
             return False
+
+    def shares_CDS_structure_with( self, thing=None ):
+        """
+        This checks if two genes have only on mRNA and, if so, compares their internal
+        CDS structure.  Returns True if they all match completely.
+        """
+        these_mRNAs = self.mRNAs()
+        other_mRNAs = thing.mRNAs()
+        
+        if len(these_mRNAs) != 1 or len(other_mRNAs) != 1 or len(these_mRNAs[0].CDSs()) != len(other_mRNAs[0].CDSs()):
+            return False;
+
+        CDS_matches_found = 0
+        ref_CDS_count = 0
+
+        for ref_CDS in these_mRNAs[0].CDSs():
+            ref_CDS_count += 1
+            
+            for other_CDS in other_mRNAs[0].CDSs():
+                if ref_CDS.has_same_coordinates_as( thing=other_CDS ):
+                    CDS_matches_found += 1
+                    break
+
+        if CDS_matches_found == ref_CDS_count:
+            return True
+        else:
+            return False
         
 
     '''
@@ -717,7 +744,7 @@ class RNA( LocatableThing ):
     def add_CDS(self, cds):
         cds.parent = self
         self.children['CDS'].append(cds)
-        
+
     def add_exon(self, exon):
         exon.parent = self
         self.children['exon'].append(exon)
