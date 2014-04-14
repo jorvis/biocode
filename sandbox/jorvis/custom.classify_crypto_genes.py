@@ -30,6 +30,7 @@ def main():
 
     print("INFO: parsing Genemark-ES data")
     (assemblies, gm_es_features) = biocodegff.get_gff3_features( gm_es_file )
+    gm_es_genes = get_genes_from_dict(gm_es_features)
 
     print("INFO: parsing CEGMA data")
     (assemblies, cegma_features) = biocodegff.get_gff3_features( cegma_file, assemblies=assemblies )
@@ -37,6 +38,7 @@ def main():
 
     print("INFO: parsing expression data (Trinity, Cufflinks, GMAP cDNAs)")
     (assemblies, transcript_features) = biocodegff.get_gff3_features( transcript_file, assemblies=assemblies)
+    transcript_genes = get_genes_from_dict(transcript_features)
 
     print("INFO: parsing AAT results (C. muris)")
     (assemblies, aat_muris_features) = biocodegff.get_gff3_features( aat_muris_file, assemblies=assemblies)
@@ -50,25 +52,11 @@ def main():
 
     genemark_cegma_shared_genes = list()
 
-    for gm_es_feat_id in gm_es_features:
-        gm_es_feat = gm_es_features[gm_es_feat_id]
-
-        if gm_es_feat.__class__.__name__ != 'Gene':
-            continue
-
-        for cegma_feat_id in cegma_features:
-            cegma_feat = cegma_features[cegma_feat_id]
-            cegma_feat_loc = cegma_feat.location()
-
-            if cegma_feat.__class__.__name__ != 'Gene':
-                continue
-
-            if gm_es_feat.has_same_coordinates_as( thing=cegma_feat ):
-
-                if gm_es_feat.shares_exon_structure_with( thing=cegma_feat ) == True:
-                    #print("Found complete agreement between GeneMark-ES:{0} and CEGMA:{1} on {2}, {3}-{4}".format(gm_es_feat_id, cegma_feat_id, \
-                    #  cegma_feat_loc.on.id, cegma_feat_loc.fmin, cegma_feat_loc.fmax))
-                    genemark_cegma_shared_genes.append(gm_es_feat)
+    for gm_es_gene in gm_es_genes:
+        for cegma_gene in cegma_genes:
+            if gm_es_gene.has_same_coordinates_as( thing=cegma_gene ):
+                if gm_es_gene.shares_exon_structure_with( thing=cegma_gene ) == True:
+                    genemark_cegma_shared_genes.append(gm_es_gene)
                     break
 
     print("\n{0} genes were shared perfectly between Genemark-ES and CEGMA".format(len(genemark_cegma_shared_genes)) )
@@ -76,12 +64,7 @@ def main():
     gm_cegma_expression_shared_genes = list()
 
     for shared_gene in genemark_cegma_shared_genes:
-        for tf_id in transcript_features:
-            tf = transcript_features[tf_id]
-
-            if tf.__class__.__name__ != 'Gene':
-                continue
-
+        for tf in transcript_genes:
             if shared_gene.shares_CDS_structure_with( tf ):
                 gm_cegma_expression_shared_genes.append( shared_gene )
                 break
