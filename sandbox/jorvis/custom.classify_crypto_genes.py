@@ -25,17 +25,26 @@ def main():
     gm_es_file = 'genemark_hmm.gff3'
     cegma_file = 'output.cegma.gff3'
     transcript_file = 'expression_data.gff3'
-
-    debug_gm_es_gene = '2460_g'
+    aat_muris_file = 'cmuris.aat.gff3'
+    aat_parvum_file = 'cparvum.aat.gff3'
 
     print("INFO: parsing Genemark-ES data")
     (assemblies, gm_es_features) = biocodegff.get_gff3_features( gm_es_file )
 
     print("INFO: parsing CEGMA data")
     (assemblies, cegma_features) = biocodegff.get_gff3_features( cegma_file, assemblies=assemblies )
+    cegma_genes = get_genes_from_dict(cegma_features)
 
     print("INFO: parsing expression data (Trinity, Cufflinks, GMAP cDNAs)")
     (assemblies, transcript_features) = biocodegff.get_gff3_features( transcript_file, assemblies=assemblies)
+
+    print("INFO: parsing AAT results (C. muris)")
+    (assemblies, aat_muris_features) = biocodegff.get_gff3_features( aat_muris_file, assemblies=assemblies)
+    aat_muris_genes = get_genes_from_dict(aat_muris_features)
+
+    print("INFO: parsing AAT results (C. parvum)")
+    (assemblies, aat_parvum_features) = biocodegff.get_gff3_features( aat_parvum_file, assemblies=assemblies)
+    aat_parvum_genes = get_genes_from_dict(aat_parvum_features)
     
     #biocodeutils.add_assembly_fasta(assemblies, args.masked_fasta)
 
@@ -62,12 +71,6 @@ def main():
                     genemark_cegma_shared_genes.append(gm_es_feat)
                     break
 
-        if gm_es_feat.id == debug_gm_es_gene:
-            if gm_es_feat in genemark_cegma_shared_genes:
-                print("GM-ES gene {0} has a CEGMA match".format(gm_es_feat.id))
-            else:
-                print("GM-ES gene {0} doesn't have a CEGMA match".format(gm_es_feat.id))
-                
     print("\n{0} genes were shared perfectly between Genemark-ES and CEGMA".format(len(genemark_cegma_shared_genes)) )
 
     gm_cegma_expression_shared_genes = list()
@@ -80,19 +83,42 @@ def main():
                 continue
 
             if shared_gene.shares_CDS_structure_with( tf ):
-                #print("Good gene: {0}".format(shared_gene.id))
                 gm_cegma_expression_shared_genes.append( shared_gene )
                 break
 
-        if shared_gene.id == debug_gm_es_gene:
-            if shared_gene in gm_cegma_expression_shared_genes:
-                print("GM-ES gene {0} has an expression match".format(shared_gene.id))
-            else:
-                print("GM-ES gene {0} doesn't have an expression match".format(shared_gene.id))
-
-
     print("\n{0} genes were shared perfectly between Genemark-ES and CEGMA with expression support".format(len(gm_cegma_expression_shared_genes)) )
 
+    gm_cegma_expression_aat_shared_genes = list()
+
+    for shared_gene in gm_cegma_expression_shared_genes:
+        for aat_gene in aat_muris_genes:
+            if shared_gene.shares_exon_structure_with( thing=aat_gene ) == True:
+                gm_cegma_expression_aat_shared_genes.append(shared_gene)
+                break
+
+        if shared_gene not in gm_cegma_expression_aat_shared_genes:
+            for aat_gene in aat_parvum_genes:
+                if shared_gene.shares_exon_structure_with( thing=aat_gene ) == True:
+                    gm_cegma_expression_aat_shared_genes.append(shared_gene)
+                    break
+            
+
+    print("\n{0} genes were shared with Genemark-ES, CEGMA, expression, AAT support".format(len(gm_cegma_expression_aat_shared_genes)) )
+    #print("They are:\n")
+    #for gene in gm_cegma_expression_aat_shared_genes:
+    #    print("\t{0}".format(gene.id))
+        
+
+
+def get_genes_from_dict( features ):
+    genes = list()
+
+    for feat_id in features:
+        feat = features[feat_id]
+        if feat.__class__.__name__ == 'Gene':
+            genes.append(feat)
+
+    return genes
     
 
 if __name__ == '__main__':
