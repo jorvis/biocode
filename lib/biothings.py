@@ -535,7 +535,7 @@ class Gene( LocatableThing ):
         exon structure.  Returns True if they all match completely.
         """
         these_mRNAs = self.mRNAs()
-        other_mRNAs = self.mRNAs()
+        other_mRNAs = thing.mRNAs()
         
         if len(these_mRNAs) != 1 or len(other_mRNAs) != 1 or len(these_mRNAs[0].exons()) != len(other_mRNAs[0].exons()):
             return False;
