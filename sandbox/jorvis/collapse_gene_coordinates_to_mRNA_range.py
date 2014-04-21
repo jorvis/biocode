@@ -39,6 +39,8 @@ def main():
     (assemblies, features) = biocodegff.get_gff3_features( args.input_gff3 )
     gff_out = open(args.output_gff3, 'wt')
 
+    gff_out.write("##gff-version 3\n")
+
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
             gene_loc = gene.location()
