@@ -57,6 +57,16 @@ And final_stats.txt file :
 
 The summary will also be printed in the console.
 
+pred.found.txt : All the predicted gene overlaping 1 known gene 
+pred.no_overlap.txt : All the predicted genes not overlapping any known genes (new_gene)
+pred.opposite.txt : All the predicted genes overlapping any known genes in opposite strand
+pred.overlap_more_than_one.txt : All the predicted genes overlapping more than one known gene.(gene merge)
+
+known.found.txt : All the known gene overlaping 1 predicted gene 
+known.no_overlap.txt : All the known genes not overlapping any predicted genes (genes_missing)
+known.opposite.txt : All the known genes overlapping any predicted genes in opposite strand
+known.overlap_more_than_one.txt : All the known genes overlapping more than one predicted gene. (gene split)
+
 
 ====
 NOTE
@@ -178,11 +188,22 @@ def base_comparison(p_exon, a_exon):
 
 
 
-def compare_cds(cds1,cds2) :
+def compare_cds(cds1,cds2,tag) :
     gene_found = 0
     gene_opp = 0
     gene_no_overlap = 0
     gene_more_than_one_overlap = 0
+
+    temp_file1 = args.output_dir + "/" + tag + '.found.txt'
+    ft1 = open(temp_file1,'w')
+    temp_file2 = args.output_dir + "/" + tag + '.opposite.txt'
+    ft2 = open(temp_file2,'w')
+    temp_file3 = args.output_dir + "/" + tag + '.no_overlap.txt'
+    ft3 = open(temp_file3,'w')
+    temp_file4 = args.output_dir + "/" + tag + '.overlap_more_than_one.txt'
+    ft4 = open(temp_file4,'w')
+    
+    
     for c1 in cds1 :
         gene_overlap_same = []
         gene_overlap_opp = []
@@ -199,15 +220,15 @@ def compare_cds(cds1,cds2) :
             strand2 = (c2.split(':'))[4]
             if (chrom1 != chrom2) :
                 continue
-            if (start2 > stop1) :
-                break
+            #if (start2 > stop1) :
+            #    break
             if(start1 <= stop2 and start2 <= stop1) :
                 arr = [start1,stop1,start2,stop2]
                 arr.sort()
                 len_overlap = arr[2] - arr[1]
                 
-                if ((stop1 - start1) == 0) :
-                    print(c1)
+                #if ((stop1 - start1) == 0) :
+                #    print(c1)
                 per_overlap = (len_overlap/(stop1 - start1)) * 100
                 if (strand1 == strand2 ) :
                     gene_overlap_same.append(per_overlap)
@@ -216,14 +237,20 @@ def compare_cds(cds1,cds2) :
                     
         if (len(gene_overlap_same) == 1) :
             gene_found += 1
+            ft1.write(chrom1 + "\t" + str(start1) + "\t" + str(stop1) + "\t" + strand1 + "\t" + cds_id1 + "\n")
+            
         if (len(gene_overlap_same) == 0 and len(gene_overlap_opp) >= 1) :
             gene_opp += 1
+            ft2.write(chrom1 + "\t" + str(start1) + "\t" + str(stop1) + "\t" + strand1 + "\t" + cds_id1 + "\n")
+            
         if (len(gene_overlap_same) == 0 and len(gene_overlap_opp) == 0) :
-            gene_no_overlap +=1
-        
+            gene_no_overlap +=1            
+            ft3.write(chrom1 + "\t" + str(start1) + "\t" + str(stop1) + "\t" + strand1 + "\t" + cds_id1 + "\n")
+            
         if (len(gene_overlap_same) > 1) :
             gene_more_than_one_overlap += 1
-
+            ft4.write(chrom1 + "\t" + str(start1) + "\t" + str(stop1) + "\t" + strand1 + "\t" + cds_id1 + "\n")
+            
     arr = [gene_found,gene_opp,gene_no_overlap,gene_more_than_one_overlap] 
     return arr
 
@@ -508,9 +535,9 @@ def process_files(args):
     fout.write("Base\t"+str(a_base_val)+"\t"+str(p_base_val)+"\t"+str(true_base)+"\t"+str(base_sn)+"\t"+str(base_sp)+"\n\n")
 
 
-    arr_pred = compare_cds(p_cds,a_cds)
-    arr_known = compare_cds(a_cds,p_cds)
-    arr_pred_same = compare_cds(p_cds,p_cds)
+    arr_pred = compare_cds(p_cds,a_cds,"pred")
+    arr_known = compare_cds(a_cds,p_cds,"known")
+    arr_pred_same = compare_cds(p_cds,p_cds,"pred_same")
     
     new_gene = arr_pred[2]
     gene_merge = arr_pred[3]
@@ -531,12 +558,13 @@ def process_files(args):
     print ("5. No. of predicted gene overlaping 1 known gene : ",gene_found)
     print ("6. No. of predicted gene overlapping >= 1 known gene in opp strand : ",gene_opp)
     print ("7. No. of predicted gene overlapping  1 known gene (exact intron/exon boundaries) : ",true_pred_gene)
-    print ("8. No. of predicted gene overlapping >= 1 known predicted gene in opp strand : ",gene_pred_overlap_opp)
+    print ("8. No. of predicted gene overlapping >= 1 predicted gene in opp strand : ",gene_pred_overlap_opp)
     
     print ("9. No. of known gene overlapping  0 predicted gene (gene missing): ",gene_missing)
     print ("10. No. of known gene overlapping > 1 predicted gene(gene split) : ",gene_split)
     print ("11. No. of known gene overlaping 1 predicted gene : ",gene)
     print ("12. No. of known gene overlapping >= 1 predicted gene in opp strand : ",gene_opp_known)
+
     
     out_file = args.output_dir + '/final_stats.txt'
     if not (os.path.exists(args.output_dir)) :
@@ -550,12 +578,19 @@ def process_files(args):
     fout.write ("5. No. of predicted gene overlaping 1 known gene : " + str(gene_found) + "\n")
     fout.write ("6. No. of predicted gene overlapping >= 1 known gene in opp strand : " + str(gene_opp) + "\n")
     fout.write ("7. No. of predicted gene overlapping  1 known gene (exact intron/exon boundary) : " + str(true_pred_gene) + "\n")
-    fout.write ("8. No. of predicted gene overlapping >= 1 known predicted gene in opp strand : " + str(gene_pred_overlap_opp) + "\n")
+    fout.write ("8. No. of predicted gene overlapping >= 1  predicted gene in opp strand : " + str(gene_pred_overlap_opp) + "\n")
     fout.write ("9. No. of known gene overlapping  0 predicted gene (gene missing): " + str(gene_missing) + "\n")
     fout.write ("10. No. of known gene overlapping > 1 predicted gene (gene_split): " + str(gene_split) + "\n")
     fout.write ("11. No. of known gene overlaping 1 predicted gene : " + str(gene) + "\n")
     fout.write ("12. No. of known gene overlapping >= 1 predicted gene in opp strand : " + str(gene_opp_known) + "\n")
 
+
+
+    true_pred_file = args.output_dir + '/true_pred.txt'
+    fout_true = open(true_pred_file,'w')
+    for true_gene in gene_true :
+        fout_true.write(true_gene+"\n")
+    
 
 
     #Clean up
