@@ -63,6 +63,12 @@ def main():
     aat_muris_file = 'cmuris.aat.gff3'
     aat_parvum_file = 'cparvum.aat.gff3'
 
+    html_out_file = 'gene_classifications.html'
+    html_out = open(html_out_file, 'wt')
+
+    # for each gene, how many flanking bases should be shown on either side?
+    flanking_bases = 1000
+
     type1_best = list()
     type2_best = list()
     type2_better = list()
@@ -221,12 +227,47 @@ def main():
     print("TYPE 2 - BETTER: {0}".format(len(type2_better)) )
     print("TYPE 3 - STILL BETTER: {0}".format(len(type3_still_better)) )
     
-    
+    html_out.write("<!doctype html>\n")
+    html_out.write("<html lang=\"en\">\n")
+    html_out.write("<head><meta charset=\"utf-8\"><title>Gene classification</title></head>\n")
+    html_out.write("<body>\n")
+
+    html_out.write("<h3>Type 1 - Best ({0})</h3>\n".format(len(type1_best)))
+    print_gene_list(html_out, type1_best, flanking_bases)
+
+    html_out.write("<h3>Type 2 - Best ({0})</h3>\n".format(len(type2_best)))
+    print_gene_list(html_out, type2_best, flanking_bases)
+
+    html_out.write("<h3>Type 2 - Better ({0})</h3>\n".format(len(type2_better)))
+    print_gene_list(html_out, type2_better, flanking_bases)
+
+    html_out.write("<h3>Type 3 - Still better ({0})</h3>\n".format(len(type3_still_better)))
+    print_gene_list(html_out, type3_still_better, flanking_bases)
+
+    html_out.write("</body>\n")
+    html_out.write("</html>\n")
 
     #print("They are:\n")
     #for gene in gm_cegma_expression_aat_shared_genes:
     #    print("\t{0}".format(gene.id))
         
+
+def print_gene_list( outfh, genes, flank ):
+    base = 'http://jbrowse.igs.umaryland.edu/c_hominis_TU502'
+    # /?loc=ctg7180000000305%3A76133..78659
+    track_string = '&tracks=DNA%2CReference%20CDS%20(gmap)%2CReference%20transcripts%20(gmap)%2CGenemark-ES%2CCEGMA%2CTrinity%20(gmap)%2CCufflinks%2CAAT%20(C.%20muris)%2CAAT%20(C.%20parvum)%2CNCBI%20fl-cDNAs%20(gmap)%2Ccufflinks_bam%2Ccufflinks_UKH1_bam%2Ctophat_sense%2Ctophat_antisense&highlight='
+
+    outfh.write("<table>\n")
+
+    for gene in genes:
+        loc = gene.location()
+        
+        outfh.write("<tr>\n")
+        outfh.write("  <td><a href=\"{1}/?loc={2}%3A{3}..{4}{5}\">{0}</a></td>\n".format(gene.id, base, loc.on.id, loc.fmin + 1 - flank, loc.fmax + flank, track_string))
+        outfh.write("  <td>{0}</td>\n".format(loc.on.id))
+        outfh.write("  <td>{0}</td>\n".format(loc.fmin + 1))
+        outfh.write("  <td>{0}</td>\n".format(loc.fmax))
+        outfh.write("<tr>\n")
 
 
 def get_genes_from_dict( features ):
@@ -242,9 +283,3 @@ def get_genes_from_dict( features ):
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
