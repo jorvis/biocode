@@ -6,9 +6,10 @@ which aren't related to another feature.
 
 The initial use-case here was a GFF file with gene features that had no mRNA children.
 
-Warning: Because feature parentage can be anywhere in the file, this has to hold the
-whole file into memory.  So don't run this on your phone with a huge file.  (Actually,
-phones now could handle it just fine.)
+Warning: Because feature parentage can be anywhere in the file, it can be difficult to
+do some things like this without holding the whole file into memory.  Instead, this makes
+two passes over the file and just stores line indexes to keep, along with a few IDs to
+track parentage.  A bit more processing time, much less memory needed.
 
 Author: Joshua Orvis
 """
