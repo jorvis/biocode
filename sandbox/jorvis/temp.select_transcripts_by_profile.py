@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+This script is currently quite experimental, and requires editing to use for each organism.  If
+you can't see what to edit in the code you probably shouldn't be trying it.
+
+Your input is a GFF3 file containing gene models.
+
+"""
+
 import argparse
 import os
 import math
@@ -9,7 +17,7 @@ import biocodegff
 import biocodeutils
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Generates a set of transcripts based on a user-defined exon-complexity profile')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
@@ -32,7 +40,10 @@ def main():
     #profile = { 1:12.2, 2:13.2, 3:15.4, 4:14.1, 5:11.5, 6:8.77, 7:6.99, 8:4.74, 9:3.81, 10:2.45 }
 
     # profile for 99-880
-    profile = { 1:19.7, 2:17.9, 3:20.6, 4:15.6, 5:10.1, 6:6.62, 7:4.14, 8:1.58, 9:2.07 }
+    #profile = { 1:19.7, 2:17.9, 3:20.6, 4:15.6, 5:10.1, 6:6.62, 7:4.14, 8:1.58, 9:2.07 }
+
+    # c. hominis TU502
+    profile = { 1:89.7, 2:6.8, 3:2.6, 4:0.78 }
     
     
     mRNAs = dict()
