@@ -157,7 +157,7 @@ while (my $line = <$ifh>) {
     }
     
     if ( $feat_type eq 'gene' ) {
-        ## make sure the molecule doesn't have a gene there already
+        ## make sure the molecule doesn't have a gene txhere already
         if ( exists $molecules{$cols[0]} && $molecules{$cols[0]}{$cols[3]} ) {
             die "found more than one gene at position $cols[3] on molecule $cols[0]\n";
         } else {
@@ -169,7 +169,10 @@ while (my $line = <$ifh>) {
               $feat_type eq 'exon' || 
               $feat_type eq 'polypeptide' ||
               $feat_type eq 'tRNA' ||
-              $feat_type eq 'rRNA' ) {
+              $feat_type eq 'rRNA' ||
+              $feat_type eq 'non_canonical_five_prime_splice_site' ||
+              $feat_type eq 'non_canonical_three_prime_splice_site'
+        ) {
     
         ## nothing to see here, carry on
         
