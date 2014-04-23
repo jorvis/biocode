@@ -529,6 +529,9 @@ class Gene( LocatableThing ):
     def mRNAs(self):
         return self.children['mRNA']
 
+    def RNAs(self):
+        return self.children['mRNA'] + self.children['tRNA'] + self.children['rRNA']
+
     def shares_exon_structure_with( self, thing=None ):
         """
         This checks if two genes have only on mRNA and, if so, compares their internal
