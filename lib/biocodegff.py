@@ -195,6 +195,8 @@ def get_gff3_features(gff3_file, assemblies=None):
     
     
     for line in open(gff3_file):
+        #print("INFO: processing line: {0}".format(line))
+        
         if in_fasta_section == True:
             m = re.search('>(\S+)\s*(.*)', line)
             if m:
