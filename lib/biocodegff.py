@@ -430,20 +430,20 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
     ## print the gene line
     fh.write( "\t".join(columns) + "\n" )
 
-    ## modifications for the mRNA
-    for mRNA in gene.mRNAs():
-        mRNA_loc = mRNA.location_on( on )
+    ## modifications for the RNA
+    for RNA in gene.RNAs():
+        RNA_loc = RNA.location_on( on )
 
-        if mRNA_loc is None:
-            raise Exception("ERROR: Expected mRNA {0} to be located on {1} but it wasn't".format(mRNA.id, on.id))
+        if RNA_loc is None:
+            raise Exception("ERROR: Expected RNA {0} to be located on {1} but it wasn't".format(RNA.id, on.id))
         
-        columns[2] = 'mRNA'
-        columns[3:5] = [str(mRNA_loc.fmin + 1), str(mRNA_loc.fmax)]
-        columns[8] = build_column_9( id=mRNA.id, parent=mRNA.parent.id, other=None )
+        columns[2] = RNA.__class__.__name__
+        columns[3:5] = [str(RNA_loc.fmin + 1), str(RNA_loc.fmax)]
+        columns[8] = build_column_9( id=RNA.id, parent=RNA.parent.id, other=None )
         fh.write( "\t".join(columns) + "\n" )
     
         ## handle each CDS for this mRNA
-        for CDS in mRNA.CDSs():
+        for CDS in RNA.CDSs():
             CDS_loc = CDS.location_on( on )
 
             if CDS_loc is None:
@@ -452,13 +452,13 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             columns[2] = 'CDS'
             columns[3:5] = [str(CDS_loc.fmin + 1), str(CDS_loc.fmax)]
             columns[7] = str(CDS_loc.phase)
-            columns[8] = build_column_9( id=CDS.id, parent=mRNA.id, other=None )
+            columns[8] = build_column_9( id=CDS.id, parent=RNA.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
         columns[7] = '.'
 
-        ## handle each exon for this mRNA
-        for exon in mRNA.exons():
+        ## handle each exon for this RNA
+        for exon in RNA.exons():
             exon_loc = exon.location_on( on )
 
             if exon_loc is None:
@@ -466,13 +466,13 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             
             columns[2] = 'exon'
             columns[3:5] = [str(exon_loc.fmin + 1), str(exon_loc.fmax)]
-            columns[8] = build_column_9( id=exon.id, parent=mRNA.id, other=None )
+            columns[8] = build_column_9( id=exon.id, parent=RNA.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
         # are there polypeptides?
-        for polypeptide in mRNA.polypeptides():
+        for polypeptide in RNA.polypeptides():
             ## HACK - we probably don't want to keep this
-            polypeptide_loc = mRNA_loc
+            polypeptide_loc = RNA_loc
             annot = polypeptide.annotation
             assertions = dict()
             dbxref_strs = list()
