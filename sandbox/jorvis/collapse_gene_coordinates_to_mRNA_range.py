@@ -51,22 +51,20 @@ def main():
 
             mRNAs = gene.mRNAs()
 
-            if len(mRNAs) < 1:
-                continue
-            
-            for mRNA in mRNAs:
-                mRNA_loc = mRNA.location()
-                
-                if min_coord is None or mRNA_loc.fmin < min_coord:
-                    min_coord = mRNA_loc.fmin
+            if len(mRNAs) >= 1:
+                for mRNA in mRNAs:
+                    mRNA_loc = mRNA.location()
 
-                if max_coord is None or mRNA_loc.fmax > max_coord:
-                    max_coord = mRNA_loc.fmax
+                    if min_coord is None or mRNA_loc.fmin < min_coord:
+                        min_coord = mRNA_loc.fmin
 
-            if min_coord != gene_loc.fmin or max_coord != gene_loc.fmax:
-                print("DEBUG: Changed gene {0} from {1}-{2} to {3}-{4}".format(gene.id, gene_loc.fmin, gene_loc.fmax, min_coord, max_coord))
-                gene_loc.fmin = min_coord
-                gene_loc.fmax = max_coord
+                    if max_coord is None or mRNA_loc.fmax > max_coord:
+                        max_coord = mRNA_loc.fmax
+
+                if min_coord != gene_loc.fmin or max_coord != gene_loc.fmax:
+                    print("DEBUG: Changed gene {0} from {1}-{2} to {3}-{4}".format(gene.id, gene_loc.fmin, gene_loc.fmax, min_coord, max_coord))
+                    gene_loc.fmin = min_coord
+                    gene_loc.fmax = max_coord
                 
             gene.print_as(fh=gff_out, source='IGS', format='gff3')
 
