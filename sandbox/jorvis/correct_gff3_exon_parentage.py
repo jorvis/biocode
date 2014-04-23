@@ -55,6 +55,8 @@ def main():
                 print("INFO: correcting unexpected parentage for feature ({0}) type {2}.  Expected ({1})".format(id, last_rna_id, cols[2]) )
                 cols[8] = biocodegff.set_column_9_value(cols[8], 'Parent', last_rna_id)
                 ofh.write("{0}\n".format("\t".join(cols)) )
+            else:
+                ofh.write("{0}\n".format(line) )
         else:
             ofh.write("{0}\n".format(line) )
             
