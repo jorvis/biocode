@@ -128,66 +128,36 @@ def main():
         if algorithm is None:
             algorithm = os.path.basename(cols[3])
 
-        if args.export_mode == 'match':
-            if args.perc_identity_cutoff is not None and segment['pct_id'] < args.perc_identity_cutoff:
-                continue
+        if last_contig_id is not None and last_contig_id != cols[0] or (last_contig_id == cols[0] and chain_num != current_chain_number):
+            chain_pct_id = global_pct_id( gene_segments )
 
-            if args.perc_similarity_cutoff is not None and segment['pct_sim'] < args.perc_similarity_cutoff:
-                continue
+            # this is a new chain
+            total_chains += 1
 
-            segment_min = min( segment['contig_start'], segment['contig_end'] )
-            segment_max = max( segment['contig_start'], segment['contig_end'] )
-            hit_min = min( segment['hit_start'], segment['hit_end'] )
-            hit_max = max( segment['hit_start'], segment['hit_end'] )
+            exported = export_segments( args.export_mode, gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                                        args.perc_similarity_cutoff, args.max_intron_cutoff )
 
-            if segment['strand'] == 'Minus':
-                segment_strand = '-'
-            else:
-                segment_strand = '+'
+            if exported is True:
+                chains_exported += 1
 
-            if last_contig_id is None or last_contig_id != cols[0] or (last_contig_id == cols[0] and chain_num != current_chain_num):
-                match_id = get_next_id(MATCH_ONLY_TERM, args.name_prefix)
-                current_chain_num = chain_num
-                
-            data_column = "ID={0};Target={1} {2} {3};Name={4}".format(match_id, segment['hit_id'], hit_min, hit_max, hit_product)
-            ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format( \
-                    segment['contig_id'], algorithm, MATCH_ONLY_TERM, segment_min, segment_max, '.', segment_strand, \
-                    '.', data_column ))
-        else:
-            if last_contig_id is not None and last_contig_id != cols[0] or (last_contig_id == cols[0] and chain_num != current_chain_number):
-                chain_pct_id = global_pct_id( gene_segments )
+            current_chain_number = chain_num
+            gene_segments = []
 
-                # this is a new chain
-                total_chains += 1
-
-                exported = export_segments( args.export_mode, gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
-                                            args.perc_similarity_cutoff, args.max_intron_cutoff )
-                
-                if exported is True:
-                    chains_exported += 1
-
-                current_chain_number = chain_num
-                gene_segments = []
-
-            gene_segments.append( segment )
+        gene_segments.append( segment )
 
         last_contig_id = cols[0]
     
     ## make sure to do the last one
-    if args.export_mode == 'match':
-        ## do nothing, we've already exported it while looping
-        pass
-    else:
-        total_chains += 1
+    total_chains += 1
 
-        exported = export_segments( args.export_mode, gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
-                                    args.perc_similarity_cutoff, args.max_intron_cutoff )
+    exported = export_segments( args.export_mode, gene_segments, ofh, current_chain_number, algorithm, args.name_prefix, args.perc_identity_cutoff, \
+                                args.perc_similarity_cutoff, args.max_intron_cutoff )
 
-        if exported is True:
-            chains_exported += 1
+    if exported is True:
+        chains_exported += 1
 
-        print("\nTotal alignment chains found: {0}".format(total_chains) )
-        print("Total chains exported (after cutoffs applied): {0}\n".format(chains_exported) )
+    print("\nTotal alignment chains found: {0}".format(total_chains) )
+    print("Total chains exported (after cutoffs applied): {0}\n".format(chains_exported) )
     
 
 def get_next_id(type, prefix):
@@ -249,24 +219,31 @@ def export_segments( mode, segments, out, chn_num, source, prefix, perc_id_cutof
     segment_strand = '+'
 
     segment_last_max = None
+    segment_last_min = None
+
+    #print("DEBUG: processing {0} segments".format(len(segments)) )
 
     # these are always returned in the file in order, so there's no need to sort segments
     for segment in segments:
+        if segment['strand'] == 'Minus':
+            segment_strand = '-'
+
+        #print("DEBUG: segment: contig_start:{0}, contig_end:{1}, strand:{2}".format(segment['contig_start'], segment['contig_end'], segment['strand']) )
         segment_min = min( segment['contig_start'], segment['contig_end'] )
         segment_max = max( segment['contig_start'], segment['contig_end'] )
         segment_hit_min = min( segment['hit_start'], segment['hit_end'] )
         segment_hit_max = max( segment['hit_start'], segment['hit_end'] )
 
         if segment_last_max is not None:
-            intron_size = segment_min - segment_last_max - 1
+            if segment_strand == '+':
+                intron_size = segment_min - segment_last_max - 1
+            else:
+                intron_size = segment_last_min - segment_max - 1
+                
+            #print("DEBUG: intron size is: {0}".format(intron_size))
             if max_intron_cutoff is not None and intron_size > max_intron_cutoff:
                 return False
-
-        segment_last_max = segment_max
         
-        if segment['strand'] == 'Minus':
-            segment_strand = '-'
-
         if contig_min is None or segment_min < contig_min:
             contig_min = segment_min
             hit_min    = segment_hit_min
@@ -280,6 +257,9 @@ def export_segments( mode, segments, out, chn_num, source, prefix, perc_id_cutof
 
         if hit_id is None:
             hit_id = segment['hit_id']
+
+        segment_last_max = segment_max
+        segment_last_min = segment_min
 
     ## does this score above any user-defined cutoffs.
     if perc_id_cutoff is not None:
@@ -355,7 +335,21 @@ def export_segments( mode, segments, out, chn_num, source, prefix, perc_id_cutof
             out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format(contig_id, source, 'match_part', mp_start, mp_end, '.', \
                                                                               segment_strand, '.', data_column ) )
             
+    elif mode == 'match':
+        match_id = get_next_id(MATCH_ONLY_TERM, prefix)
+        
+        ## now write the match parts
+        for segment in sorted(segments, key=itemgetter('contig_start')):
+            mp_start = min( segment['contig_start'], segment['contig_end'] )
+            mp_hit_start = min(segment['hit_start'], segment['hit_end'])
+            mp_end = max( segment['contig_start'], segment['contig_end'] )
+            mp_hit_end = max( segment['hit_start'], segment['hit_end'] )
 
+            data_column = "ID={0};Target={1} {2} {3};Name={4}".format(match_id, segment['hit_id'], mp_hit_start, mp_hit_end, 'HIT_PRODUCT_HERE')
+            out.write( "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format(contig_id, source, MATCH_ONLY_TERM, mp_start, mp_end, '.', \
+                                                                              segment_strand, '.', data_column ) )
+
+            
     else:
         raise Exception( "ERROR: valid export modes are 'model', 'match', or 'match_and_parts'" )
 
