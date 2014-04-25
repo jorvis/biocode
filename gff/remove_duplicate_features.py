@@ -14,11 +14,6 @@ A row is considered a removable duplicate if:
 Why the parent restriction?  If this wasn't included, two different isoforms at the same
 location which had shared exons could lose them (for example.)
 
-Warning: Because feature parentage can be anywhere in the file, it can be difficult to
-do some things like this without holding the whole file into memory.  Instead, this makes
-two passes over the file and just stores line indexes to keep, along with a few IDs to
-track parentage.  A bit more processing time, much less memory needed.
-
 Author: Joshua Orvis
 """
 
