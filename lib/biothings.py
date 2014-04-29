@@ -534,7 +534,7 @@ class Gene( LocatableThing ):
 
     def shares_exon_structure_with( self, thing=None ):
         """
-        This checks if two genes have only on mRNA and, if so, compares their internal
+        This checks if two genes have only one mRNA and, if so, compares their internal
         exon structure.  Returns True if they all match completely.
         """
         these_mRNAs = self.mRNAs()
@@ -561,7 +561,7 @@ class Gene( LocatableThing ):
 
     def shares_CDS_structure_with( self, thing=None ):
         """
-        This checks if two genes have only on mRNA and, if so, compares their internal
+        This checks if two genes have only one mRNA and, if so, compares their internal
         CDS structure.  Returns True if they all match completely.
         """
         these_mRNAs = self.mRNAs()
