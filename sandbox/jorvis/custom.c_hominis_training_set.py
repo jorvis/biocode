@@ -46,7 +46,8 @@ def main():
     args = parser.parse_args()
 
     # reference CDS, mapped to our genome using GMAP with -f gff3_gene
-    ref_gff_file = '/usr/local/projects/cryptosporidium/structural_prediction/gmap/ref_vs_our_c_hominis_TU502/gmap.gff'
+    #ref_gff_file = '/usr/local/projects/cryptosporidium/structural_prediction/gmap/ref_vs_our_c_hominis_TU502/gmap.gff'
+    ref_gff_file = '/usr/local/projects/cryptosporidium/structural_prediction/cegma/c_hominis_TU502/output.cegma.gff3'
     gmap_pct_id_cutoff = 97
     gmap_cov_cutoff = 100
 
