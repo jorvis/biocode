@@ -52,9 +52,6 @@ def main():
     parser.add_argument('-m', '--max_genes', type=int, required=False, help='Limits gene IDs exported to the top N by strongest evidence class' )
     args = parser.parse_args()
 
-    if args.expression is not None:
-        raise Exception("ERROR: --expression option not yet implemented")
-
     print("INFO: parsing Genemark-ES data")
     (assemblies, gm_es_features) = biocodegff.get_gff3_features( args.genemark )
     gm_es_genes = get_genes_from_dict(gm_es_features)
@@ -66,9 +63,16 @@ def main():
     print("\tINFO: Got {0} CEGMA genes".format(len(cegma_genes)))
 
     print("INFO: parsing AAT results")
-    (assemblies, aat_muris_features) = biocodegff.get_gff3_features( args.aat, assemblies=assemblies)
-    aat_genes = get_genes_from_dict(aat_muris_features)
+    (assemblies, aat_features) = biocodegff.get_gff3_features( args.aat, assemblies=assemblies)
+    aat_genes = get_genes_from_dict(aat_features)
     print("\tINFO: Got {0} AAT 'genes'".format(len(aat_genes)))
+
+    expression_genes = list()
+    if args.expression is not None:
+        print("INFO: parsing expression results")
+        (assemblies, expression_features) = biocodegff.get_gff3_features( args.expression, assemblies=assemblies)
+        expression_genes = get_genes_from_dict(expression_features)
+        print("\tINFO: Got {0} expression 'genes'".format(len(expression_genes)))
 
     genemark_cegma_shared_genes = list()
     gmes_cegma_fh = open('gmes_cegma.shared.ids', 'wt')
@@ -82,6 +86,19 @@ def main():
                     break
 
     print("\n{0} genes were shared perfectly between Genemark-ES and CEGMA".format(len(genemark_cegma_shared_genes)) )
+
+    #############################################################################
+
+    genemark_cegma_expression_shared_genes = list()
+    gmes_cegma_exp_fh = open('gmes_cegma_exp.shared.ids', 'wt')
+
+    for gm_es_gene in genemark_cegma_shared_genes:
+        for exp_gene in expression_genes:
+            if gm_es_gene.shares_CDS_structure_with( exp_gene ):
+                genemark_cegma_expression_shared_genes.append(gm_es_gene)
+                break
+
+    print("{0} genes were shared perfectly between Genemark-ES and CEGMA and expression data".format(len(genemark_cegma_expression_shared_genes)) )
 
     #############################################################################
 
@@ -148,10 +165,16 @@ def main():
     ##############################################################################
     ## now to assemble the results
     training_ids = list()
+
+    # 0. Start with genes shared between GeneMark-ES, CEGMA and expression evidence
+    recruit_training_genes( training_ids, genemark_cegma_expression_shared_genes, args.max_genes )
+    print("DEBUG: {0} genes after recruitment of GeneMark-ES, CEGMA and expression data".format(len(training_ids)))
+    
     # 1. Pull in the genes with shared evidence across GeneMark-ES, CEGMA and AAT
     recruit_training_genes( training_ids, genemark_aat_cegma_shared_genes, args.max_genes )
     print("DEBUG: {0} genes after recruitment of GeneMark-ES, CEGMA and AAT".format(len(training_ids)))
 
+    # 2. Next include those genes 
     recruit_training_genes( training_ids, cegma_with_aat_not_gm_es, args.max_genes )
     print("DEBUG: {0} genes after recruitment of CEGMA + AAT without GM-ES".format(len(training_ids)))
 
