@@ -501,9 +501,10 @@ class Gene( LocatableThing ):
     elements necessary to encode a functional transcript. A gene may include regulatory 
     regions, transcribed regions and/or other functional sequence regions."
     '''
-    def __init__( self, id=None, locations=None, children=None ):
+    def __init__( self, id=None, locus_tag=None, locations=None, children=None ):
         super().__init__(locations)
         self.id = id
+        self.locus_tag = locus_tag
         self.children = children
 
         ## initialize any types needed
@@ -730,11 +731,14 @@ class RNA( LocatableThing ):
     SO definition (2013-05-22): "An attribute describing a sequence consisting of nucleobases 
     bound to a repeating unit made of a D-ribose ring connected to a phosphate backbone."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
+    def __init__( self, id=None, locations=None, parent=None, children=None, annotation=None ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
         self.children = children
+
+        ## this should be an instance of FunctionalAnnotation from bioannotation.py
+        self.annotation = annotation
 
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'exon')
