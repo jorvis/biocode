@@ -119,7 +119,9 @@ sub check_parameters {
 	## check if ids came from file
 	if(defined $options{id_list}){
 		## make sure file exists
-		pod2usage( {-exitval => 0, -verbose => 2, -output => \*STDERR} ) if (!-e $options{id_list});
+        if (! -e $options{id_list}) {
+            die "Error, file defined by --id_list not found\n";
+        }
 	
 		## store id list
 		if(-e $options{id_list}){
