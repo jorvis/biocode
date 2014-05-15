@@ -66,6 +66,7 @@ def main():
     next_id = args.interval
 
     mapping = parse_mapping_file( args.id_file )
+    loci_assigned = list()
 
     ## output will either be a file or STDOUT
     fout = sys.stdout
@@ -90,9 +91,16 @@ def main():
                 locus_id = mapping[id]
             else:
                 locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
-                cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
                 next_id += args.interval
-            
+
+            cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
+
+            ## make sure this wasn't generated already (possibly conflict between --id_file and an
+            #   auto-generated ID?
+            if locus_id in loci_assigned:
+                raise Exception("ERROR: Duplicate ID ({0}) attempted to be generated.  Possible conflict between id mapping file and an auto-generated ID?".format(locus_id))
+
+            loci_assigned.append(locus_id)
             gene_loci[id] = locus_id
             
         elif type.endswith('RNA'):
