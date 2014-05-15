@@ -73,15 +73,8 @@ def set_column_9_value(colstring, key, val):
     """
     c9 = column_9_dict(colstring)
     c9[key] = val
-    colstring = ''
+    return build_column_9_from_dict(c9)
 
-    for att in c9:
-        if len(colstring) > 0:
-            colstring += ';'
-
-        colstring += "{0}={1}".format(att, escape(c9[att]))
-
-    return colstring
     
 
 def column_9_dict(colstring):
