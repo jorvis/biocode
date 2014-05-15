@@ -37,7 +37,8 @@ you'd have:
    Tparva_00015
    ...
 
-
+You can pass an ID file if you have a list of identifiers that you know you already want applied.  It looks
+in the first column for feature IDs (column 9 ID attribute) and in the second column for the locus tag to use.
 """
 
 import argparse
@@ -55,14 +56,16 @@ def main():
     parser.add_argument('-p', '--prefix', type=str, required=True, help='The prefix portion of IDs to be generated')
     parser.add_argument('-a', '--padding', type=int, required=True, help='Specify the minimum with to reserve for the numeric portion of the IDs.  Smaller numbers will be zero-padded.' )
     parser.add_argument('-n', '--interval', type=int, required=False, default=1, help='Interval between generated identifiers' )
-    parser.add_argument('-m', '--mode', type=str, required=False, default='sequential', help='ID modes (see embedded documentation): sequential, uuid, hex8, hex12')
-
+    parser.add_argument('-d', '--id_file', type=str, required=False, help='Pass a 2-column file of IDs to retain (in case you have mapped genes, for example)')
+    
     args = parser.parse_args()
     check_arguments(args)
 
     # used to store locus_tags associated with each gene (so children can inherit)
     gene_loci = dict()
     next_id = args.interval
+
+    mapping = parse_mapping_file( args.id_file )
 
     ## output will either be a file or STDOUT
     fout = sys.stdout
@@ -83,10 +86,15 @@ def main():
         type = cols[2]
 
         if type == 'gene':
-            locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
-            cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
-            next_id += args.interval
+            if id in mapping:
+                locus_id = mapping[id]
+            else:
+                locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
+                cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
+                next_id += args.interval
+            
             gene_loci[id] = locus_id
+            
         elif type.endswith('RNA'):
             if parent in gene_loci:
                 cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', gene_loci[parent] )
@@ -96,12 +104,26 @@ def main():
         fout.write("\t".join(cols) + "\n")
 
 
+def parse_mapping_file( file ):
+    id_map = dict()
+
+    if file is None:
+        return id_map
+
+    for line in open(file):
+        line = line.rstrip()
+        cols = line.split("\t")
+
+        if len(cols) == 2:
+            id_map[cols[0]] = cols[1]
+    
+    return id_map
+
+
 
 def check_arguments( args ):
     # Check the acceptable values for format
-    mode_options = ('sequential', 'uuid', 'hex8', 'hex12')
-    if args.mode not in mode_options:
-        raise Exception("ERROR: The --mode provided ({0}) isn't supported.  Please check the documentation again.".format(args.mode))
+    pass
 
 
 
