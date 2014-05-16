@@ -44,8 +44,10 @@ def main():
     usp_db_conn = sqlite3.connect(args.uniprot_sprot_db)
     usp_db_curs = usp_db_conn.cursor()
 
+    sources_log_fh = open("{0}.sources.log".format(args.output_file), 'wt')
+    
     # this is a dict of biothings.Polypeptide objects
-    polypeptides = initialize_polypeptides( args.input_fasta )
+    polypeptides = initialize_polypeptides( sources_log_fh, args.input_fasta )
 
     # keyed on polypeptide ID, the values here are the organism name for the top BLAST match of each
     polypeptide_blast_org = dict()
@@ -56,11 +58,11 @@ def main():
         (assemblies, features) = biocodegff.get_gff3_features( args.source_gff )
 
     print("INFO: parsing HMM evidence")
-    parse_hmm_evidence( polypeptides, args.hmm_htab_list, hmm_db_curs )
+    parse_hmm_evidence( sources_log_fh, polypeptides, args.hmm_htab_list, hmm_db_curs )
     hmm_db_curs.close()
 
     print("INFO: parsing BLAST (SWISS-PROT) evidence")
-    parse_sprot_blast_evidence( polypeptides, polypeptide_blast_org, args.blast_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff )
+    parse_sprot_blast_evidence( sources_log_fh, polypeptides, polypeptide_blast_org, args.blast_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff )
     usp_db_curs.close()
 
     if args.blast_trembl_btab_list is not None:
@@ -193,7 +195,7 @@ def write_tab_results( f, polypeptides ):
                 polypeptide.annotation.gene_symbol) )
 
 
-def initialize_polypeptides( fasta_file ):
+def initialize_polypeptides( log_fh, fasta_file ):
     '''
     Reads a FASTA file of (presumably) polypeptide sequences and creates a dict of Polypeptide
     objects, keyed by ID.  No bioannotation.FunctionalAnnotation objects will be attached yet.
@@ -205,6 +207,7 @@ def initialize_polypeptides( fasta_file ):
     for seq_id in seqs:
         polypeptide = biothings.Polypeptide( id=seq_id, length=len(seqs[seq_id]['s']), residues=seqs[seq_id]['s'] )
         annotation = bioannotation.FunctionalAnnotation(product_name=DEFAULT_PRODUCT_NAME)
+        log_fh.write("INFO: {0}: Set initial product name to '{1}'\n".format(seq_id, DEFAULT_PRODUCT_NAME))
         polypeptide.annotation = annotation
         
         polypeptides[seq_id] = polypeptide
@@ -260,7 +263,7 @@ def parse_trembl_blast_evidence(polypeptides, blast_list, eval_cutoff):
                 # remember the ID we just saw
                 last_qry_id = this_qry_id
 
-def parse_sprot_blast_evidence( polypeptides, blast_org, blast_list, cursor, eval_cutoff ):
+def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cursor, eval_cutoff ):
     '''
     Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
     each with Annotation evidence where appropriate.  Only attaches evidence if
@@ -309,6 +312,8 @@ def parse_sprot_blast_evidence( polypeptides, blast_org, blast_list, cursor, eva
                     else:
                         annot.product_name = cols[15]
 
+                    log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to SPROT accession '{2}'".format(this_qry_id, annot.product_name, accession))
+
                 # if no EC numbers have been set, they can inherit from this
                 if len(annot.ec_numbers) == 0:
                     for ec_annot in get_uspdb_ec_nums( accession, cursor ):
@@ -330,7 +335,7 @@ def parse_sprot_blast_evidence( polypeptides, blast_org, blast_list, cursor, eva
 
 
 
-def parse_hmm_evidence( polypeptides, htab_list, cursor ):
+def parse_hmm_evidence( log_fh, polypeptides, htab_list, cursor ):
     '''
     Reads a list file of HMM evidence and dict of polypeptides, populating each with
     Annotation evidence where appropriate.  Each file in the list can have results
@@ -365,6 +370,7 @@ def parse_hmm_evidence( polypeptides, htab_list, cursor ):
                 ## save it
                 annot = polypeptides[this_qry_id].annotation
                 annot.product_name = cols[15]
+                log_fh.write("INFO: {0}: Updated product name to '{1}' based on HMM hit to accession '{2}'".format(this_qry_id, annot.product_name, accession))
                 
                 # does our hmm database provide GO terms for this accession?
                 for go_annot in get_hmmdb_go_terms( accession, cursor ):
