@@ -88,10 +88,13 @@ class LocatableThing:
 
         return False
 
-    def has_same_coordinates_as( self, on=None, thing=None ):
+    def has_same_coordinates_as( self, on=None, thing=None, stop_tolerant=False ):
         '''
         Reports True/False depending on whether the calling object shares both start/stop coordinates
         with the passed 'thing' when considering locations 'on' the passed molecule biothing object.
+
+        If you set the stop_tolerant argument=True, this will check the exact coordinates AND
+        the coordinates with three bases off the end.  This obviously takes longer.
         '''
         other = thing
 
@@ -105,6 +108,16 @@ class LocatableThing:
                     
                     if this_loc.fmin == other_loc.fmin and this_loc.fmax == other_loc.fmax:
                         return True
+
+                    # for those features with mixed stop codon inclusion
+                    elif stop_tolerant == True:
+                        if this_loc.strand == 1:
+                            # this allows for either to be three base pairs away from the other in either direction
+                            if this_loc.fmin == other_loc.fmin and abs(this_loc.fmax - other_loc.fmax) == 3:
+                                return True
+                        else:
+                            if abs(this_loc.fmin - other_loc.fmin) == 3 and this_loc.fmax == other_loc.fmax:
+                                return True
 
         # if we got here, there wasn't a match
         return False
@@ -533,7 +546,7 @@ class Gene( LocatableThing ):
     def RNAs(self):
         return self.children['mRNA'] + self.children['tRNA'] + self.children['rRNA']
 
-    def shares_exon_structure_with( self, thing=None ):
+    def shares_exon_structure_with( self, thing=None, stop_tolerant=False ):
         """
         This checks if two genes have only one mRNA and, if so, compares their internal
         exon structure.  Returns True if they all match completely.
@@ -551,7 +564,7 @@ class Gene( LocatableThing ):
             ref_exon_count += 1
             
             for other_exon in other_mRNAs[0].exons():
-                if ref_exon.has_same_coordinates_as( thing=other_exon ):
+                if ref_exon.has_same_coordinates_as( thing=other_exon, stop_tolerant=stop_tolerant ):
                     exon_matches_found += 1
                     break
 
