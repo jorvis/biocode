@@ -107,8 +107,8 @@ def main():
 
     for gm_es_gene in gm_es_genes:
         for aat_gene in aat_genes:
-            #if gm_es_gene.shares_exon_structure_with( thing=aat_gene, stop_tolerant=True ) == True:
-            if gm_es_gene.shares_exon_structure_with( thing=aat_gene ) == True:
+            if gm_es_gene.shares_exon_structure_with( thing=aat_gene, stop_tolerant=True ) == True:
+            #if gm_es_gene.shares_exon_structure_with( thing=aat_gene ) == True:
                 genemark_aat_shared_genes.append(gm_es_gene)
                 gmes_aat_fh.write("{0}\n".format(gm_es_gene.id))
                 break
