@@ -39,6 +39,17 @@ you'd have:
 
 You can pass an ID file if you have a list of identifiers that you know you already want applied.  It looks
 in the first column for feature IDs (column 9 ID attribute) and in the second column for the locus tag to use.
+
+Another option, perhaps an esoteric one, is to pass a molecule mapping file which will embed a token in each
+locus tag containing a marker for that molecule.  Take the example Tparva_00005 ID above, if a molecule
+map were passed with these contents:
+
+    tp.assembly.567468735.1	01
+    tp.assembly.567478335.1	02
+    tp.assembly.567492885.1	03
+
+The script will read the molecule name in column 1 of the GFF, match it to this table, and instead set
+a locus tag of Tparva_01g00005
 """
 
 import argparse
@@ -57,6 +68,7 @@ def main():
     parser.add_argument('-a', '--padding', type=int, required=True, help='Specify the minimum with to reserve for the numeric portion of the IDs.  Smaller numbers will be zero-padded.' )
     parser.add_argument('-n', '--interval', type=int, required=False, default=1, help='Interval between generated identifiers' )
     parser.add_argument('-d', '--id_file', type=str, required=False, help='Pass a 2-column file of IDs to retain (in case you have mapped genes, for example)')
+    parser.add_argument('-m', '--molecule_map', type=str, required=False, help='Pass a 2-column file of molecule->token identifiers (see documentation)')
     
     args = parser.parse_args()
     check_arguments(args)
@@ -65,7 +77,8 @@ def main():
     gene_loci = dict()
     next_id = args.interval
 
-    mapping = parse_mapping_file( args.id_file )
+    id_mapping  = parse_mapping_file( args.id_file )
+    mol_mapping = parse_mapping_file( args.molecule_map )
     loci_assigned = list()
 
     ## output will either be a file or STDOUT
@@ -87,10 +100,17 @@ def main():
         type = cols[2]
 
         if type == 'gene':
-            if id in mapping:
-                locus_id = mapping[id]
+            if id in id_mapping:
+                locus_id = id_mapping[id]
             else:
-                locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
+                if args.molecule_map is None:
+                    locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
+                else:
+                    if cols[0] in mol_mapping:
+                        locus_id = "{0}_{2}g{1}".format(args.prefix, str(next_id).zfill(args.padding), mol_mapping[cols[0]])
+                    else:
+                        raise Exception("ERROR: --molecule_map passed but {0} wasn't found in it.".format(cols[0]) )
+                    
                 next_id += args.interval
 
             cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
