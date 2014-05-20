@@ -68,6 +68,7 @@ def main():
     parser.add_argument('-p', '--prefix', type=str, required=True, help='The prefix portion of IDs to be generated')
     parser.add_argument('-a', '--padding', type=int, required=True, help='Specify the minimum with to reserve for the numeric portion of the IDs.  Smaller numbers will be zero-padded.' )
     parser.add_argument('-n', '--interval', type=int, required=False, default=1, help='Interval between generated identifiers' )
+    parser.add_argument('-s', '--starting_id', type=int, required=False, default=0, help='Initial numeric portion of IDs to be generated (do not zero-pad)' )
     parser.add_argument('-d', '--id_file', type=str, required=False, help='Pass a 2-column file of IDs to retain (in case you have mapped genes, for example)')
     parser.add_argument('-m', '--molecule_map', type=str, required=False, help='Pass a 2-column file of molecule->token identifiers (see documentation)')
     parser.add_argument('-c', '--custom', type=str, required=False, help='For custom parsing steps.  Most should ignore this.')
@@ -77,7 +78,8 @@ def main():
 
     # used to store locus_tags associated with each gene (so children can inherit)
     gene_loci = dict()
-    next_id = args.interval
+    next_id = args.starting_id
+    last_molecule = None
 
     id_mapping  = parse_mapping_file( args.id_file )
     mol_mapping = parse_mapping_file( args.molecule_map )
@@ -87,6 +89,14 @@ def main():
     if args.custom == 'joana':
         if args.molecule_map is None or args.id_file is None:
             raise Exception("ERROR: Expected --molecule_map and --id_file options when using --custom=joana")
+        else:
+            ## need to process the ID map to reformat IDs
+            for id in id_mapping:
+                # TP05_0002 -> TpMuguga_05g00002
+                m = re.match('TP(\d\d)_(\d+)', id_mapping[id])
+                if m:
+                    id_mapping[id] = "{0}_{1}g{2}".format(args.prefix, m.group(1), m.group(2) )
+                    
         
     ## output will either be a file or STDOUT
     fout = sys.stdout
@@ -101,6 +111,11 @@ def main():
             fout.write(line + "\n")
             continue
 
+        if last_molecule is None or (args.molecule_map is not None and mol_mapping[cols[0]] != mol_mapping[last_molecule]):
+            print("Found molecule {0}, resetting id counter from {1}".format(cols[0], next_id) )
+            next_id = args.starting_id
+            last_molecule = cols[0]
+
         # grab the ID column if any
         id = biocodegff.column_9_value(cols[8], 'ID')
         parent = biocodegff.column_9_value(cols[8], 'Parent')
@@ -108,17 +123,7 @@ def main():
 
         if type == 'gene':
             if id in id_mapping:
-                if args.custom == 'joana':
-                    # TP05_0002 -> TpMuguga_05g00002
-                    m = re.match('TP(\d\d)_(\d+)', id)
-                    if m:
-                        locus_id = "{0}_{1}g{2}".format(args.prefix, m.group(1), m.group(2) )
-                    else:
-                        raise Exception("ERROR: --custom=joana passed but expected input mapping id convention TPNN_N+")
-                    
-                    locus_id = locus_id = "{0}_{2}g{1}".format(args.prefix, str(next_id).zfill(args.padding), mol_mapping[cols[0]])
-                else:
-                    locus_id = id_mapping[id]
+                locus_id = id_mapping[id]
             else:
                 if args.molecule_map is None:
                     locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
