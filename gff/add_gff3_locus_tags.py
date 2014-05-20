@@ -110,8 +110,8 @@ def main():
             if id in id_mapping:
                 if args.custom == 'joana':
                     # TP05_0002 -> TpMuguga_05g00002
-                    re = re.match('TP(\d\d)_(\d+)', id)
-                    if re:
+                    m = re.match('TP(\d\d)_(\d+)', id)
+                    if m:
                         locus_id = "{0}_{1}g{2}".format(args.prefix, m.group(1), m.group(2) )
                     else:
                         raise Exception("ERROR: --custom=joana passed but expected input mapping id convention TPNN_N+")
