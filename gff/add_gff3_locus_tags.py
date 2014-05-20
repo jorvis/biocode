@@ -95,7 +95,7 @@ def main():
                 # TP05_0002 -> TpMuguga_05g00002
                 m = re.match('TP(\d\d)_(\d+)', id_mapping[id])
                 if m:
-                    id_mapping[id] = "{0}_{1}g{2}".format(args.prefix, m.group(1), m.group(2) )
+                    id_mapping[id] = "{0}_{1}g0{2}".format(args.prefix, m.group(1), m.group(2) )
                     
         
     ## output will either be a file or STDOUT
