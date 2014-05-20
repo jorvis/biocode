@@ -54,6 +54,7 @@ a locus tag of Tparva_01g00005
 
 import argparse
 import os
+import re
 import sys
 import biocodegff
 
@@ -69,7 +70,8 @@ def main():
     parser.add_argument('-n', '--interval', type=int, required=False, default=1, help='Interval between generated identifiers' )
     parser.add_argument('-d', '--id_file', type=str, required=False, help='Pass a 2-column file of IDs to retain (in case you have mapped genes, for example)')
     parser.add_argument('-m', '--molecule_map', type=str, required=False, help='Pass a 2-column file of molecule->token identifiers (see documentation)')
-    
+    parser.add_argument('-c', '--custom', type=str, required=False, help='For custom parsing steps.  Most should ignore this.')
+
     args = parser.parse_args()
     check_arguments(args)
 
@@ -81,6 +83,11 @@ def main():
     mol_mapping = parse_mapping_file( args.molecule_map )
     loci_assigned = list()
 
+    ## if using Joana's custom options, check assumptions
+    if args.custom == 'joana':
+        if args.molecule_map is None or args.id_file is None:
+            raise Exception("ERROR: Expected --molecule_map and --id_file options when using --custom=joana")
+        
     ## output will either be a file or STDOUT
     fout = sys.stdout
     if args.output_file is not None:
@@ -101,7 +108,17 @@ def main():
 
         if type == 'gene':
             if id in id_mapping:
-                locus_id = id_mapping[id]
+                if args.custom == 'joana':
+                    # TP05_0002 -> TpMuguga_05g00002
+                    re = re.match('TP(\d\d)_(\d+)', id)
+                    if re:
+                        locus_id = "{0}_{1}g{2}".format(args.prefix, m.group(1), m.group(2) )
+                    else:
+                        raise Exception("ERROR: --custom=joana passed but expected input mapping id convention TPNN_N+")
+                    
+                    locus_id = locus_id = "{0}_{2}g{1}".format(args.prefix, str(next_id).zfill(args.padding), mol_mapping[cols[0]])
+                else:
+                    locus_id = id_mapping[id]
             else:
                 if args.molecule_map is None:
                     locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
