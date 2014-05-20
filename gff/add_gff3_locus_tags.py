@@ -122,25 +122,27 @@ def main():
         type = cols[2]
 
         if type == 'gene':
-            if id in id_mapping:
-                locus_id = id_mapping[id]
-            else:
-                if args.molecule_map is None:
-                    locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
+            
+            while True:
+                if id in id_mapping:
+                    locus_id = id_mapping[id]
                 else:
-                    if cols[0] in mol_mapping:
-                        locus_id = "{0}_{2}g{1}".format(args.prefix, str(next_id).zfill(args.padding), mol_mapping[cols[0]])
+                    if args.molecule_map is None:
+                        locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
                     else:
-                        raise Exception("ERROR: --molecule_map passed but {0} wasn't found in it.".format(cols[0]) )
-                    
-                next_id += args.interval
+                        if cols[0] in mol_mapping:
+                            locus_id = "{0}_{2}g{1}".format(args.prefix, str(next_id).zfill(args.padding), mol_mapping[cols[0]])
+                        else:
+                            raise Exception("ERROR: --molecule_map passed but {0} wasn't found in it.".format(cols[0]) )
 
-            cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
+                    next_id += args.interval
 
-            ## make sure this wasn't generated already (possibly conflict between --id_file and an
-            #   auto-generated ID?
-            if locus_id in loci_assigned:
-                raise Exception("ERROR: Duplicate ID ({0}) attempted to be generated.  Possible conflict between id mapping file and an auto-generated ID?".format(locus_id))
+                cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
+
+                ## make sure this wasn't generated already (possibly conflict between --id_file and an
+                #   auto-generated ID?
+                if locus_id not in loci_assigned:
+                    break
 
             loci_assigned.append(locus_id)
             gene_loci[id] = locus_id
@@ -152,6 +154,7 @@ def main():
                 raise Exception("ERROR: found RNA {0} whose parent {1} wasn't found yet".format(id, parent))
         
         fout.write("\t".join(cols) + "\n")
+
 
 
 def parse_mapping_file( file ):
