@@ -432,10 +432,14 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
     elif gene_loc.strand == -1:
         strand = '-'
 
+    gene_annot_atts = dict()
+    if gene.locus_tag is not None:
+        gene_annot_atts['locus_tag'] = gene.locus_tag
+
     columns = ['.']*9
     columns[0:3] = [gene_loc.on.id, source, 'gene']
     columns[3:7] = [str(gene_loc.fmin + 1), str(gene_loc.fmax), '.', strand]
-    columns[8] = build_column_9( id=gene.id, parent=None, other=None )
+    columns[8] = build_column_9( id=gene.id, parent=None, other=gene_annot_atts )
 
     ## print the gene line
     fh.write( "\t".join(columns) + "\n" )
