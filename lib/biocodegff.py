@@ -24,10 +24,11 @@ def build_column_9( id=None, parent=None, other=None ):
     # other is a dict of key,value pairs
     if other is not None:
         for att in other:
-            if colstring is not None:
-                colstring += ";"
+            if other[att] is not None:
+                if colstring is not None:
+                    colstring += ";"
 
-            colstring += "{0}={1}".format(att, escape(other[att]))
+                colstring += "{0}={1}".format(att, escape(other[att]))
 
     return colstring
 
@@ -265,7 +266,7 @@ def get_gff3_features(gff3_file, assemblies=None):
             current_assembly.add_gene(gene)
 
         elif cols[2] == 'mRNA':
-            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat)
+            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_mRNA(mRNA)
             features[feat_id] = mRNA
