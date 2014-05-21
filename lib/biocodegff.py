@@ -451,9 +451,13 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         if RNA_loc is None:
             raise Exception("ERROR: Expected RNA {0} to be located on {1} but it wasn't".format(RNA.id, on.id))
 
+        rna_annot_atts = dict()
+        if RNA.locus_tag is not None:
+            rna_annot_atts['locus_tag'] = RNA.locus_tag
+
         columns[2] = RNA.__class__.__name__
         columns[3:5] = [str(RNA_loc.fmin + 1), str(RNA_loc.fmax)]
-        columns[8] = build_column_9( id=RNA.id, parent=RNA.parent.id, other=None )
+        columns[8] = build_column_9( id=RNA.id, parent=RNA.parent.id, other=rna_annot_atts )
         fh.write( "\t".join(columns) + "\n" )
 
         ## handle each CDS for this mRNA
