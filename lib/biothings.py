@@ -872,16 +872,16 @@ class mRNA( RNA ):
     SO definition (2013-05-22): "Messenger RNA is the intermediate molecule between DNA and protein. It
     includes UTR and coding sequences. It does not contain introns."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
-        super().__init__(id, locations, parent, children)
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
 
 class rRNA( RNA ):
     '''
     SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both
     structural scaffolding and catalytic activity."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
-        super().__init__(id, locations, parent, children)
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
 
 class tRNA( RNA ):
     '''
@@ -894,8 +894,8 @@ class tRNA( RNA ):
     in two manners: having more than one tRNA (with a specific anti-codon) for a particular amino acid;
     and 'wobble' base-pairing, i.e. permitting non-standard base-pairing at the 3rd anti-codon position."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
-        super().__init__(id, locations, parent, children)
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
 
 
 #############################
