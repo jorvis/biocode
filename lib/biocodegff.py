@@ -272,13 +272,13 @@ def get_gff3_features(gff3_file, assemblies=None):
             features[feat_id] = mRNA
 
         elif cols[2] == 'rRNA':
-            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat)
+            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_rRNA(rRNA)
             features[feat_id] = rRNA
 
         elif cols[2] == 'tRNA':
-            tRNA = biothings.tRNA(id=feat_id, parent=parent_feat)
+            tRNA = biothings.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_tRNA(tRNA)
             features[feat_id] = tRNA
