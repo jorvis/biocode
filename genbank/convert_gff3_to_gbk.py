@@ -9,6 +9,12 @@ http://www.sequenceontology.org/gff3.shtml
 Genbank flat file specification:
 https://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
 
+--molecule_type:
+    http://www.ncbi.nlm.nih.gov/Sequin/sequin.hlp.html#Molecule
+
+--genbank_division:
+    http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html#GenBankDivisionB
+
 """
 
 import argparse
@@ -17,12 +23,25 @@ import biocodegff
 import os
 import sys
 
+from jinja2 import Environment, FileSystemLoader
+
+PATH = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_ENVIRONMENT = Environment(
+    autoescape=False,
+    loader=FileSystemLoader(os.path.join(PATH, '../data')),
+    trim_blocks=False)
+
 def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GFF3 file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to a Genbank flat file to be created' )
+    parser.add_argument('-mt', '--molecule_type', type=str, required=False, default='DNA', help='Molecule type' )
+    parser.add_argument('-gbd', '--genbank_division', type=str, required=False, default='.', help='GenBank Division (3-letter abbreviation)' )
+    parser.add_argument('-md', '--modification_date', type=str, required=False, default='DD-MMM-YYYY', help='The modification date for header in format like 21-JUN-1999' )
+    parser.add_argument('-d', '--definition', type=str, required=False, default='.', help='Brief description of sequence; includes information such as source organism, gene name/protein name, or some description of the sequence\'s function.' )
+    parser.add_argument('-s', '--source', type=str, required=False, default='.', help='Free-format information including an abbreviated form of the organism name, sometimes followed by a molecule type.' )
     args = parser.parse_args()
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
@@ -32,9 +51,20 @@ def main():
 
     for assembly_id in assemblies:
         assembly = assemblies[assembly_id]
+
+        context = { 'locus':assembly_id, 'molecule_size':assembly.length, 'molecule_type':args.molecule_type,
+                    'division':args.genbank_division, 'modification_date':args.modification_date,
+                    'accession':'.', 'version':'.', 'gi':'.',
+                    'source':args.source, 'definition':args.definition
+        }
+        header = TEMPLATE_ENVIRONMENT.get_template('genbank_flat_file_header.template').render(context)
+        ofh.write(header)
+        ofh.write("\nFEATURES             Location/Qualifiers\n")
         
         for gene in assemblies[assembly_id].genes():
             biocodegenbank.print_biogene( gene=gene, fh=ofh, on=assembly )
+
+        ofh.write("//\n")
 
 
 if __name__ == '__main__':
