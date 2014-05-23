@@ -4,7 +4,7 @@ ACCESSION   {{ accession }}
 VERSION     {{ version }}  GI:{{ gi }}
 KEYWORDS    .
 SOURCE      {{ source }}
-  ORGANISM  .
+  ORGANISM  {{ organism }}
             .
 REFERENCE   1  (bases 1 to {{ molecule_size }})
   AUTHORS   .

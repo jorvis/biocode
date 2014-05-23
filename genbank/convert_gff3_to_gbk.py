@@ -40,6 +40,7 @@ def main():
     parser.add_argument('-mt', '--molecule_type', type=str, required=False, default='DNA', help='Molecule type' )
     parser.add_argument('-gbd', '--genbank_division', type=str, required=False, default='.', help='GenBank Division (3-letter abbreviation)' )
     parser.add_argument('-md', '--modification_date', type=str, required=False, default='DD-MMM-YYYY', help='The modification date for header in format like 21-JUN-1999' )
+    parser.add_argument('-org', '--organism', type=str, required=False, default='.', help='Full organism name (including strain)' )
     parser.add_argument('-d', '--definition', type=str, required=False, default='.', help='Brief description of sequence; includes information such as source organism, gene name/protein name, or some description of the sequence\'s function.' )
     parser.add_argument('-s', '--source', type=str, required=False, default='.', help='Free-format information including an abbreviated form of the organism name, sometimes followed by a molecule type.' )
     args = parser.parse_args()
@@ -55,11 +56,14 @@ def main():
         context = { 'locus':assembly_id, 'molecule_size':assembly.length, 'molecule_type':args.molecule_type,
                     'division':args.genbank_division, 'modification_date':args.modification_date,
                     'accession':'.', 'version':'.', 'gi':'.',
-                    'source':args.source, 'definition':args.definition
+                    'source':args.source, 'definition':args.definition, 'organism':args.organism
         }
         header = TEMPLATE_ENVIRONMENT.get_template('genbank_flat_file_header.template').render(context)
         ofh.write(header)
         ofh.write("\nFEATURES             Location/Qualifiers\n")
+        ofh.write("     source          1..{0}\n".format(assembly.length))
+        ofh.write("                     /organism=\"{0}\"\n".format(args.organism))
+        
         
         for gene in assemblies[assembly_id].genes():
             biocodegenbank.print_biogene( gene=gene, fh=ofh, on=assembly )
