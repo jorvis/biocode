@@ -1,0 +1,14 @@
+LOCUS       {{ locus }}     {{ molecule_size }} bp    {{ molecule_type }}             {{ division }}       {{ modification_date }}
+DEFINITION  {{ definition }}
+ACCESSION   {{ accession }}
+VERSION     {{ version }}  GI:{{ gi }}
+KEYWORDS    .
+SOURCE      {{ source }}
+  ORGANISM  .
+            .
+REFERENCE   1  (bases 1 to {{ molecule_size }})
+  AUTHORS   .
+  TITLE     .
+  JOURNAL   .
+  PUBMED    .
+
