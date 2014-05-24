@@ -1,6 +1,7 @@
 import re
-import biothings
 import bioannotation
+import biocodeutils
+import biothings
 import sys
 
 """
@@ -33,6 +34,9 @@ EXAMPLES:
                      F"
 """
 
+# this is the character limit width of the content part of the GBK flat file
+#                    | ... from here to here in the example above ...         |
+CONTENT_WIDTH_LIMIT = 58
 
 def print_biogene( gene=None, fh=None, on=None ):
     '''
@@ -120,14 +124,39 @@ def print_biogene( gene=None, fh=None, on=None ):
             if annot.product_name is not None:
                 fh.write("                     /product=\"{0}\"\n".format(annot.product_name))
 
+        cds_residues = mRNA.get_CDS_residues()
+        polypeptide_residues = biocodeutils.translate(cds_residues)
 
+        if len(polypeptide_residues) > 0:
+            fh.write("                     /TRANSLATION=\"{0}\"\n".format(polypeptide_residues))
+            
+            # This is the easiest case first, where no wrapping is needed.
+            if len(polypeptide_residues) < CONTENT_WIDTH_LIMIT - 15:
+                fh.write("                     /translation=\"{0}\"\n".format(polypeptide_residues))
+            else:
+                # If we get here, we must wrap
+                remaining = polypeptide_residues[CONTENT_WIDTH_LIMIT - 14:]
+                closing_parens_written = False
+                
+                while len(remaining) > 0:
+                    if len(remaining) > CONTENT_WIDTH_LIMIT - 1:
+                        fh.write("                     {0}\n".format(remaining[0:CONTENT_WIDTH_LIMIT]))
+                        remaining = remaining[CONTENT_WIDTH_LIMIT:]
+                    else:
+                        fh.write("                     {0}\"\n".format(remaining))
+                        remaining = ""
+                        closing_parens_written = True
 
+                if closing_parens_written == False:
+                    # G675_02159
+                    fh.write("                     \"\n")
+
+                
 
 
 
 def segments_to_string(locs):
     # this is the character limit width of the content part of the GBK flat file
-    CONTENT_WIDTH_LIMIT = 58
     lines = list()
 
     if len(locs) < 2:
