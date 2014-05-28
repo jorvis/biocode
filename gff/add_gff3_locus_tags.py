@@ -97,11 +97,28 @@ def main():
                 if m:
                     id_mapping[id] = "{0}_{1}g0{2}".format(args.prefix, m.group(1), m.group(2) )
                     
+    elif args.custom == 'bmicroti':
+        microti_map = { 'I':'01', 'II':'02', 'III':'03', 'IV':'04' }
+        
+        if  args.molecule_map is None or args.id_file is None:
+            raise Exception("ERROR: Expected --molecule_map and --id_file options when using --custom=bmicroti")
+        else:
+            for id in id_mapping:
+                m = re.match('BBM_(\D+)(\d+)', id_mapping[id])
+                if m:
+                    print("Changing id from {0} to ".format(id))
+                    id_mapping[id] = "{0}_{1}g{2}".format(args.prefix, microti_map[m.group(1)], m.group(2) )
+                    print(id_mapping[id])
+                else:
+                    raise Exception("ERROR: id ({0}) didn't match expected convention.".format(id_mapping[id]))
+                    
         
     ## output will either be a file or STDOUT
     fout = sys.stdout
     if args.output_file is not None:
         fout = open(args.output_file, 'wt')
+
+    last_number_portion_assigned = 0
 
     for line in open(args.input_file):
         line = line.rstrip()
@@ -121,8 +138,21 @@ def main():
         parent = biocodegff.column_9_value(cols[8], 'Parent')
         type = cols[2]
 
+# issue
+
+# 66F4EEF2E3C863C251F831817FF71233
+# 7F1917E4D81A959078C9A38E15488BC0
+# E22888670919A4A888572155F40F2654
+# B9D9CF1F7A8E5A2E1124F0A6C68840DC -> BBM_I00232
+# gene before is: 6DE6BCCE69CCDC39994A0940B2ED524A - novel
+
+# errors on: BmicrotiR1_01g00233 -> BBM_I00233
+#5800A4110A62E4EAE57AFAD1F8D65CB3        BBM_I00233
+
+
+
+
         if type == 'gene':
-            
             while True:
                 if id in id_mapping:
                     locus_id = id_mapping[id]
@@ -131,7 +161,10 @@ def main():
                         locus_id = "{0}_{1}".format(args.prefix, str(next_id).zfill(args.padding))
                     else:
                         if cols[0] in mol_mapping:
-                            locus_id = "{0}_{2}g{1}".format(args.prefix, str(next_id).zfill(args.padding), mol_mapping[cols[0]])
+                            if args.custom == 'bmicroti':
+                                locus_id = "{0}_{2}g{1}".format(args.prefix, str(int(last_number_portion_assigned) + 1).zfill(args.padding), mol_mapping[cols[0]])
+                            else:
+                                locus_id = "{0}_{2}g{1}".format(args.prefix, str(next_id).zfill(args.padding), mol_mapping[cols[0]])
                         else:
                             raise Exception("ERROR: --molecule_map passed but {0} wasn't found in it.".format(cols[0]) )
 
@@ -143,9 +176,15 @@ def main():
                 #   auto-generated ID?
                 if locus_id not in loci_assigned:
                     break
+                else:
+                    print("DEBUG: Duplicate ID assigned ({0}), trying again.".format(locus_id) )
 
             loci_assigned.append(locus_id)
             gene_loci[id] = locus_id
+
+            m = re.search(r"(\d+)$", locus_id)
+            if m:
+                last_number_portion_assigned = m.group(1)
             
         elif type.endswith('RNA'):
             if parent in gene_loci:
