@@ -99,13 +99,13 @@ foreach my $line (<$ifh>){
 	chomp @cols;
 	my $contig = $cols[0];
 
-    ## skip the header lines
-    next if $contig eq 'Sequence' || $contig eq 'Name' || $contig eq '--------';
-    
     if ($contig =~ /^(.+?)\s+$/) {
         $contig = $1;
     }
 
+    ## skip the header lines
+    next if $contig eq 'Sequence' || $contig eq 'Name' || $contig eq '--------';
+    
 	my $start = $cols[2];
 	my $stop = $cols[3];
 	my $target = $cols[4];
