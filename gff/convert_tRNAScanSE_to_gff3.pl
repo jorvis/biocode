@@ -13,7 +13,10 @@ USAGE: convert_tRNAScanSE_to_gff3.pl
 
 B<--input,-i>
     The raw output from tRNAScan-SE:
-
+    
+    Sequence                        tRNA    Bounds  tRNA    Anti    Intron Bounds   Cove
+    Name                    tRNA #  Begin   End     Type    Codon   Begin   End     Score
+    --------                ------  ----    ------  ----    -----   -----   ----    ------
     tp.assembly.567468735.1         1       91820   91902   Tyr     GTA     91857   91866   66.58
     tp.assembly.567468735.1         2       171777  171849  Phe     GAA     0       0       70.28
     tp.assembly.567468735.1         3       172144  172215  His     GTG     0       0       64.04
@@ -95,6 +98,9 @@ foreach my $line (<$ifh>){
 	my @cols = split /[\t]/, $line;
 	chomp @cols;
 	my $contig = $cols[0];
+
+    ## skip the header lines
+    next if $contig eq 'Sequence' || $contig eq 'Name' || $contig eq '--------';
     
     if ($contig =~ /^(.+?)\s+$/) {
         $contig = $1;
