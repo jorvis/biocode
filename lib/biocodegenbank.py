@@ -128,7 +128,7 @@ def print_biogene( gene=None, fh=None, on=None ):
         polypeptide_residues = biocodeutils.translate(cds_residues)
 
         if len(polypeptide_residues) > 0:
-            fh.write("                     /TRANSLATION=\"{0}\"\n".format(polypeptide_residues))
+            #fh.write("                     /TRANSLATION=\"{0}\"\n".format(polypeptide_residues))
             
             # This is the easiest case first, where no wrapping is needed.
             if len(polypeptide_residues) < CONTENT_WIDTH_LIMIT - 15:
