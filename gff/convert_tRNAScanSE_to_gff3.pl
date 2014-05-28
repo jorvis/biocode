@@ -89,8 +89,8 @@ print "##gff-version 3\n";
 
 ## globals
 my $i=1;
+
 ## parse the file
-print "##gff-version 3\n";
 foreach my $line (<$ifh>){
 	my @cols = split /[\t]/, $line;
 	chomp @cols;
