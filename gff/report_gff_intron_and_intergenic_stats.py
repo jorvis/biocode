@@ -93,7 +93,7 @@ def main():
                     intron_size = intron_loc.fmax - intron_loc.fmin
 
                     #if intron_size > 0:
-                    #    print("\tDEBUG: found mRNA:{0} intron {1}-{2} ({3} bp)".format(mRNA.id, intron_loc.fmin, intron_loc.fmax, intron_size))
+                        #print("\tDEBUG: found mRNA:{0} intron {1}-{2} ({3} bp)".format(mRNA.id, intron_loc.fmin, intron_loc.fmax, intron_size))
 
                     if intron_size < 0:
                         print("\tWARN: Intron size ({1}) < 0 reported in gene {0}".format(gene.id, intron_size))
