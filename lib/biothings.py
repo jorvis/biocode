@@ -849,7 +849,7 @@ class RNA( LocatableThing ):
         last_exon = None
         last_exon_loc = None
 
-        for exon in self.exons():
+        for exon in sorted(self.exons()):
             exon_loc = exon.location_on( mol_on )
 
             if last_exon is not None:
