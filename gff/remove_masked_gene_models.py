@@ -42,14 +42,22 @@ def main():
     parser.add_argument('-m', '--masked_fasta', type=str, required=True, help='FASTA with sequence masked with N characters')
     parser.add_argument('-p', '--percent_repeat_coverage_cutoff', type=int, required=True, help='Genes with an mRNA covered by this percentage of repeats will be excluded' )
     parser.add_argument('-o', '--output_gff3', type=str, required=False, help='Path to GFF3 output file to be created')
+    parser.add_argument('-r', '--removed_gff3', type=str, required=False, help='If passed, writes the deleted genes to this file')
     args = parser.parse_args()
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_gff3 )
     biocodeutils.add_assembly_fasta(assemblies, args.masked_fasta)
 
     gff_out = open(args.output_gff3, 'wt')
+    gff_out.write("##gff-version 3\n")
+    
+    rem_out = None
     gene_count = 0
     kept_count = 0
+
+    if args.removed_gff3 is not None:
+        rem_out = open(args.removed_gff3, 'wt')
+        rem_out.write("##gff-version 3\n")
         
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
@@ -68,6 +76,9 @@ def main():
             if keep == True:
                 kept_count += 1
                 gene.print_as(fh=gff_out, source='IGS', format='gff3')
+            else:
+                if rem_out is not None:
+                    gene.print_as(fh=rem_out, source='IGS', format='gff3')
 
 
     print("INFO: {0} genes kept out of {1} ({2:.1f}%)".format(kept_count, gene_count, ((kept_count/gene_count) * 100)))
