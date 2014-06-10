@@ -32,7 +32,7 @@ TEMPLATE_ENVIRONMENT = Environment(
     trim_blocks=False)
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Converts GFF3 into a GenBank flat file')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GFF3 file to be read' )
