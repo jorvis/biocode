@@ -883,6 +883,7 @@ class rRNA( RNA ):
     def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
         super().__init__(id, locations, parent, locus_tag, children)
 
+
 class tRNA( RNA ):
     '''
     SO definition (2013-05-22): "Transfer RNA (tRNA) molecules are approximately 80 nucleotides in length.
@@ -896,6 +897,36 @@ class tRNA( RNA ):
     '''
     def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
         super().__init__(id, locations, parent, locus_tag, children)
+
+
+class UTR( LocatableThing ):
+    '''
+    SO definition (2014-06-12): "Messenger RNA sequences that are untranslated and lie five prime or three
+    prime to sequences which are translated."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(locations)
+        self.id = id
+        self.parent = parent
+        self.length = length
+
+
+class FivePrimeUTR( UTR ):
+    '''
+    SO definition (2014-06-12): "A region at the 5' end of a mature transcript (preceding the initiation
+    codon) that is not translated into a protein."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(id, locations, parent, length)
+
+
+class ThreePrimeUTR( UTR ):
+    '''
+    SO definition (2014-06-12): "A region at the 3' end of a mature transcript (following the stop codon)
+    that is not translated into a protein."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(id, locations, parent, length)
 
 
 #############################
