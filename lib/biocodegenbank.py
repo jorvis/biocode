@@ -135,6 +135,7 @@ def print_biogene( gene=None, fh=None, on=None ):
                 fh.write("                     /translation=\"{0}\"\n".format(polypeptide_residues))
             else:
                 # If we get here, we must wrap
+                fh.write("                     /translation=\"{0}\n".format(polypeptide_residues[0:CONTENT_WIDTH_LIMIT - 14]))
                 remaining = polypeptide_residues[CONTENT_WIDTH_LIMIT - 14:]
                 closing_parens_written = False
                 
