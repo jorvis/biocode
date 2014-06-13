@@ -43,6 +43,7 @@ def main():
     parser.add_argument('-org', '--organism', type=str, required=False, default='.', help='Full organism name (including strain)' )
     parser.add_argument('-d', '--definition', type=str, required=False, default='.', help='Brief description of sequence; includes information such as source organism, gene name/protein name, or some description of the sequence\'s function.' )
     parser.add_argument('-s', '--source', type=str, required=False, default='.', help='Free-format information including an abbreviated form of the organism name, sometimes followed by a molecule type.' )
+    parser.add_argument('-t', '--taxon_id', type=int, required=False, help='NCBI taxon ID, if known' )
     args = parser.parse_args()
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
@@ -63,7 +64,9 @@ def main():
         ofh.write("\nFEATURES             Location/Qualifiers\n")
         ofh.write("     source          1..{0}\n".format(assembly.length))
         ofh.write("                     /organism=\"{0}\"\n".format(args.organism))
-        
+
+        if args.taxon_id is not None:
+            ofh.write("                     /dbxref=\"taxon:{0}\"\n".format(args.taxon_id))
         
         for gene in assemblies[assembly_id].genes():
             biocodegenbank.print_biogene( gene=gene, fh=ofh, on=assembly )
