@@ -41,6 +41,7 @@ def main():
     parser.add_argument('-gbd', '--genbank_division', type=str, required=False, default='.', help='GenBank Division (3-letter abbreviation)' )
     parser.add_argument('-md', '--modification_date', type=str, required=False, default='DD-MMM-YYYY', help='The modification date for header in format like 21-JUN-1999' )
     parser.add_argument('-org', '--organism', type=str, required=False, default='.', help='Full organism name (including strain)' )
+    parser.add_argument('-str', '--strain', type=str, required=False, help="Only the strain designation, which is written to the FEATURES.source element" )
     parser.add_argument('-d', '--definition', type=str, required=False, default='.', help='Brief description of sequence; includes information such as source organism, gene name/protein name, or some description of the sequence\'s function.' )
     parser.add_argument('-s', '--source', type=str, required=False, default='.', help='Free-format information including an abbreviated form of the organism name, sometimes followed by a molecule type.' )
     parser.add_argument('-t', '--taxon_id', type=int, required=False, help='NCBI taxon ID, if known' )
@@ -64,9 +65,13 @@ def main():
         ofh.write("\nFEATURES             Location/Qualifiers\n")
         ofh.write("     source          1..{0}\n".format(assembly.length))
         ofh.write("                     /organism=\"{0}\"\n".format(args.organism))
+        ofh.write("                     /mol_type=\"genomic DNA\"\n")
+
+        if args.strain is not None:
+            ofh.write("                     /strain=\"{0}\"\n".format(args.strain))
 
         if args.taxon_id is not None:
-            ofh.write("                     /dbxref=\"taxon:{0}\"\n".format(args.taxon_id))
+            ofh.write("                     /db_xref=\"taxon:{0}\"\n".format(args.taxon_id))
         
         for gene in assemblies[assembly_id].genes():
             biocodegenbank.print_biogene( gene=gene, fh=ofh, on=assembly )
