@@ -9,6 +9,15 @@ NOTE: This currently only works for coding features
 
 EXAMPLES:
 
+Ex1 (header portion of GenBank flat file):
+            |--------------- 67 character limit ------------------------------|
+LOCUS       HQ450365                 735 bp    DNA     linear   PLN 15-JUL-2011
+DEFINITION  Rhizopus delemar voucher RA 99-880 RNA polymerase II second largest
+            subunit (RPB2) gene, partial cds.
+ACCESSION   HQ450365
+VERSION     HQ450365.1  GI:315271506
+
+Ex2 (feature table of GenBank flat file):
                      |--------------- 58 character limit ---------------------|
      gene            42455..44072
                      /locus_tag="TP03_0020"
@@ -34,9 +43,14 @@ EXAMPLES:
                      F"
 """
 
-# this is the character limit width of the content part of the GBK flat file
-#                    | ... from here to here in the example above ...         |
-CONTENT_WIDTH_LIMIT = 58
+# character limits for the content portions of the header and the feature table,
+# respectively (as illustrated above):
+MAX_CONTENT_WIDTH = 79
+MAX_HEADER_CONTENT_WIDTH = 67
+MAX_FTABLE_CONTENT_WIDTH = 58
+
+HEADER_MARGIN_WIDTH = MAX_CONTENT_WIDTH - MAX_HEADER_CONTENT_WIDTH
+HEADER_MARGIN = " " * HEADER_MARGIN_WIDTH
 
 def print_biogene( gene=None, fh=None, on=None ):
     '''
@@ -131,18 +145,18 @@ def print_biogene( gene=None, fh=None, on=None ):
             #fh.write("                     /TRANSLATION=\"{0}\"\n".format(polypeptide_residues))
             
             # This is the easiest case first, where no wrapping is needed.
-            if len(polypeptide_residues) < CONTENT_WIDTH_LIMIT - 15:
+            if len(polypeptide_residues) < MAX_FTABLE_CONTENT_WIDTH - 15:
                 fh.write("                     /translation=\"{0}\"\n".format(polypeptide_residues))
             else:
                 # If we get here, we must wrap
-                fh.write("                     /translation=\"{0}\n".format(polypeptide_residues[0:CONTENT_WIDTH_LIMIT - 14]))
-                remaining = polypeptide_residues[CONTENT_WIDTH_LIMIT - 14:]
+                fh.write("                     /translation=\"{0}\n".format(polypeptide_residues[0:MAX_FTABLE_CONTENT_WIDTH - 14]))
+                remaining = polypeptide_residues[MAX_FTABLE_CONTENT_WIDTH - 14:]
                 closing_parens_written = False
                 
                 while len(remaining) > 0:
-                    if len(remaining) > CONTENT_WIDTH_LIMIT - 1:
-                        fh.write("                     {0}\n".format(remaining[0:CONTENT_WIDTH_LIMIT]))
-                        remaining = remaining[CONTENT_WIDTH_LIMIT:]
+                    if len(remaining) > MAX_FTABLE_CONTENT_WIDTH - 1:
+                        fh.write("                     {0}\n".format(remaining[0:MAX_FTABLE_CONTENT_WIDTH]))
+                        remaining = remaining[MAX_FTABLE_CONTENT_WIDTH:]
                     else:
                         fh.write("                     {0}\"\n".format(remaining))
                         remaining = ""
@@ -157,7 +171,6 @@ def print_biogene( gene=None, fh=None, on=None ):
 
 
 def segments_to_string(locs):
-    # this is the character limit width of the content part of the GBK flat file
     lines = list()
 
     if len(locs) < 2:
@@ -168,7 +181,7 @@ def segments_to_string(locs):
     for loc in locs:
         new_part = "{0}..{1},".format(loc[0], loc[1])
 
-        if len(loc_string) + len(new_part) > CONTENT_WIDTH_LIMIT:
+        if len(loc_string) + len(new_part) > MAX_FTABLE_CONTENT_WIDTH:
             lines.append(loc_string)
             loc_string = ""
 
@@ -187,5 +200,45 @@ def segments_to_string(locs):
 
 
 
+def line_wrap_lineage_string(lineage):
+    '''
+    This method accepts a lineage string in the format 
+    "Eukaryota; Alveolata; Apicomplexa; Aconoidasida; Piroplasmida; Theileriidae; Theileria"
+    and inserts line breaks as needed.
+    '''
+    ll = len(lineage)
+    result = ""
+    is_first_line = True
+
+    def add_line(new_line):
+        nonlocal is_first_line
+        nonlocal result
+        if (is_first_line):
+            is_first_line = False
+        else:
+            result = result + "\n" + HEADER_MARGIN
+        result = result + new_line
+
+    while (ll > 0):
+        # remainder of string fits in one line
+        if (ll <= MAX_HEADER_CONTENT_WIDTH):
+            add_line(lineage)
+            lineage = ""
+        # remainder of string does not fit in one line
+        else:
+            # look for a space on which to break the line
+            max_sp = MAX_HEADER_CONTENT_WIDTH 
+            sp = -1
+            for p in range(max_sp, 0, -1):
+                if (lineage[p] == ' '):
+                    sp = p
+                    break
+            # space not found, must break in the middle of a word
+            if (sp == -1):
+                sp = MAX_HEADER_CONTENT_WIDTH - 1
+            add_line(lineage[0:sp+1])
+            lineage = lineage[sp+1:]
+        ll = len(lineage)
+    return result
 
 
