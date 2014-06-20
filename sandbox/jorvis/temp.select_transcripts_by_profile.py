@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+This script is currently quite experimental, and requires editing to use for each organism.  If
+you can't see what to edit in the code you probably shouldn't be trying it.
+
+Your input is a GFF3 file containing gene models.
+
+"""
+
 import argparse
 import os
 import math
@@ -9,11 +17,12 @@ import biocodegff
 import biocodeutils
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Generates a set of transcripts based on a user-defined exon-complexity profile')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Output ID list file to create' )
+    parser.add_argument('-ni', '--not_included', type=str, required=False, help='Writes the ID list of genes not included' )
     parser.add_argument('-c', '--count', type=int, required=True, help='Count of transcripts to pull' )
     parser.add_argument('-e', '--exclude', type=str, required=False, help='List of IDs to exclude' )
     args = parser.parse_args()
@@ -28,11 +37,25 @@ def main():
 
     ofh = open(args.output_file, 'wt')
 
+    if args.not_included is None:
+        ni_ofh = None
+    else:
+        ni_ofh = open(args.not_included, 'wt')
+
+
+
     # profile for 99-892
     #profile = { 1:12.2, 2:13.2, 3:15.4, 4:14.1, 5:11.5, 6:8.77, 7:6.99, 8:4.74, 9:3.81, 10:2.45 }
 
     # profile for 99-880
-    profile = { 1:19.7, 2:17.9, 3:20.6, 4:15.6, 5:10.1, 6:6.62, 7:4.14, 8:1.58, 9:2.07 }
+    #profile = { 1:19.7, 2:17.9, 3:20.6, 4:15.6, 5:10.1, 6:6.62, 7:4.14, 8:1.58, 9:2.07 }
+
+    # c. hominis TU502
+    #profile = { 1:89.7, 2:6.8, 3:2.6, 4:0.78 }
+
+    # c. baileyi TAMU 10GZ1
+    #profile = { 1:85.6 , 2:9.85 , 3:4.06 , 4:0.25 , 5:0.25 }
+    profile = { 1:85.6 , 2:9.85 , 3:4.06 }
     
     
     mRNAs = dict()
@@ -49,10 +72,13 @@ def main():
     # fill the bins of each target size, then fill a reservoir to select any additional ones from
     reservoir = list()
     total_mRNAs_selected = 0
+    total_mRNA_count = 0
         
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
             for mRNA in gene.mRNAs():
+                total_mRNA_count += 1
+                
                 if mRNA.id in exclude:
                     continue
                 
@@ -86,7 +112,7 @@ def main():
               ) )
 
         for mRNA in selected[ccount]:
-            ofh.write("{0}\n".format(mRNA.id) )
+            ofh.write("{0}\n".format(mRNA.parent.id) )
 
     print("Total selected according to profile: {0}".format(total_mRNAs_selected) ) 
     # now, from the rounding portions fill the rest randomly
@@ -95,13 +121,21 @@ def main():
 
     for mRNA in sample_from_reservoir:
         sample_ids_from_reservoir.append(mRNA.id)
+        reservoir.remove(mRNA)
     
     ofh.write( "\n".join( sample_ids_from_reservoir ) )
     ofh.write("\n")
 
     total_mRNAs_selected += len(sample_from_reservoir)
 
-    print("Total selected randomly afterwards: {0}".format(len(sample_from_reservoir)) ) 
+    print("Total selected randomly afterwards: {0}".format(len(sample_from_reservoir)) )
+
+    if ni_ofh is not None:
+        for mRNA in reservoir:
+            ni_ofh.write("{0}\n".format(mRNA.parent.id) )
+        
+        
+
     
                 
         

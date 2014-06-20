@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 # encoding:utf8
 # author: Sébastien Boisvert
 # part of Ray distribution

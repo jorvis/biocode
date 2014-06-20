@@ -24,11 +24,12 @@ def build_column_9( id=None, parent=None, other=None ):
     # other is a dict of key,value pairs
     if other is not None:
         for att in other:
-            if colstring is not None:
-                colstring += ";"
+            if other[att] is not None:
+                if colstring is not None:
+                    colstring += ";"
 
-            colstring += "{0}={1}".format(att, escape(other[att]))
-        
+                colstring += "{0}={1}".format(att, escape(other[att]))
+
     return colstring
 
 
@@ -56,7 +57,7 @@ def build_column_9_from_dict( atts ):
             colstring += ';'
 
         colstring += "{0}={1}".format(att, escape(atts[att]))
-        
+
     return colstring
 
 
@@ -73,16 +74,9 @@ def set_column_9_value(colstring, key, val):
     """
     c9 = column_9_dict(colstring)
     c9[key] = val
-    colstring = ''
+    return build_column_9_from_dict(c9)
 
-    for att in c9:
-        if len(colstring) > 0:
-            colstring += ';'
 
-        colstring += "{0}={1}".format(att, escape(c9[att]))
-
-    return colstring
-    
 
 def column_9_dict(colstring):
     '''
@@ -93,7 +87,7 @@ def column_9_dict(colstring):
     COMMA	= ','
     EQ	        = '='
     WSP_RE = re.compile(r'^\s*$')
-    
+
     if colstring == ".":
         return {}
     c9 = {}
@@ -116,7 +110,7 @@ def column_9_value(value, key):
     '''
     Pass a case-sensitive key and this function will return the value,
     if present, else None.
-    
+
     This was borrowed from the URL below and then modified for Python 3
     ftp://ftp.informatics.jax.org/%2Fpub/mgigff/gff3.py
     '''
@@ -124,7 +118,7 @@ def column_9_value(value, key):
     COMMA	= ','
     EQ	        = '='
     WSP_RE = re.compile(r'^\s*$')
-    
+
     if value == ".":
         return {}
     c9 = {}
@@ -158,7 +152,7 @@ def escape(s):
     #  support list values for 'other' attributes
     #return ''.join(x if x not in ';=&,' else quote(x) for x in s)
     return ''.join(x if x not in ';=&' else quote(x) for x in s)
-    
+
 
 def unescape(s):
     """
@@ -185,16 +179,18 @@ def get_gff3_features(gff3_file, assemblies=None):
 
     if assemblies is None:
         assemblies = dict()
-        
+
     features   = dict()
 
     # these are related to parsing any embedded FASTA
     in_fasta_section = False
     is_assembly_fasta = False
     current_fasta_id = None
-    
-    
+
+
     for line in open(gff3_file):
+        #print("INFO: processing line: {0}".format(line))
+
         if in_fasta_section == True:
             m = re.search('>(\S+)\s*(.*)', line)
             if m:
@@ -204,7 +200,7 @@ def get_gff3_features(gff3_file, assemblies=None):
                     is_assembly_fasta = True
                 else:
                     is_assembly_fasta = False
-                    
+
             else:
                 if is_assembly_fasta == True:
                     # must be a sequence line for an assembly
@@ -214,20 +210,20 @@ def get_gff3_features(gff3_file, assemblies=None):
                     assemblies[current_fasta_id].length = len( assemblies[current_fasta_id].residues )
 
             continue
-        
+
         elif line.startswith("##FASTA"):
             # all data to the end of the file must be FASTA
             in_fasta_section = True
             continue
 
-        
+
         cols = line.split("\t")
 
         if len(cols) != 9:
             continue
 
         mol_id = cols[0]
-        
+
         # initialize this assembly if we haven't seen it yet
         if mol_id not in assemblies:
             assemblies[mol_id] = biothings.Assembly( id=mol_id, residues='' )
@@ -236,9 +232,15 @@ def get_gff3_features(gff3_file, assemblies=None):
         rfmin = int(cols[3]) - 1
         rfmax = int(cols[4])
         rstrand = None
-        feat_id = column_9_value(cols[8], 'ID')
-        parent_id = column_9_value(cols[8], 'Parent')
+        atts = column_9_dict(cols[8])
+        feat_id = atts.get('ID')
+        parent_id = atts.get('Parent')
         parent_feat = None
+
+        if 'locus_tag' in atts:
+            locus_tag = atts['locus_tag']
+        else:
+            locus_tag = None
 
         # shared features is not yet supported
         if isinstance(parent_id, list):
@@ -258,25 +260,25 @@ def get_gff3_features(gff3_file, assemblies=None):
             rstrand = 0
 
         if cols[2] == 'gene':
-            gene = biothings.Gene(id=feat_id)
+            gene = biothings.Gene(id=feat_id, locus_tag=locus_tag)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             features[feat_id] = gene
             current_assembly.add_gene(gene)
-        
+
         elif cols[2] == 'mRNA':
-            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat)
+            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_mRNA(mRNA)
             features[feat_id] = mRNA
 
         elif cols[2] == 'rRNA':
-            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat)
+            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_rRNA(rRNA)
             features[feat_id] = rRNA
-            
+
         elif cols[2] == 'tRNA':
-            tRNA = biothings.tRNA(id=feat_id, parent=parent_feat)
+            tRNA = biothings.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_tRNA(tRNA)
             features[feat_id] = tRNA
@@ -297,6 +299,7 @@ def get_gff3_features(gff3_file, assemblies=None):
             polypeptide = biothings.Polypeptide(id=feat_id, parent=parent_feat)
             polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_polypeptide(polypeptide)
+            polypeptide.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = polypeptide
 
         else:
@@ -308,6 +311,15 @@ def get_gff3_features(gff3_file, assemblies=None):
     return (assemblies, features)
 
 
+def parse_annotation_from_column_9(col9):
+    annot = bioannotation.FunctionalAnnotation()
+    atts = column_9_dict(col9)
+
+    if 'product_name' in atts:
+        annot.product_name = atts['product_name']
+
+    return annot
+
 def parse_gff3_by_relationship( gff3_file ):
     '''
     Parses a GFF3 file, caring only about the ID/Parent relationships and returning a dict where
@@ -317,10 +329,10 @@ def parse_gff3_by_relationship( gff3_file ):
     $feat_id = { children: [], fmin: 30, cols: [] }
 
     Every feature must have either and ID or Parent defined, else an error will be thrown.
-    
+
     The structure returned looks like this:
     {
-    $molecule_id = { 
+    $molecule_id = {
                          fmin: 30,
                          cols: [...],
                          children: {
@@ -328,7 +340,7 @@ def parse_gff3_by_relationship( gff3_file ):
                          }
 
                    }, ...
-    
+
 
     }
 
@@ -362,7 +374,7 @@ def parse_gff3_by_relationship( gff3_file ):
 
         if id:
             parentage[id] = parent
-    
+
         if mol_id != current_molecule_id:
             if current_molecule_id is not None:
                 _reunite_children( fgraph, current_molecule_id, purgatory )
@@ -420,57 +432,65 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
     elif gene_loc.strand == -1:
         strand = '-'
 
+    gene_annot_atts = dict()
+    if gene.locus_tag is not None:
+        gene_annot_atts['locus_tag'] = gene.locus_tag
+
     columns = ['.']*9
     columns[0:3] = [gene_loc.on.id, source, 'gene']
     columns[3:7] = [str(gene_loc.fmin + 1), str(gene_loc.fmax), '.', strand]
-    columns[8] = build_column_9( id=gene.id, parent=None, other=None )
+    columns[8] = build_column_9( id=gene.id, parent=None, other=gene_annot_atts )
 
     ## print the gene line
     fh.write( "\t".join(columns) + "\n" )
 
-    ## modifications for the mRNA
-    for mRNA in gene.mRNAs():
-        mRNA_loc = mRNA.location_on( on )
+    ## modifications for the RNA
+    for RNA in gene.RNAs():
+        RNA_loc = RNA.location_on( on )
 
-        if mRNA_loc is None:
-            raise Exception("ERROR: Expected mRNA {0} to be located on {1} but it wasn't".format(mRNA.id, on.id))
-        
-        columns[2] = 'mRNA'
-        columns[3:5] = [str(mRNA_loc.fmin + 1), str(mRNA_loc.fmax)]
-        columns[8] = build_column_9( id=mRNA.id, parent=mRNA.parent.id, other=None )
+        if RNA_loc is None:
+            raise Exception("ERROR: Expected RNA {0} to be located on {1} but it wasn't".format(RNA.id, on.id))
+
+        rna_annot_atts = dict()
+        if RNA.locus_tag is not None:
+            rna_annot_atts['locus_tag'] = RNA.locus_tag
+
+        columns[2] = RNA.__class__.__name__
+        columns[3:5] = [str(RNA_loc.fmin + 1), str(RNA_loc.fmax)]
+        columns[8] = build_column_9( id=RNA.id, parent=RNA.parent.id, other=rna_annot_atts )
         fh.write( "\t".join(columns) + "\n" )
-    
+
         ## handle each CDS for this mRNA
-        for CDS in mRNA.CDSs():
+        for CDS in RNA.CDSs():
             CDS_loc = CDS.location_on( on )
 
             if CDS_loc is None:
                 raise Exception("ERROR: Expected CDS {0} to be located on {1} but it wasn't".format(CDS.id, on.id) )
-            
+
             columns[2] = 'CDS'
             columns[3:5] = [str(CDS_loc.fmin + 1), str(CDS_loc.fmax)]
             columns[7] = str(CDS_loc.phase)
-            columns[8] = build_column_9( id=CDS.id, parent=mRNA.id, other=None )
+            columns[8] = build_column_9( id=CDS.id, parent=RNA.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
         columns[7] = '.'
 
-        ## handle each exon for this mRNA
-        for exon in mRNA.exons():
+        ## handle each exon for this RNA
+        for exon in RNA.exons():
             exon_loc = exon.location_on( on )
 
             if exon_loc is None:
                 raise Exception("ERROR: Expected exon {0} to be located on {1} but it wasn't".format(exon.id, on.id))
-            
+
             columns[2] = 'exon'
             columns[3:5] = [str(exon_loc.fmin + 1), str(exon_loc.fmax)]
-            columns[8] = build_column_9( id=exon.id, parent=mRNA.id, other=None )
+            columns[8] = build_column_9( id=exon.id, parent=RNA.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
         # are there polypeptides?
-        for polypeptide in mRNA.polypeptides():
+        for polypeptide in RNA.polypeptides():
             ## HACK - we probably don't want to keep this
-            polypeptide_loc = mRNA_loc
+            polypeptide_loc = RNA_loc
             annot = polypeptide.annotation
             assertions = dict()
             dbxref_strs = list()
@@ -482,7 +502,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
 
                 if annot.gene_symbol is not None:
                     assertions['gene_symbol'] = annot.gene_symbol
-            
+
                 if len(annot.ec_numbers):
                     # should this construction be in build_column_9() instead?
                     # this is treating each EC number as a string, but each should be an ECAnnotation object
@@ -555,7 +575,7 @@ def print_biomatch( match=None, fh=None, source=None, on=None, mode=None ):
         elif mode == 'match_and_parts':
             columns[0:3] = [mp_loc.on.id, source, 'match_part']
             columns[8] = build_column_9( id=mp.id, parent=match.id, other=None )
-            
+
         fh.write( "\t".join(columns) + "\n" )
 
 

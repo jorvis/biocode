@@ -6,7 +6,7 @@ import sys
 '''
 Warning: this module requires Python 3.2 or higher
 
-Yes, there's a lot of abstraction that could happen here still but I'm trying to allow for 
+Yes, there's a lot of abstraction that could happen here still but I'm trying to allow for
 special consideration to be allowed for each feature type and for calls to read more like
 biology than CS.
 
@@ -88,10 +88,13 @@ class LocatableThing:
 
         return False
 
-    def has_same_coordinates_as( self, on=None, thing=None ):
+    def has_same_coordinates_as( self, on=None, thing=None, stop_tolerant=False ):
         '''
         Reports True/False depending on whether the calling object shares both start/stop coordinates
         with the passed 'thing' when considering locations 'on' the passed molecule biothing object.
+
+        If you set the stop_tolerant argument=True, this will check the exact coordinates AND
+        the coordinates with three bases off the end.  This obviously takes longer.
         '''
         other = thing
 
@@ -102,9 +105,19 @@ class LocatableThing:
                     # if a specific molecule was requested, is this it?
                     if on is not None and on.id != this_loc.on.id:
                         continue
-                    
+
                     if this_loc.fmin == other_loc.fmin and this_loc.fmax == other_loc.fmax:
                         return True
+
+                    # for those features with mixed stop codon inclusion
+                    elif stop_tolerant == True:
+                        if this_loc.strand == 1:
+                            # this allows for either to be three base pairs away from the other in either direction
+                            if this_loc.fmin == other_loc.fmin and abs(this_loc.fmax - other_loc.fmax) == 3:
+                                return True
+                        else:
+                            if abs(this_loc.fmin - other_loc.fmin) == 3 and this_loc.fmax == other_loc.fmax:
+                                return True
 
         # if we got here, there wasn't a match
         return False
@@ -128,13 +141,13 @@ class LocatableThing:
                     # if a specific molecule was requested, is this it?
                     if on is not None and on.id != this_loc.on.id:
                         continue
-                    
+
                     if this_loc.fmin > other_loc.fmax:
                         return True
 
         # if we got here, there wasn't a match
         return False
-    
+
     def is_on_min_side_of( self, thing=None, on=None ):
         '''
         Returns True/False depending on whether the calling LocatableThing object has a location
@@ -154,7 +167,7 @@ class LocatableThing:
                     # if a specific molecule was requested, is this it?
                     if on is not None and on.id != this_loc.on.id:
                         continue
-                    
+
                     if this_loc.fmax < other_loc.fmin:
                         return True
 
@@ -188,7 +201,7 @@ class LocatableThing:
             mols[loc.on.id] = loc.on
 
         return mols
-    
+
     def location( self ):
         '''
         In a majority of use-cases any given feature will only be located on one other feature.
@@ -247,34 +260,34 @@ class LocatableThing:
         ## first catch any which don't overlap. this makes the other tests easier
         if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
             return None
-        
+
         # overlap on right end of ref, left of qry
         # ref:   -------------------
         # qry:            -------------------
         elif ref_location.fmax <= qry_location.fmax and ref_location.fmin < qry_location.fmin:
             return ref_location.fmax - qry_location.fmin
-        
+
         # overlap on left end of ref, right of qry
         # ref:           -------------------
         # qry:   -------------------
         elif ref_location.fmin >= qry_location.fmin and ref_location.fmax > qry_location.fmax:
             return qry_location.fmax - ref_location.fmin
-        
+
         # is the reference contained within the qry?
         # ref:      ------------
-        # qry:   -------------------        
+        # qry:   -------------------
         elif ref_location.fmin >= qry_location.fmin and ref_location.fmax <= qry_location.fmax:
             return ref_location.fmax - ref_location.fmin
-        
+
         # is the query contained within the ref?
         # ref:   -------------------
-        # qry:      -------------    
+        # qry:      -------------
         elif qry_location.fmin >= ref_location.fmin and qry_location.fmax <= ref_location.fmax:
             return qry_location.fmax - qry_location.fmin
         else:
             raise Exception("ERROR: uncaught orientation in overlap_size_with between {0} and {1}".format(self.id, thing.id))
-        
-        
+
+
     def overlaps_max_side_of( self, thing=None, on=None ):
         '''
         Returns True/False depending on whether the two LocatableThing objects have
@@ -295,7 +308,7 @@ class LocatableThing:
                     # if a specific molecule was requested, is this it?
                     if on is not None and on.id != this_loc.on.id:
                         continue
-                    
+
                     if this_loc.fmin < other_loc.fmax and this_loc.fmax > other_loc.fmax:
                         return True
 
@@ -322,14 +335,14 @@ class LocatableThing:
                     # if a specific molecule was requested, is this it?
                     if on is not None and on.id != this_loc.on.id:
                         continue
-                    
+
                     if this_loc.fmin < other_loc.fmin and this_loc.fmax > other_loc.fmin:
                         return True
 
         # if we got here, there wasn't a match
         return False
 
-    
+
     def overlaps_with( self, thing ):
         '''
         Returns True/False depending on whether the two LocatableThing objects have
@@ -339,13 +352,13 @@ class LocatableThing:
         ignoring strandedness.
         '''
         common_location_found = False
-        
+
         ## see if either are located on the same thing
         for ref_location in self.locations:
             for qry_location in thing.locations:
                 if ref_location.on.id == qry_location.on.id:
                     common_location_found = True
-                    
+
                     ## if so, see if they have overlapping coordinates
                     ## it's easier to negate an overlap
                     if ref_location.fmax <= qry_location.fmin or qry_location.fmax <= ref_location.fmin:
@@ -371,14 +384,14 @@ class Location:
     '''
     Notes on the 'phase' attribute, used as defined in the GFF3 spec:
 
-    For features of type "CDS", the phase indicates where the feature begins with reference to the 
-    reading frame. The phase is one of the integers 0, 1, or 2, indicating the number of bases that 
-    should be removed from the beginning of this feature to reach the first base of the next codon. 
-    In other words, a phase of "0" indicates that the next codon begins at the first base of the region 
-    described by the current line, a phase of "1" indicates that the next codon begins at the second 
-    base of this region, and a phase of "2" indicates that the codon begins at the third base of this 
+    For features of type "CDS", the phase indicates where the feature begins with reference to the
+    reading frame. The phase is one of the integers 0, 1, or 2, indicating the number of bases that
+    should be removed from the beginning of this feature to reach the first base of the next codon.
+    In other words, a phase of "0" indicates that the next codon begins at the first base of the region
+    described by the current line, a phase of "1" indicates that the next codon begins at the second
+    base of this region, and a phase of "2" indicates that the codon begins at the third base of this
     region. This is NOT to be confused with the frame, which is simply start modulo 3.
-    
+
     For forward strand features, phase is counted from the start field. For reverse strand features,
     phase is counted from the end field.
 
@@ -413,7 +426,7 @@ class Organism:
 
         def add_assembly( self, assembly ):
             self.assemblies.append( assembly )
-            
+
         def common_name(self):
             if self.strain is None:
                 return "{0} {1}".format(self.genus, self.species)
@@ -424,10 +437,10 @@ class Organism:
 
 class Assembly( LocatableThing ):
     '''
-    SO definition (2013-05-22): "A region of the genome of known length that is composed by ordering and 
+    SO definition (2013-05-22): "A region of the genome of known length that is composed by ordering and
     aligning two or more different regions."
     '''
-    
+
     def __init__( self, id=None, locations=None, length=None, residues=None, children=None ):
         super().__init__(locations)
         self.id = id
@@ -437,7 +450,7 @@ class Assembly( LocatableThing ):
 
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'gene')
-        
+
     def add_gene( self, gene ):
         self.children['gene'].append(gene)
 
@@ -446,12 +459,12 @@ class Assembly( LocatableThing ):
         Returns all Gene objects which are children of this Assembly
         '''
         return self.children['gene']
-    
+
 
 
 class CDS( LocatableThing ):
     '''
-    SO definition (2013-05-22): "A contiguous sequence which begins with, and includes, a start codon 
+    SO definition (2013-05-22): "A contiguous sequence which begins with, and includes, a start codon
     and ends with, and includes, a stop codon."
     '''
     def __init__( self, id=None, locations=None, parent=None, phase=None, length=None, residues=None, annotation=None ):
@@ -483,7 +496,7 @@ class CDS( LocatableThing ):
 
         if loc.strand == -1:
             self.residues = biocodeutils.reverse_complement(self.residues)
-        
+
         return self.residues
 
 
@@ -497,13 +510,14 @@ class Exon( LocatableThing ):
 
 class Gene( LocatableThing ):
     '''
-    SO definition (2013-05-22): "A region (or regions) that includes all of the sequence 
-    elements necessary to encode a functional transcript. A gene may include regulatory 
+    SO definition (2013-05-22): "A region (or regions) that includes all of the sequence
+    elements necessary to encode a functional transcript. A gene may include regulatory
     regions, transcribed regions and/or other functional sequence regions."
     '''
-    def __init__( self, id=None, locations=None, children=None ):
+    def __init__( self, id=None, locus_tag=None, locations=None, children=None ):
         super().__init__(locations)
         self.id = id
+        self.locus_tag = locus_tag
         self.children = children
 
         ## initialize any types needed
@@ -513,10 +527,10 @@ class Gene( LocatableThing ):
 
     def __hash__(self):
         return hash(self.id)
-    
+
     def add_mRNA(self, rna):
         self.children['mRNA'].append(rna)
-    
+
     def add_rRNA(self, rna):
         self.children['rRNA'].append(rna)
 
@@ -525,18 +539,21 @@ class Gene( LocatableThing ):
 
     def mRNA_count(self):
         return len(self.mRNAs())
-        
+
     def mRNAs(self):
         return self.children['mRNA']
 
-    def shares_exon_structure_with( self, thing=None ):
+    def RNAs(self):
+        return self.children['mRNA'] + self.children['tRNA'] + self.children['rRNA']
+
+    def shares_exon_structure_with( self, thing=None, stop_tolerant=False ):
         """
-        This checks if two genes have only on mRNA and, if so, compares their internal
+        This checks if two genes have only one mRNA and, if so, compares their internal
         exon structure.  Returns True if they all match completely.
         """
         these_mRNAs = self.mRNAs()
         other_mRNAs = thing.mRNAs()
-        
+
         if len(these_mRNAs) != 1 or len(other_mRNAs) != 1 or len(these_mRNAs[0].exons()) != len(other_mRNAs[0].exons()):
             return False;
 
@@ -545,9 +562,9 @@ class Gene( LocatableThing ):
 
         for ref_exon in these_mRNAs[0].exons():
             ref_exon_count += 1
-            
+
             for other_exon in other_mRNAs[0].exons():
-                if ref_exon.has_same_coordinates_as( thing=other_exon ):
+                if ref_exon.has_same_coordinates_as( thing=other_exon, stop_tolerant=stop_tolerant ):
                     exon_matches_found += 1
                     break
 
@@ -558,12 +575,12 @@ class Gene( LocatableThing ):
 
     def shares_CDS_structure_with( self, thing=None ):
         """
-        This checks if two genes have only on mRNA and, if so, compares their internal
+        This checks if two genes have only one mRNA and, if so, compares their internal
         CDS structure.  Returns True if they all match completely.
         """
         these_mRNAs = self.mRNAs()
         other_mRNAs = thing.mRNAs()
-        
+
         if len(these_mRNAs) != 1 or len(other_mRNAs) != 1 or len(these_mRNAs[0].CDSs()) != len(other_mRNAs[0].CDSs()):
             return False;
 
@@ -572,7 +589,7 @@ class Gene( LocatableThing ):
 
         for ref_CDS in these_mRNAs[0].CDSs():
             ref_CDS_count += 1
-            
+
             for other_CDS in other_mRNAs[0].CDSs():
                 if ref_CDS.has_same_coordinates_as( thing=other_CDS ):
                     CDS_matches_found += 1
@@ -582,7 +599,7 @@ class Gene( LocatableThing ):
             return True
         else:
             return False
-        
+
 
     '''
     Prints the gene as a GFF3 entry, with all children.  Is printed to STDOUT
@@ -609,7 +626,7 @@ class Gene( LocatableThing ):
             self.children['mRNA'].remove(rna)
         else:
             raise Exception("ERROR: Can't remove mRNA {0} from gene {1} because it wasn't found".format(rna.id, self.id))
-    
+
 
 class Intron( LocatableThing ):
     '''
@@ -618,16 +635,16 @@ class Intron( LocatableThing ):
 
     There are some issues to resolve here.  For example, what's the parentage
     of an intron?  What are conceivable children?
-    
-    SO definition (2013-05-22): "A region of a primary transcript that is transcribed, but 
-    removed from within the transcript by splicing together the sequences (exons) on either 
+
+    SO definition (2013-05-22): "A region of a primary transcript that is transcribed, but
+    removed from within the transcript by splicing together the sequences (exons) on either
     side of it."
     '''
     def __init__( self, id=None, locations=None, length=None ):
         super().__init__(locations)
         self.id = id
         self.length = length
-        
+
 
 class Match( LocatableThing ):
     '''
@@ -636,10 +653,10 @@ class Match( LocatableThing ):
     as a lightweight implementation of them all rather than explicitly creating
     dozens of subclasses.  Instead, create a Match object and simply set any more
     specific term using Match.class
-    
+
     Future mod: Add Annotation object to store info on the match?
     '''
-    
+
     def __init__( self, id=None, subclass=None, target_id=None, locations=None, parts=None, length=None ):
         super().__init__(locations)
         self.id = id
@@ -703,12 +720,12 @@ class MatchPart( LocatableThing ):
     #    lines.append("\tlocations: {0}".format(len(self.locations)) )
 
     #    return "\n".join(lines)
-        
+
 
 
 class Polypeptide( LocatableThing ):
     '''
-    SO definition (2013-05-22): "A sequence of amino acids linked by peptide bonds which may lack 
+    SO definition (2013-05-22): "A sequence of amino acids linked by peptide bonds which may lack
     appreciable tertiary structure and may not be liable to irreversible denaturation."
     '''
     def __init__( self, id=None, locations=None, parent=None, length=None, annotation=None, residues=None ):
@@ -717,21 +734,25 @@ class Polypeptide( LocatableThing ):
         self.parent = parent
         self.length = length
         self.residues = residues
-        
+
         ## this should be an instance of FunctionalAnnotation from bioannotation.py
         self.annotation = annotation
-        
-        
+
+
 class RNA( LocatableThing ):
     '''
-    SO definition (2013-05-22): "An attribute describing a sequence consisting of nucleobases 
+    SO definition (2013-05-22): "An attribute describing a sequence consisting of nucleobases
     bound to a repeating unit made of a D-ribose ring connected to a phosphate backbone."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None, annotation=None ):
         super().__init__(locations)
         self.id = id
         self.parent = parent
+        self.locus_tag = locus_tag
         self.children = children
+
+        ## this should be an instance of FunctionalAnnotation from bioannotation.py
+        self.annotation = annotation
 
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'exon')
@@ -755,7 +776,7 @@ class RNA( LocatableThing ):
 
     def CDS_count(self):
         return len(self.CDSs())
-        
+
     def CDSs(self):
         ## Why not "CDSes"?  As a grammarian, this gave me fits.  There are many references
         #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
@@ -774,14 +795,14 @@ class RNA( LocatableThing ):
             if cds.id == cds_to_remove.id:
                 del self.children['CDS'][idx]
                 break
-            
+
             idx += 1
         else:
             raise Exception("ERROR: Attempt to delete a CDS ({0}) which wasn't found as a child of this RNA ({1}".format(cds.id, self.id))
 
     def exon_count(self):
         return len(self.exons())
-        
+
     def exons(self):
         return self.children['exon']
 
@@ -791,7 +812,7 @@ class RNA( LocatableThing ):
         elif len(self.locations) > 1:
             raise Exception("ERROR: RNA {0} is located on multiple molecules.  Can't automatically extract the residues.".format(self.id))
 
-        loc = self.location()        
+        loc = self.location()
         segments = list()
 
         # these MUST be handled in a sorted order
@@ -807,13 +828,13 @@ class RNA( LocatableThing ):
             residues += segment
 
         return residues
-    
+
     def has_introns( self ):
         if len( self.exons() ) > 1:
             return True
         else:
             return False
-    
+
     def introns(self, on=None):
         '''
         Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
@@ -821,14 +842,14 @@ class RNA( LocatableThing ):
         '''
         if on is None:
             raise Exception("ERROR: the introns() method requires a passed molecule using the 'on' argument")
-        
+
         mol_on = on
 
         intron_objs = list()
         last_exon = None
         last_exon_loc = None
 
-        for exon in self.exons():
+        for exon in sorted(self.exons()):
             exon_loc = exon.location_on( mol_on )
 
             if last_exon is not None:
@@ -841,40 +862,71 @@ class RNA( LocatableThing ):
             last_exon_loc = exon_loc
 
         return intron_objs
-    
+
     def polypeptides(self):
         return self.children['polypeptide']
 
-        
+
 class mRNA( RNA ):
     '''
-    SO definition (2013-05-22): "Messenger RNA is the intermediate molecule between DNA and protein. It 
+    SO definition (2013-05-22): "Messenger RNA is the intermediate molecule between DNA and protein. It
     includes UTR and coding sequences. It does not contain introns."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
-        super().__init__(id, locations, parent, children)
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
 
 class rRNA( RNA ):
     '''
-    SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both 
+    SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both
     structural scaffolding and catalytic activity."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
-        super().__init__(id, locations, parent, children)
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
+
 
 class tRNA( RNA ):
     '''
-    SO definition (2013-05-22): "Transfer RNA (tRNA) molecules are approximately 80 nucleotides in length. 
-    Their secondary structure includes four short double-helical elements and three loops (D, anti-codon, 
-    and T loops). Further hydrogen bonds mediate the characteristic L-shaped molecular structure. Transfer 
-    RNAs have two regions of fundamental functional importance: the anti-codon, which is responsible for 
-    specific mRNA codon recognition, and the 3' end, to which the tRNA's corresponding amino acid is 
-    attached (by aminoacyl-tRNA synthetases). Transfer RNAs cope with the degeneracy of the genetic code 
-    in two manners: having more than one tRNA (with a specific anti-codon) for a particular amino acid; 
+    SO definition (2013-05-22): "Transfer RNA (tRNA) molecules are approximately 80 nucleotides in length.
+    Their secondary structure includes four short double-helical elements and three loops (D, anti-codon,
+    and T loops). Further hydrogen bonds mediate the characteristic L-shaped molecular structure. Transfer
+    RNAs have two regions of fundamental functional importance: the anti-codon, which is responsible for
+    specific mRNA codon recognition, and the 3' end, to which the tRNA's corresponding amino acid is
+    attached (by aminoacyl-tRNA synthetases). Transfer RNAs cope with the degeneracy of the genetic code
+    in two manners: having more than one tRNA (with a specific anti-codon) for a particular amino acid;
     and 'wobble' base-pairing, i.e. permitting non-standard base-pairing at the 3rd anti-codon position."
     '''
-    def __init__( self, id=None, locations=None, parent=None, children=None ):
-        super().__init__(id, locations, parent, children)
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
+
+
+class UTR( LocatableThing ):
+    '''
+    SO definition (2014-06-12): "Messenger RNA sequences that are untranslated and lie five prime or three
+    prime to sequences which are translated."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(locations)
+        self.id = id
+        self.parent = parent
+        self.length = length
+
+
+class FivePrimeUTR( UTR ):
+    '''
+    SO definition (2014-06-12): "A region at the 5' end of a mature transcript (preceding the initiation
+    codon) that is not translated into a protein."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(id, locations, parent, length)
+
+
+class ThreePrimeUTR( UTR ):
+    '''
+    SO definition (2014-06-12): "A region at the 3' end of a mature transcript (following the stop codon)
+    that is not translated into a protein."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
+        super().__init__(id, locations, parent, length)
 
 
 #############################
@@ -885,7 +937,7 @@ class tRNA( RNA ):
 def _initialize_type_list( children, feattype ):
     if children is None:
         children = dict()
-    
+
     if feattype not in children:
         children[feattype] = list()
 
@@ -911,7 +963,7 @@ def _print_thing( thing, fh=None ):
             for child in thing.children[child_type]:
                 child_count += 1
                 print("\t\t{0}".format(child.id) )
-        
+
         print("\tchild count = {0}".format( child_count ) )
     else:
         print("\tchildren = None")

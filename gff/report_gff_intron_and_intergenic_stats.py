@@ -63,12 +63,13 @@ def main():
     ############################
     
     for asm_id in assemblies:
+        #print("DEBUG: processing assembly: {0}".format(asm_id))
         assembly = assemblies[asm_id]
-        genes = assembly.genes()
+        genes = sorted(assembly.genes())
         total_gene_count += len(genes)
         last_gene_loc = None
 
-        for gene in sorted(genes):
+        for gene in genes:
             gene_loc = gene.location_on(assembly)
 
             if last_gene_loc is not None:
@@ -91,18 +92,25 @@ def main():
                     intron_loc = intron.location_on(assembly)
                     intron_size = intron_loc.fmax - intron_loc.fmin
 
+                    #if intron_size > 0:
+                        #print("\tDEBUG: found mRNA:{0} intron {1}-{2} ({3} bp)".format(mRNA.id, intron_loc.fmin, intron_loc.fmax, intron_size))
+
                     if intron_size < 0:
-                        print("WARN: Intron size ({1}) < 0 reported in gene {0}".format(gene.id, intron_size))
+                        print("\tWARN: Intron size ({1}) < 0 reported in gene {0}".format(gene.id, intron_size))
                     
                     intron_sizes.append(intron_size)
                     total_intron_residues += intron_size
                 
             last_gene_loc = gene_loc
 
-
-    avg_intergenic_space_dist = total_intergenic_space_residues / total_intergenic_space_count
-    intergenic_distances = sorted(intergenic_distances)
-    median_int_space_dist = intergenic_distances[ int(len(intergenic_distances)/2) ]
+    if total_intergenic_space_count == 0:
+        avg_intergenic_space_dist = None
+        intergenic_distances = None
+        median_int_space_dist = None
+    else:
+        avg_intergenic_space_dist = total_intergenic_space_residues / total_intergenic_space_count
+        intergenic_distances = sorted(intergenic_distances)
+        median_int_space_dist = intergenic_distances[ int(len(intergenic_distances)/2) ]
 
     avg_intron_size = total_intron_residues / total_intron_count
     intron_sizes = sorted(intron_sizes)
@@ -112,14 +120,17 @@ def main():
     ## Reporting section
     ############################
 
-    print("\nMolecule count: {0}\n".format(total_molecule_count))
+    print("\nMolecule count: {0}".format(total_molecule_count))
     print("Gene count: {0}".format(total_gene_count) )
-    print("Intergenic space count: {0}".format(total_intergenic_space_count) )
 
-    print("Average intergenic space distance: {0:.1f} bp".format(avg_intergenic_space_dist) )
-    print("Median intergenic space distance: {0} bp".format(median_int_space_dist) )
-    print("Minimum intergenic space distance: {0} bp".format(intergenic_distances[0]) )
-    print("Maximum intergenic space distance: {0} bp\n".format(intergenic_distances[-1]) )
+    if total_intergenic_space_count > 0:
+        print("Intergenic space count: {0}".format(total_intergenic_space_count) )
+        print("Average intergenic space distance: {0:.1f} bp".format(avg_intergenic_space_dist) )
+        print("Median intergenic space distance: {0} bp".format(median_int_space_dist) )
+        print("Minimum intergenic space distance: {0} bp".format(intergenic_distances[0]) )
+        print("Maximum intergenic space distance: {0} bp\n".format(intergenic_distances[-1]) )
+    else:
+        print("There were no intergenic spaces found.  This might mean there were no molecules with at least 2 genes.")
  
     print("Intron count: {0}".format(total_intron_count) )
     print("Intron space count: {0}".format(total_intron_residues) )
