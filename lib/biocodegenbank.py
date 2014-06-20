@@ -2,6 +2,7 @@ import re
 import bioannotation
 import biocodeutils
 import biothings
+import math
 import sys
 
 """
@@ -41,6 +42,17 @@ Ex2 (feature table of GenBank flat file):
                      YPENVEQVDMLLDIVKKCNFNGGLVVDNPNSVKAKKYYLCIWSYNSNIYHKLPNPIEQ
                      NGDHEEVEFDEVESCVMKKRKNKLTYKDRIIKKKQQQRNKGMKTRPDTKYTGRKRPHA
                      F"
+
+Ex3 (sequence entry in GenBank flat file):
+          |------------------- 60 characters per line --------------------|
+ORIGIN
+        1 gatcctccat atacaacggt atctccacct caggtttaga tctcaacaac ggaaccattg
+       61 ccgacatgag acagttaggt atcgtcgaga gttacaagct aaaacgagca gtagtcagct
+      121 ctgcatctga agccgctgaa gttctactaa gggtggataa catcatccgt gcaagaccaa
+      181 gaaccgccaa tagacaacat atgtaacata tttaggatat acctcgaaaa taataaaccg
+      241 ccacactgtc attattataa ttagaaacag aacgcaaaaa ttatccacta tataattcaa
+      301 agacgcgaaa aaaaaagaac aacgcgtcat agaacttttg gcaattcgcg tcacaaataa
+
 """
 
 # character limits for the content portions of the header and the feature table,
@@ -48,9 +60,14 @@ Ex2 (feature table of GenBank flat file):
 MAX_CONTENT_WIDTH = 79
 MAX_HEADER_CONTENT_WIDTH = 67
 MAX_FTABLE_CONTENT_WIDTH = 58
-
+# sequence formatting constants:
+SEQ_GROUP_BP = 10
+SEQ_GROUPS_PER_LINE = 6
+SEQ_MARGIN_WIDTH = 10
+# computed values:
 HEADER_MARGIN_WIDTH = MAX_CONTENT_WIDTH - MAX_HEADER_CONTENT_WIDTH
 HEADER_MARGIN = " " * HEADER_MARGIN_WIDTH
+SEQ_BP_PER_LINE = SEQ_GROUP_BP * SEQ_GROUPS_PER_LINE
 
 def print_biogene( gene=None, fh=None, on=None ):
     '''
@@ -241,4 +258,35 @@ def line_wrap_lineage_string(lineage):
         ll = len(lineage)
     return result
 
+
+def print_sequence( seq=None, fh=None ):
+    '''
+    This method accepts a sequence and prints it to the specified filehandle in GenBank flat 
+    file format.
+    '''
+    if seq is None:
+        raise Exception( "ERROR: The print_sequence() function requires sequence residues to be passed via the 'seq' argument" );
+
+    sl = len(seq)
+    num_lines = math.ceil(sl / SEQ_BP_PER_LINE)
+    offset = 0
+
+    for l in range(0, num_lines):
+        # format each line of sequence into SEQ_GROUPS_PER_LINE groups of SEQ_GROUP_BP
+        fstr = "{:>" + str(SEQ_MARGIN_WIDTH - 1) + "}"
+        fh.write(fstr.format(offset+1))
+        fh.write(" ")
+        ng = 0
+        while (ng < SEQ_GROUPS_PER_LINE):
+            fh.write(" ")
+            next_offset = offset + SEQ_GROUP_BP
+            fh.write(seq[offset:next_offset])
+            offset = next_offset
+            ng = ng + 1
+            if (offset > sl):
+                break
+        fh.write("\n")
+
+
+        
 

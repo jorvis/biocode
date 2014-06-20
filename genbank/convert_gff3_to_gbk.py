@@ -46,10 +46,11 @@ def main():
     parser.add_argument('-s', '--source', type=str, required=False, default='.', help='Free-format information including an abbreviated form of the organism name, sometimes followed by a molecule type.' )
     parser.add_argument('-t', '--taxon_id', type=int, required=False, help='NCBI taxon ID, if known' )
     parser.add_argument('-l', '--lineage', type=str, required=False, default='Unknown', help='Semicolon-delimited lineage of the organism e.g., "Eukaryota; Alveolata; Apicomplexa; Aconoidasida; Piroplasmida; Theileriidae; Theileria"' )
+    parser.add_argument('-seq', '--include-sequence', action='store_true', help='Include sequence (if present) in the output GenBank flat file(s).' )
     args = parser.parse_args()
 
     # line-wrap lineage to stay below 79 character GenBank flat file width
-    lineage = biocodegenbank.line_wrap_lineage_string(args.lineage)
+    lineage = biocodegenbank.line_wrap_lineage_string( args.lineage )
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
     ofh = sys.stdout
@@ -80,6 +81,10 @@ def main():
         
         for gene in assemblies[assembly_id].genes():
             biocodegenbank.print_biogene( gene=gene, fh=ofh, on=assembly )
+
+        if args.include_sequence:
+            ofh.write("ORIGIN\n")
+            biocodegenbank.print_sequence( seq=assembly.residues, fh=ofh )
 
         ofh.write("//\n")
 
