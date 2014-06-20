@@ -36,7 +36,8 @@ def main():
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GFF3 file to be read' )
-    parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to a Genbank flat file to be created' )
+    parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to a Genbank flat file to be created. Supersedes --output_dir if both are specified.' )
+    parser.add_argument('-od', '--output_dir', type=str, required=False, help='Path to an output directory. If this option is specified then each input assembly will be written to a separate GenBank output file, named with the assembly_id.' )
     parser.add_argument('-mt', '--molecule_type', type=str, required=False, default='DNA', help='Molecule type' )
     parser.add_argument('-gbd', '--genbank_division', type=str, required=False, default='.', help='GenBank Division (3-letter abbreviation)' )
     parser.add_argument('-md', '--modification_date', type=str, required=False, default='DD-MMM-YYYY', help='The modification date for header in format like 21-JUN-1999' )
@@ -58,6 +59,9 @@ def main():
         ofh = open(args.output_file, 'wt')
 
     for assembly_id in assemblies:
+        if args.output_dir is not None:
+            ofn = args.output_dir + "/" + assembly_id + ".gbk"
+            ofh = open(ofn, 'wt')
         assembly = assemblies[assembly_id]
 
         context = { 'locus':assembly_id, 'molecule_size':assembly.length, 'molecule_type':args.molecule_type,
@@ -87,7 +91,8 @@ def main():
             biocodegenbank.print_sequence( seq=assembly.residues, fh=ofh )
 
         ofh.write("//\n")
-
+        if args.output_dir is not None:
+            ofh.close()
 
 if __name__ == '__main__':
     main()
