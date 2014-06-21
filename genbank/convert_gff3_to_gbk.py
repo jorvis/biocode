@@ -36,7 +36,8 @@ def main():
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GFF3 file to be read' )
-    parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to a Genbank flat file to be created' )
+    parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to a Genbank flat file to be created. Supersedes --output_dir if both are specified.' )
+    parser.add_argument('-od', '--output_dir', type=str, required=False, help='Path to an output directory. If this option is specified then each input assembly will be written to a separate GenBank output file, named with the assembly_id.' )
     parser.add_argument('-mt', '--molecule_type', type=str, required=False, default='DNA', help='Molecule type' )
     parser.add_argument('-gbd', '--genbank_division', type=str, required=False, default='.', help='GenBank Division (3-letter abbreviation)' )
     parser.add_argument('-md', '--modification_date', type=str, required=False, default='DD-MMM-YYYY', help='The modification date for header in format like 21-JUN-1999' )
@@ -45,7 +46,12 @@ def main():
     parser.add_argument('-d', '--definition', type=str, required=False, default='.', help='Brief description of sequence; includes information such as source organism, gene name/protein name, or some description of the sequence\'s function.' )
     parser.add_argument('-s', '--source', type=str, required=False, default='.', help='Free-format information including an abbreviated form of the organism name, sometimes followed by a molecule type.' )
     parser.add_argument('-t', '--taxon_id', type=int, required=False, help='NCBI taxon ID, if known' )
+    parser.add_argument('-l', '--lineage', type=str, required=False, default='Unknown', help='Semicolon-delimited lineage of the organism e.g., "Eukaryota; Alveolata; Apicomplexa; Aconoidasida; Piroplasmida; Theileriidae; Theileria"' )
+    parser.add_argument('-seq', '--include_sequence', action='store_true', help='Include sequence (if present) in the output GenBank flat file(s).' )
     args = parser.parse_args()
+
+    # line-wrap lineage to stay below 79 character GenBank flat file width
+    lineage = biocodegenbank.line_wrap_lineage_string( args.lineage )
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
     ofh = sys.stdout
@@ -53,12 +59,16 @@ def main():
         ofh = open(args.output_file, 'wt')
 
     for assembly_id in assemblies:
+        if args.output_dir is not None:
+            ofn = args.output_dir + "/" + assembly_id + ".gbk"
+            ofh = open(ofn, 'wt')
         assembly = assemblies[assembly_id]
 
         context = { 'locus':assembly_id, 'molecule_size':assembly.length, 'molecule_type':args.molecule_type,
                     'division':args.genbank_division, 'modification_date':args.modification_date,
                     'accession':'.', 'version':'.', 'gi':'.',
-                    'source':args.source, 'definition':args.definition, 'organism':args.organism
+                    'source':args.source, 'definition':args.definition, 'organism':args.organism,
+                    'lineage':lineage
         }
         header = TEMPLATE_ENVIRONMENT.get_template('genbank_flat_file_header.template').render(context)
         ofh.write(header)
@@ -76,8 +86,13 @@ def main():
         for gene in assemblies[assembly_id].genes():
             biocodegenbank.print_biogene( gene=gene, fh=ofh, on=assembly )
 
-        ofh.write("//\n")
+        if args.include_sequence:
+            ofh.write("ORIGIN\n")
+            biocodegenbank.print_sequence( seq=assembly.residues, fh=ofh )
 
+        ofh.write("//\n")
+        if args.output_dir is not None:
+            ofh.close()
 
 if __name__ == '__main__':
     main()

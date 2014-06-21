@@ -5,10 +5,9 @@ VERSION     {{ version }}  GI:{{ gi }}
 KEYWORDS    .
 SOURCE      {{ source }}
   ORGANISM  {{ organism }}
-            .
+            {{ lineage }}.
 REFERENCE   1  (bases 1 to {{ molecule_size }})
   AUTHORS   .
   TITLE     .
   JOURNAL   .
   PUBMED    .
-
