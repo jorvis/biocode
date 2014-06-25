@@ -158,9 +158,16 @@ while ( my $line = <$gffin_fh> ) {
 }
 
 ## do the last one and reset
-$molecules{$current_seq_id} = join( '', @current_seq_lines );
-$molecules{$current_seq_id} =~ s/\s//g;
-$molecules{$current_seq_id} = uc( $molecules{$current_seq_id} );
+if ($current_seq_id) {
+    $molecules{$current_seq_id} = join( '', @current_seq_lines );
+    $molecules{$current_seq_id} =~ s/\s//g;
+    $molecules{$current_seq_id} = uc( $molecules{$current_seq_id} );
+}
+
+## sanity check that any sequence data was actually found
+if (scalar keys %molecules == 0 && ! $options{fasta}) {
+    die "ERROR: No sequence data found embedded in GFF3.  Perhaps you forgot to pass the path to a FASTA file via --fasta ? ";
+}
 
 $current_seq_id = '';
 @current_seq_lines = ();
