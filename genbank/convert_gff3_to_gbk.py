@@ -50,13 +50,22 @@ def main():
     parser.add_argument('-seq', '--include_sequence', action='store_true', help='Include sequence (if present) in the output GenBank flat file(s).' )
     args = parser.parse_args()
 
+    # check that output directory exists
+    if args.output_dir is not None:
+        if not os.path.isdir(args.output_dir):
+            sys.stderr.write("FATAL: the specified output directory (" + args.output_dir + ") does not exist\n");
+            exit(1)
+
     # line-wrap lineage to stay below 79 character GenBank flat file width
     lineage = biocodegenbank.line_wrap_lineage_string( args.lineage )
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
     ofh = sys.stdout
     if args.output_file is not None:
-        ofh = open(args.output_file, 'wt')
+        if args.output_dir is None:
+            ofh = open(args.output_file, 'wt')
+        else:
+            sys.stderr.write("WARN: both -o/--output_file and -od/--output_dir were passed so the former will be ignored\n")
 
     for assembly_id in assemblies:
         if args.output_dir is not None:
@@ -91,8 +100,13 @@ def main():
             biocodegenbank.print_sequence( seq=assembly.residues, fh=ofh )
 
         ofh.write("//\n")
+        # there may be multiple output files
         if args.output_dir is not None:
             ofh.close()
+
+    # there is only one output file
+    if args.output_dir is None:
+        ofh.close()
 
 if __name__ == '__main__':
     main()
