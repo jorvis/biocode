@@ -302,6 +302,18 @@ def get_gff3_features(gff3_file, assemblies=None):
             polypeptide.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = polypeptide
 
+        elif cols[2] == 'five_prime_UTR':
+            utr = biothings.FivePrimeUTR(id=feat_id, parent=parent_feat)
+            utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            parent_feat.add_five_prime_UTR(utr)
+            features[feat_id] = utr
+
+        elif cols[2] == 'three_prime_UTR':
+            utr = biothings.ThreePrimeUTR(id=feat_id, parent=parent_feat)
+            utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            parent_feat.add_three_prime_UTR(utr)
+            features[feat_id] = utr
+
         else:
             sys.stderr.write( "Skipping feature {0} with type {1}\n".format(feat_id, cols[2]) )
             continue
@@ -460,6 +472,19 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         columns[8] = build_column_9( id=RNA.id, parent=RNA.parent.id, other=rna_annot_atts )
         fh.write( "\t".join(columns) + "\n" )
 
+        ## Write any 5' UTRs
+        for utr in RNA.five_prime_UTRs():
+            utr_loc = utr.location_on( on )
+
+            if utr_loc is None:
+                raise Exception("ERROR: Expected UTR {0} to be located on {1} but it wasn't".format(utr.id, on.id) )
+
+            columns[2] = 'five_prime_UTR'
+            columns[3:5] = [str(utr_loc.fmin + 1), str(utr_loc.fmax)]
+            columns[7] = str(utr_loc.phase)
+            columns[8] = build_column_9( id=utr.id, parent=utr.parent.id, other=None )
+            fh.write( "\t".join(columns) + "\n" )
+
         ## handle each CDS for this mRNA
         for CDS in RNA.CDSs():
             CDS_loc = CDS.location_on( on )
@@ -522,6 +547,19 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             columns[2] = 'polypeptide'
             columns[3:5] = [str(polypeptide_loc.fmin + 1), str(polypeptide_loc.fmax)]
             columns[8] = build_column_9( id=polypeptide.id, parent=polypeptide.parent.id, other=assertions )
+            fh.write( "\t".join(columns) + "\n" )
+
+        ## Write any 5' UTRs
+        for utr in RNA.three_prime_UTRs():
+            utr_loc = utr.location_on( on )
+
+            if utr_loc is None:
+                raise Exception("ERROR: Expected UTR {0} to be located on {1} but it wasn't".format(utr.id, on.id) )
+
+            columns[2] = 'three_prime_UTR'
+            columns[3:5] = [str(utr_loc.fmin + 1), str(utr_loc.fmax)]
+            columns[7] = str(utr_loc.phase)
+            columns[8] = build_column_9( id=utr.id, parent=utr.parent.id, other=None )
             fh.write( "\t".join(columns) + "\n" )
 
 

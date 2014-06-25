@@ -771,6 +771,7 @@ class RNA( LocatableThing ):
         self.children = _initialize_type_list(self.children, 'exon')
         self.children = _initialize_type_list(self.children, 'CDS')
         self.children = _initialize_type_list(self.children, 'polypeptide')
+        self.children = _initialize_type_list(self.children, 'UTR')
 
     def __hash__(self):
         return hash(self.id)
@@ -783,9 +784,25 @@ class RNA( LocatableThing ):
         exon.parent = self
         self.children['exon'].append(exon)
 
+    def add_five_prime_UTR(self, utr):
+        utr.parent = self
+        self.children['UTR'].append(utr)
+
     def add_polypeptide(self, polypeptide):
         polypeptide.parent = self
         self.children['polypeptide'].append(polypeptide)
+
+    def add_three_prime_UTR(self, utr):
+        utr.parent = self
+        self.children['UTR'].append(utr)
+
+    def add_UTR(self, utr):
+        if isinstance(utr, FivePrimeUTR):
+            self.add_five_prime_UTR(utr)
+        elif isinstance(utr, ThreePrimeUTR):
+            self.add_three_prime_UTR(utr)
+        else:
+            raise Exception("ERROR: add_UTR() method called for unrecognized type: {0}".format(utr.__class__.__name__))
 
     def CDS_count(self):
         return len(self.CDSs())
@@ -794,6 +811,7 @@ class RNA( LocatableThing ):
         ## Why not "CDSes"?  As a grammarian, this gave me fits.  There are many references
         #  which suggest adding -es to any initialism, but in the end I had to go with Oxford's example:
         #  http://oxforddictionaries.com/definition/american_english/SOS
+        #   -- J. Orvis
         #
         # This method was added for consistency of usage and naming, but it really returns an array
         #  of the CDS fragments in spliced genes.  If you want the contiguous sequence, use get_CDS_residues()
@@ -818,6 +836,15 @@ class RNA( LocatableThing ):
 
     def exons(self):
         return self.children['exon']
+
+    def five_prime_UTRs(self):
+        utrs = list()
+
+        for utr in self.UTRs():
+            if isinstance(utr, FivePrimeUTR):
+                utrs.append(utr)
+
+        return utrs
 
     def get_CDS_residues(self):
         if len(self.locations) == 0:
@@ -878,6 +905,18 @@ class RNA( LocatableThing ):
 
     def polypeptides(self):
         return self.children['polypeptide']
+
+    def three_prime_UTRs(self):
+        utrs = list()
+
+        for utr in self.UTRs():
+            if isinstance(utr, ThreePrimeUTR):
+                utrs.append(utr)
+
+        return utrs
+
+    def UTRs(self):
+        return self.children['UTR']
 
 
 class mRNA( RNA ):
