@@ -528,6 +528,19 @@ class Gene( LocatableThing ):
     def __hash__(self):
         return hash(self.id)
 
+    def add_RNA(self, rna):
+        """
+        Utility method which can be used to add any RNA subtype (mRNA, rRNA, etc.)
+        """
+        if isinstance(rna, mRNA):
+            self.add_mRNA(rna)
+        elif isinstance(rna, rRNA):
+            self.add_rRNA(rna)
+        elif isinstance(rna, tRNA):
+            self.add_tRNA(rna)
+        else:
+            raise Exception("ERROR: add_RNA() method called for unrecognized type: {0}".format(rna.__class__.__name__))
+
     def add_mRNA(self, rna):
         self.children['mRNA'].append(rna)
 
