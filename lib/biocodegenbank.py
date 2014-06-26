@@ -132,6 +132,10 @@ def print_biogene( gene=None, fh=None, on=None ):
         ###########################
         ## write the CDS feature (made up of CDS fragments)
         cds_loc_segments = list()
+
+        if len(mRNA.CDSs()) < 1:
+            raise Exception("ERROR: Encountered an mRNA ({0}) without an CDS children".format(mRNA.id))
+        
         for cds in mRNA.CDSs():
             cds_loc = cds.location_on(on)
             cds_loc_segments.append( [cds_loc.fmin + 1, cds_loc.fmax] )
