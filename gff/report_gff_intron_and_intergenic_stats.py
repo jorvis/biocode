@@ -31,6 +31,8 @@ def main():
     the distribution of intergenic region sizes and the other the intron lengths.  Because these
     can often have long tails, you can limit both the Y- and X-axes values with the --ylimit and
     --xlimit options, respectively.
+
+    Author: Joshua Orvis (jorvis AT gmail)
     '''
     parser = argparse.ArgumentParser( description='Reports statistics of reference gene coverage and extension by aligned RNA-seq transcript data.')
 
