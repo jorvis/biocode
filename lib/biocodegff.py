@@ -216,6 +216,9 @@ def get_gff3_features(gff3_file, assemblies=None):
             in_fasta_section = True
             continue
 
+        # ignore all other comments
+        if line.startswith('#'):
+            continue
 
         cols = line.split("\t")
 
