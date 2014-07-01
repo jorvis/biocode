@@ -32,6 +32,18 @@ def main():
     can often have long tails, you can limit both the Y- and X-axes values with the --ylimit and
     --xlimit options, respectively.
 
+    Definitions:
+
+    Intergenic space was a little ambiguous to me as I started writing this.  Does one count the space from
+    the beginning of the contig until the first gene, or only between them?  What about short contigs which
+    have no annotated genes at all?  From the Sequence Ontology:
+
+    SO:0000605: A region containing or overlapping no genes that is bounded on either side by a gene, or
+    bounded by a gene and the end of the chromosome.
+
+    To my reading, this includes contig ends but not gene-less contigs.  To that end, I include the
+    former in intergenic space reporting but include the latter as a separate statistic.
+
     Author: Joshua Orvis (jorvis AT gmail)
     '''
     parser = argparse.ArgumentParser( description='Reports statistics of reference gene coverage and extension by aligned RNA-seq transcript data.')
@@ -56,6 +68,9 @@ def main():
     total_intergenic_space_residues = 0
     intergenic_distances = list()
 
+    total_contig_residues = 0
+    empty_contig_residues = 0
+
     total_intron_count = 0
     total_intron_residues = 0
     intron_sizes = list()
@@ -63,13 +78,23 @@ def main():
     ############################
     ## Calculation section
     ############################
-    
+
     for asm_id in assemblies:
         #print("DEBUG: processing assembly: {0}".format(asm_id))
         assembly = assemblies[asm_id]
         genes = sorted(assembly.genes())
         total_gene_count += len(genes)
         last_gene_loc = None
+
+        # we should have a length here
+        if assembly.length is None or assembly.length == 0:
+            raise Exception("ERROR: Detected assembly with undefined or 0 length: {0}".format(assembly.id))
+
+        if total_gene_count == 0:
+            empty_contig_residues += assembly.length
+            continue
+
+        total_contig_residues += assembly.length
 
         for gene in genes:
             gene_loc = gene.location_on(assembly)
@@ -124,6 +149,9 @@ def main():
 
     print("\nMolecule count: {0}".format(total_molecule_count))
     print("Gene count: {0}".format(total_gene_count) )
+
+    print("\nTotal molecule bases: {0} bp".format(total_contig_residues) )
+    print("Empty molecule bases: {0} bp".format(empty_contig_residues) )
 
     if total_intergenic_space_count > 0:
         print("Intergenic space count: {0}".format(total_intergenic_space_count) )
