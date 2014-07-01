@@ -48,6 +48,7 @@ def main():
     parser.add_argument('-t', '--taxon_id', type=int, required=False, help='NCBI taxon ID, if known' )
     parser.add_argument('-l', '--lineage', type=str, required=False, default='Unknown', help='Semicolon-delimited lineage of the organism e.g., "Eukaryota; Alveolata; Apicomplexa; Aconoidasida; Piroplasmida; Theileriidae; Theileria"' )
     parser.add_argument('-seq', '--include_sequence', action='store_true', help='Include sequence (if present) in the output GenBank flat file(s).' )
+    parser.add_argument('-p', '--locus_id_prefix', required=False, default='', help='Prefix to add to the GenBank LOCUS id in the output GenBank flat file(s).' )
     args = parser.parse_args()
 
     # line-wrap lineage to stay below 79 character GenBank flat file width
@@ -59,12 +60,13 @@ def main():
         ofh = open(args.output_file, 'wt')
 
     for assembly_id in assemblies:
+        locus_id = args.locus_id_prefix + assembly_id
         if args.output_dir is not None:
-            ofn = args.output_dir + "/" + assembly_id + ".gbk"
+            ofn = args.output_dir + "/" + locus_id + ".gbk"
             ofh = open(ofn, 'wt')
         assembly = assemblies[assembly_id]
 
-        context = { 'locus':assembly_id, 'molecule_size':assembly.length, 'molecule_type':args.molecule_type,
+        context = { 'locus':locus_id, 'molecule_size':assembly.length, 'molecule_type':args.molecule_type,
                     'division':args.genbank_division, 'modification_date':args.modification_date,
                     'accession':'.', 'version':'.', 'gi':'.',
                     'source':args.source, 'definition':args.definition, 'organism':args.organism,
