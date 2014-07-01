@@ -84,7 +84,7 @@ def main():
         assembly = assemblies[asm_id]
         genes = sorted(assembly.genes())
         total_gene_count += len(genes)
-        last_gene_loc = None
+        previous_gene_loc = None
 
         # we should have a length here
         if assembly.length is None or assembly.length == 0:
@@ -95,19 +95,29 @@ def main():
             continue
 
         total_contig_residues += assembly.length
+        first_gene_loc = None
+        last_gene_loc = None
 
         for gene in genes:
             gene_loc = gene.location_on(assembly)
 
-            if last_gene_loc is not None:
+            # if this is the first gene, track the number of bases from the start of the molecule here
+            if first_gene_loc is None:
+                total_intergenic_space_count += 1
+                intergenic_distance = gene_loc.fmin
+                total_intergenic_space_residues += intergenic_distance
+                intergenic_distances.append(intergenic_distance)
+                first_gene_loc = gene_loc
+
+            if previous_gene_loc is not None:
                 ## skip this gene if it overlaps the previous
-                if gene_loc.fmin < last_gene_loc.fmax:
-                    if gene_loc.fmax > last_gene_loc.fmax:
-                        last_gene_loc = gene_loc
+                if gene_loc.fmin < previous_gene_loc.fmax:
+                    if gene_loc.fmax > previous_gene_loc.fmax:
+                        previous_gene_loc = gene_loc
 
                 else:
                     total_intergenic_space_count += 1
-                    intergenic_distance = gene_loc.fmin - last_gene_loc.fmax
+                    intergenic_distance = gene_loc.fmin - previous_gene_loc.fmax
                     total_intergenic_space_residues += intergenic_distance
                     intergenic_distances.append(intergenic_distance)
                     
@@ -128,7 +138,14 @@ def main():
                     intron_sizes.append(intron_size)
                     total_intron_residues += intron_size
                 
-            last_gene_loc = gene_loc
+            previous_gene_loc = gene_loc
+            last_gene_loc = previous_gene_loc
+        
+        if last_gene_loc is not None:
+            total_intergenic_space_count += 1
+            intergenic_distance = assembly.length - last_gene_loc.fmax
+            total_intergenic_space_residues += intergenic_distance
+            intergenic_distances.append(intergenic_distance)
 
     if total_intergenic_space_count == 0:
         avg_intergenic_space_dist = None
