@@ -36,7 +36,7 @@ B<--help,-h>
 Useful for analyzing sequence bias by different feature types, this script will
 export a tab delimited report of each feature type found in a GFF file and some
 statistics on each.  (see OUTPUT section below).  A few other types are also
-calculated that aren't defined in the file, such as intron and telomere.
+calculated that aren't defined in the file, such as introns.
 
 =head1  INPUT
 
@@ -53,7 +53,6 @@ Example output:
     mRNA	2098384	749699	35.73
     polypeptide	2051944	738571	35.99
     intron	742678	192378	25.90
-    telomere	6226	1882	30.23
     rRNA	4146	1989	47.97
     tRNA	1114	664	59.61
 
@@ -164,6 +163,8 @@ print "## feature_type\tsummed_length\tGC_count\tGC_percent\n";
 
 ## print them out, sorted by most prevalent
 for my $type (sort {$features{$b}{length} <=> $features{$a}{length}} keys %features) {
+    next if $type eq 'telomere';
+
     print "$type\t$features{$type}{length}\t$features{$type}{gc_count}\t" .
           sprintf("%.2f", ( ($features{$type}{gc_count}/$features{$type}{length}) * 100)) . "\n";
 }

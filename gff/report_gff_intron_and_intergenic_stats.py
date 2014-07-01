@@ -31,6 +31,20 @@ def main():
     the distribution of intergenic region sizes and the other the intron lengths.  Because these
     can often have long tails, you can limit both the Y- and X-axes values with the --ylimit and
     --xlimit options, respectively.
+
+    Definitions:
+
+    Intergenic space was a little ambiguous to me as I started writing this.  Does one count the space from
+    the beginning of the contig until the first gene, or only between them?  What about short contigs which
+    have no annotated genes at all?  From the Sequence Ontology:
+
+    SO:0000605: A region containing or overlapping no genes that is bounded on either side by a gene, or
+    bounded by a gene and the end of the chromosome.
+
+    To my reading, this includes contig ends but not gene-less contigs.  To that end, I include the
+    former in intergenic space reporting but include the latter as a separate statistic.
+
+    Author: Joshua Orvis (jorvis AT gmail)
     '''
     parser = argparse.ArgumentParser( description='Reports statistics of reference gene coverage and extension by aligned RNA-seq transcript data.')
 
@@ -54,6 +68,9 @@ def main():
     total_intergenic_space_residues = 0
     intergenic_distances = list()
 
+    total_contig_residues = 0
+    empty_contig_residues = 0
+
     total_intron_count = 0
     total_intron_residues = 0
     intron_sizes = list()
@@ -61,26 +78,46 @@ def main():
     ############################
     ## Calculation section
     ############################
-    
+
     for asm_id in assemblies:
         #print("DEBUG: processing assembly: {0}".format(asm_id))
         assembly = assemblies[asm_id]
         genes = sorted(assembly.genes())
         total_gene_count += len(genes)
+        previous_gene_loc = None
+
+        # we should have a length here
+        if assembly.length is None or assembly.length == 0:
+            raise Exception("ERROR: Detected assembly with undefined or 0 length: {0}".format(assembly.id))
+
+        if total_gene_count == 0:
+            empty_contig_residues += assembly.length
+            continue
+
+        total_contig_residues += assembly.length
+        first_gene_loc = None
         last_gene_loc = None
 
         for gene in genes:
             gene_loc = gene.location_on(assembly)
 
-            if last_gene_loc is not None:
+            # if this is the first gene, track the number of bases from the start of the molecule here
+            if first_gene_loc is None:
+                total_intergenic_space_count += 1
+                intergenic_distance = gene_loc.fmin
+                total_intergenic_space_residues += intergenic_distance
+                intergenic_distances.append(intergenic_distance)
+                first_gene_loc = gene_loc
+
+            if previous_gene_loc is not None:
                 ## skip this gene if it overlaps the previous
-                if gene_loc.fmin < last_gene_loc.fmax:
-                    if gene_loc.fmax > last_gene_loc.fmax:
-                        last_gene_loc = gene_loc
+                if gene_loc.fmin < previous_gene_loc.fmax:
+                    if gene_loc.fmax > previous_gene_loc.fmax:
+                        previous_gene_loc = gene_loc
 
                 else:
                     total_intergenic_space_count += 1
-                    intergenic_distance = gene_loc.fmin - last_gene_loc.fmax
+                    intergenic_distance = gene_loc.fmin - previous_gene_loc.fmax
                     total_intergenic_space_residues += intergenic_distance
                     intergenic_distances.append(intergenic_distance)
                     
@@ -101,7 +138,14 @@ def main():
                     intron_sizes.append(intron_size)
                     total_intron_residues += intron_size
                 
-            last_gene_loc = gene_loc
+            previous_gene_loc = gene_loc
+            last_gene_loc = previous_gene_loc
+        
+        if last_gene_loc is not None:
+            total_intergenic_space_count += 1
+            intergenic_distance = assembly.length - last_gene_loc.fmax
+            total_intergenic_space_residues += intergenic_distance
+            intergenic_distances.append(intergenic_distance)
 
     if total_intergenic_space_count == 0:
         avg_intergenic_space_dist = None
@@ -122,6 +166,9 @@ def main():
 
     print("\nMolecule count: {0}".format(total_molecule_count))
     print("Gene count: {0}".format(total_gene_count) )
+
+    print("\nTotal molecule bases: {0} bp".format(total_contig_residues) )
+    print("Empty molecule bases: {0} bp".format(empty_contig_residues) )
 
     if total_intergenic_space_count > 0:
         print("Intergenic space count: {0}".format(total_intergenic_space_count) )

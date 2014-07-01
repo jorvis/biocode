@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
 """
 ========
@@ -289,7 +289,9 @@ def process_files(args):
     p_cd= []
     chr = []
 
-
+    true_pred_file = args.output_dir + '/true_predicted_genes.txt'
+    true_file = open(true_pred_file,'w')
+    true_file.write("Known\tPredicted\n")
     
     for asm_id in assemblies_1:                                                                                     ## Iterate through each chromosome from the known ref annotation        
         assembly_1 = assemblies_1[asm_id]
@@ -440,8 +442,9 @@ def process_files(args):
                     
                     ex_union = ex_mrna1.union(ex_mrna2)
                     if (len(ex_union) ==  len(ex_mrna1) and len(ex_union) == len(ex_mrna2)) :
-                    	gene_true.add(cord_g)
-                    	break
+                        gene_true.add(cord_g)
+                        true_file.write(gene_1.id+"\t"+gene_2.id+"\n")
+                        break
           
     for asm_id in assemblies_2:                                                  ## Iterate through each chromosome from the predicted annotation
         if asm_id not in chr :
@@ -594,8 +597,10 @@ def process_files(args):
 
 
     #Clean up
-    cmd = "rm " + args.output_dir + "/*.bed"
-    os.system(cmd)
+    delete_file = ['exon_1.bed','exon_2.bed','exon_1_merged.bed','exon_2_merged.bed','exon_1_2_intersect.bed']
+    for f in delete_file :
+        cmd = "rm " + args.output_dir + "/" + f
+        os.system(cmd)
 
 
 
