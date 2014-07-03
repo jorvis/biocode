@@ -1,7 +1,7 @@
 LOCUS       {{ locus }}     {{ molecule_size }} bp    {{ molecule_type }}             {{ division }}       {{ modification_date }}
 DEFINITION  {{ definition }}
 ACCESSION   {{ accession }}
-VERSION     {{ version }}  GI:{{ gi }}
+VERSION     {{ version }}
 KEYWORDS    .
 SOURCE      {{ source }}
   ORGANISM  {{ organism }}

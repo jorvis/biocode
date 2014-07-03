@@ -77,7 +77,7 @@ def main():
 
         context = { 'locus':locus_id, 'molecule_size':assembly.length, 'molecule_type':args.molecule_type,
                     'division':args.genbank_division, 'modification_date':args.modification_date,
-                    'accession':'.', 'version':'.', 'gi':'.',
+                    'accession':'.', 'version':'.', 
                     'source':args.source, 'definition':args.definition, 'organism':args.organism,
                     'lineage':lineage
         }
