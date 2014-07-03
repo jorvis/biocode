@@ -38,6 +38,13 @@ BTAB from nap has these columns:
 18	total score	260
 
 
+OUTPUT general considerations
+
+One annoyance of AAT is that the default output contains the full FASTA header for each input
+sequence rather than just the ID portion of it.  This script strips everything out of the ID
+column after the first whitespace.
+
+
 OUTPUT --export_mode=model (the default)
 
 The output will look like:
@@ -66,6 +73,7 @@ uses the same type where each segment of the aligment shares the same ID.  The o
 a parent feature (still a nucleotide_to_protein_match) but uses subfeature 'match_part' rows to model
 each segment of the match.  These each of unique IDs.
 
+EXAMPLE HERE
 
 """
 
@@ -104,6 +112,9 @@ def main():
     for line in open(args.input_file, 'r'):
         cols = line.split("\t")
         chain_num = int(cols[13]);
+
+        # remove everything after the first whitespace
+        cols[0] = cols[0].split()[0]
         
         segment = { 'contig_id':cols[0], 'contig_start':int(cols[6]), 'contig_end':int(cols[7]), \
                     'hit_id':cols[5], 'hit_start':int(cols[8]), 'hit_end':int(cols[9]), \
