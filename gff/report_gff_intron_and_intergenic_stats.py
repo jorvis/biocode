@@ -3,11 +3,12 @@
 import argparse
 import biothings
 import biocodegff
+import biocodeutils
 
 def main():
     '''
     This script reports statistics on the areas of a genome where features aren't - introns and
-    intergenic space.  Pass a valid GFF3 file and get a report like this:
+    intergenic space.  Pass a valid GFF3 file (along with FASTA data) and get a report like this:
 
     Molecule count: 9
 
@@ -32,8 +33,11 @@ def main():
     can often have long tails, you can limit both the Y- and X-axes values with the --ylimit and
     --xlimit options, respectively.
 
-    Definitions:
+    FASTA:
+    If your FASTA isn't embedded at the end of your GFF3 file after a ##FASTA directive you'll need
+    to specify the --fasta option in this script and pass it as a separate file.
 
+    Definitions:
     Intergenic space was a little ambiguous to me as I started writing this.  Does one count the space from
     the beginning of the contig until the first gene, or only between them?  What about short contigs which
     have no annotated genes at all?  From the Sequence Ontology:
@@ -53,9 +57,17 @@ def main():
     parser.add_argument('-g', '--histogram', type=str, required=False, help='Optional path to a histogram of intron/intergenic space size distribution to be created (PNG)' )
     parser.add_argument('-x', '--xlimit', type=int, required=False, help='Use this if you want to limit the X-axis of the histogram (feature length)' )
     parser.add_argument('-y', '--ylimit', type=int, required=False, help='Use this if you want to limit the Y-axis of the histogram (feature count)' )
+    parser.add_argument('-f', '--fasta', type=str, required=False, help='Required if you don\'t have GFF3 with embedded FASTA')
     args = parser.parse_args()
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_gff3 )
+
+    if args.fasta is not None:
+        seqs = biocodeutils.fasta_dict_from_file( args.fasta )
+        for seq_id in seqs:
+            if seq_id in assemblies:
+                assemblies[seq_id].residues = seqs[seq_id]['s']
+                assemblies[seq_id].length = len(assemblies[seq_id].residues)
 
     ## things to keep stats on and report
     total_molecule_count = len(assemblies)
