@@ -116,9 +116,9 @@ foreach my $line (<$ifh>){
 		print "$contig\ttRNAScan-SE\texon\t$start\t$stop\t$score\t+\t.\tID=$target\_$i\_exon;Parent=$target\_$i\_tRNA\n";
 		$i++;
 	}else{
-		print "$contig\ttRNAScan-SE\tgene\t$start\t$stop\t$score\t-\t.\tID=$target\_$i\n";
-                print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t$score\t-\t.\tID=$target\_$i\_tRNA;Parent=$target\_$i\n";
-                print "$contig\ttRNAScan-SE\texon\t$start\t$stop\t$score\t-\t.\tID=$target\_$i\_exon;Parent=$target\_$i\_tRNA\n";
+		print "$contig\ttRNAScan-SE\tgene\t$stop\t$start\t$score\t-\t.\tID=$target\_$i\n";
+                print "$contig\ttRNAScan-SE\ttRNA\t$stop\t$start\t$score\t-\t.\tID=$target\_$i\_tRNA;Parent=$target\_$i\n";
+                print "$contig\ttRNAScan-SE\texon\t$stop\t$start\t$score\t-\t.\tID=$target\_$i\_exon;Parent=$target\_$i\_tRNA\n";
 		$i++;
 	}
 }
