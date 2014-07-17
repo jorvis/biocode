@@ -240,6 +240,10 @@ def get_gff3_features(gff3_file, assemblies=None):
         parent_id = atts.get('Parent')
         parent_feat = None
 
+        # sanity check
+        if rfmin > rfmax:
+            raise Exception("ERROR: Coordinates in GFF for feature id {0} appear to be reversed and violate GFF3 specification: {1} > {2}".format(feat_id, cols[3], cols[4]))
+
         if 'locus_tag' in atts:
             locus_tag = atts['locus_tag']
         else:
