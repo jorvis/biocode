@@ -159,12 +159,14 @@ def print_biogene( gene=None, fh=None, on=None ):
             if annot.product_name is not None:
                 fh.write("                     /product=\"{0}\"\n".format(annot.product_name))
 
+            if len(annot.ec_numbers) > 0:
+                for ec_num in annot.ec_numbers:
+                    fh.write("                     /EC_number=\"{0}\"\n".format(ec_num.number))
+
         cds_residues = mRNA.get_CDS_residues()
         polypeptide_residues = biocodeutils.translate(cds_residues)
 
         if len(polypeptide_residues) > 0:
-            #fh.write("                     /TRANSLATION=\"{0}\"\n".format(polypeptide_residues))
-            
             # This is the easiest case first, where no wrapping is needed.
             if len(polypeptide_residues) < MAX_FTABLE_CONTENT_WIDTH - 15:
                 fh.write("                     /translation=\"{0}\"\n".format(polypeptide_residues))
