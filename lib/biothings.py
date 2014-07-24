@@ -542,12 +542,15 @@ class Gene( LocatableThing ):
             raise Exception("ERROR: add_RNA() method called for unrecognized type: {0}".format(rna.__class__.__name__))
 
     def add_mRNA(self, rna):
+        rna.parent = self
         self.children['mRNA'].append(rna)
 
     def add_rRNA(self, rna):
+        rna.parent = self
         self.children['rRNA'].append(rna)
 
     def add_tRNA(self, rna):
+        rna.parent = self
         self.children['tRNA'].append(rna)
 
     def mRNA_count(self):
@@ -559,6 +562,10 @@ class Gene( LocatableThing ):
     def RNAs(self):
         return self.children['mRNA'] + self.children['tRNA'] + self.children['rRNA']
 
+    def remove_mRNA(self, rna):
+        if rna in self.children['mRNA']:
+            self.children['mRNA'].remove(rna)
+        
     def shares_exon_structure_with( self, thing=None, stop_tolerant=False ):
         """
         This checks if two genes have only one mRNA and, if so, compares their internal
