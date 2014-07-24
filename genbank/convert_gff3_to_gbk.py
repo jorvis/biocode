@@ -15,6 +15,9 @@ https://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
 --genbank_division:
     http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html#GenBankDivisionB
 
+MAJOR assumptions:
+- Functional annotation is attached to a polypeptide feature
+
 """
 
 import argparse
