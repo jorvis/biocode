@@ -337,6 +337,20 @@ def parse_annotation_from_column_9(col9):
     if 'product_name' in atts:
         annot.product_name = atts['product_name']
 
+    if 'Dbxref' in atts:
+        ec_nums = list()
+        
+        if isinstance(atts['Dbxref'], str) and atts['Dbxref'].startswith("EC"):
+            ec_nums.append(atts['Dbxref'])
+        else:
+            for dbxref in atts['Dbxref']:
+                if dbxref.startswith("EC"):
+                    ec_nums.append(dbxref)
+
+        for ec_num in ec_nums:
+            ec_annot = bioannotation.ECAnnotation(number=ec_num)
+            annot.add_ec_number(ec_annot)
+        
     return annot
 
 def parse_gff3_by_relationship( gff3_file ):
