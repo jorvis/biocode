@@ -163,6 +163,10 @@ def print_biogene( gene=None, fh=None, on=None ):
                 for ec_num in annot.ec_numbers:
                     fh.write("                     /EC_number=\"{0}\"\n".format(ec_num.number))
 
+            if len(annot.go_annotations) > 0:
+                for go_annot in annot.go_annotations:
+                    fh.write("                     /db_xref=\"GO:{0}\"\n".format(go_annot.go_id))
+
         cds_residues = mRNA.get_CDS_residues()
         polypeptide_residues = biocodeutils.translate(cds_residues)
 

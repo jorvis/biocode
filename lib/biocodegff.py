@@ -350,6 +350,22 @@ def parse_annotation_from_column_9(col9):
         for ec_num in ec_nums:
             ec_annot = bioannotation.ECAnnotation(number=ec_num)
             annot.add_ec_number(ec_annot)
+    
+    if 'Ontology_term' in atts:
+        ont_terms = list()
+
+        if isinstance(atts['Ontology_term'], str) and atts['Ontology_term'].startswith("GO"):
+            ont_terms.append(atts['Ontology_term'])
+        else:
+            for term in atts['Ontology_term']:
+                if term.startswith("GO"):
+                    ont_terms.append(term)
+        
+        for go_id in ont_terms:
+            go_annot = bioannotation.GOAnnotation(go_id=go_id)
+            annot.add_go_annotation(go_annot)
+
+        
         
     return annot
 
