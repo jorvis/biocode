@@ -70,6 +70,7 @@ my $results = GetOptions (\%options,
                           'output|o=s',
                           'fasta|f=s',
                           'type|t=s',
+                          'use_locus_tags!',
                           'log|l=s',
                           'help|h') || pod2usage();
 
@@ -91,7 +92,6 @@ if (defined $options{log}) {
 #   $h{$mol_id}{$mRNA_id}, [ { min => N, max => N, strand => ?, phase => N } ];
 my %coords = ();
 
-
 my %molecules = ();
 
 open(my $gffin_fh, $options{gff}) || die "failed to open input gff file: $options{gff}: $!";
@@ -100,6 +100,10 @@ open(my $fastaout_fh, ">$options{output}") || die "failed to create FASTA output
 my $in_fasta = 0;
 my $current_seq_id;
 my @current_seq_lines = ();
+
+my %mRNA_locus_tags = ();
+
+my %locus_lookup = ();
 
 while ( my $line = <$gffin_fh> ) {
     chomp $line; 
@@ -139,6 +143,26 @@ while ( my $line = <$gffin_fh> ) {
     
         ## check for Parent definitions with others after 
         my $parent;
+        my $locus_tag;
+        my $feat_id;
+        
+
+        if ( $cols[2] eq 'mRNA') {
+            if ($options{use_locus_tags}) {
+                if ( $cols[8] =~ /locus_tag\=(.+?)\;/ ) {
+                    $locus_tag = $1;
+                } elsif ( $cols[8] =~ /locus_tag\=(.+)/ ) {
+                    $locus_tag = $1;
+                } else {
+                    die "Failed to find locus tag on mRNA feature line: $line";
+                }
+
+                $cols[8] =~ /ID\=(.+?)\;/ || die "Failed to find ID attribute on the following mRNA line: $line";
+                $feat_id = $1;
+
+                $locus_lookup{$feat_id} = $locus_tag;
+            }
+        }
 
         if ( $cols[2] eq 'CDS' ) {
 
@@ -225,12 +249,18 @@ for my $mol_id ( keys %coords ) {
             $complete_cds = reverse $complete_cds;
             $complete_cds =~ tr/ATGC/TACG/;
         }
+
+        my $display_id = $mrna_id;
+
+        if ($options{use_locus_tags}) {
+            $display_id = $locus_lookup{$mrna_id};
+        }
         
         if ($options{type} eq 'protein' ) {
             my $protein_seq = translate_sequence( $complete_cds, $mrna_id );
-            print $fastaout_fh ">$mrna_id\n" . characters_per_line($protein_seq,60) . "\n";
+            print $fastaout_fh ">$display_id\n" . characters_per_line($protein_seq,60) . "\n";
         } else {
-            print $fastaout_fh ">$mrna_id\n" . characters_per_line($complete_cds,60) . "\n";
+            print $fastaout_fh ">$display_id\n" . characters_per_line($complete_cds,60) . "\n";
         }
     }
 }
