@@ -408,15 +408,17 @@ def process_files(args):
             
             if (cord_g in gene_true) :                                          ## To prevent duplication, check if the feature already exists in the set of truly predicted gene.
                 continue
-            ex_mrna1 = set()
+            
             ex_mrna2 = set()
-			
+            			
         
             for gene_1 in sorted(genes_1) :
+                ex_mrna1 = set()
                 gene_1_loc = gene_1.location_on(assembly_1)
                 if (gene_1_loc.strand != gene_2_loc.strand) :
                     continue
                 if (gene_2.overlaps_with(gene_1)) :
+                    
                     for mrna_2 in sorted(gene_2.mRNAs()) :
                         if (args.feature == "Exon") :
                             feat_2 = mrna_2.exons()
