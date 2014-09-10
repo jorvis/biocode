@@ -82,7 +82,7 @@ def main():
                     transcripts_to_correct[last_transcript_id] = 1
                 
                 ## report counts
-                #print("{0}\t1-T:{1}\t1-F:{2}\t2-T:{3}\t2-F:{4}".format(last_transcript_id, counts['1']['T'], counts['1']['F'], counts['2']['T'], counts['2']['F']))
+                print("{0}\t1-T:{1}\t1-F:{2}\t2-T:{3}\t2-F:{4}".format(last_transcript_id, counts['1']['T'], counts['1']['F'], counts['2']['T'], counts['2']['F']))
 
             ## reset
             last_transcript_id = transcript_id
