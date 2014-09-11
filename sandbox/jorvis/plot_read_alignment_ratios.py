@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+
+"""
+
+./plot_read_alignment_ratios.py -i /usr/local/projects/aplysia/A1_CNS_reorientation.log -o /usr/local/projects/aplysia/A1_CNS_reorientation.png
+Count of ratios < 0.05: 47414
+Count of ratios > 0.95: 53006
+
+./plot_read_alignment_ratios.py -i /usr/local/projects/aplysia/A3_digestive_reorientation.log -o /usr/local/projects/aplysia/A3_digestive_reorientation.png
+Count of ratios < 0.05: 44087
+Count of ratios > 0.95: 49084
+
+./plot_read_alignment_ratios.py -i /usr/local/projects/aplysia/A7_heart_reorientation.log -o /usr/local/projects/aplysia/A7_heart_reorientation.png
+Count of ratios < 0.05: 45995
+Count of ratios > 0.95: 52188
+
+./plot_read_alignment_ratios.py -i /usr/local/projects/aplysia/A10_gills_reorientation.log -o /usr/local/projects/aplysia/A10_gills_reorientation.png
+Count of ratios < 0.05: 49941
+Count of ratios > 0.95: 55683
+
+"""
+
+import argparse
+import os
+import re
+import biocodeutils
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('Agg')
+
+
+
+def main():
+    parser = argparse.ArgumentParser( description='Put a description of your script here' )
+
+    ## output file to be written
+    parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
+    parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
+    parser.add_argument('-f', '--fasta_file', type=str, required=True, help='Path to an input FASTA file' )
+    args = parser.parse_args()
+
+    ratios = list()
+    
+    RATIO_MIN = 0.05
+    RATIO_MAX = 0.95
+    LENGTH_CUTOFF = 350
+    ratio_min_count = 0
+    ratio_bet_count = 0
+    ratio_max_count = 0
+
+    fasta = biocodeutils.fasta_dict_from_file( args.fasta_file )
+
+    for line in open(args.input_file):
+        # lines are like: comp0_c0_seq1   1-T:6   1-F:0   2-T:0   2-F:5
+        m = re.search('(.+)\t1-T:(\d+)\t1-F:(\d+)\t2-T:(\d+)\t2-F:(\d+)', line)
+        if m:
+            seq_id = m.group(1)
+
+            if seq_id in fasta:
+                if len(fasta[seq_id]['s']) < LENGTH_CUTOFF:
+                    continue
+            else:
+                raise Exception("Expected but filed to find seq ID {0} in FASTA file".format(seq_id))
+            
+            f_reads_correctly_mapped = int(m.group(2))
+            f_reads_incorrectly_mapped = int(m.group(3))
+            r_reads_correctly_mapped = int(m.group(5))
+            r_reads_incorrectly_mapped = int(m.group(4))
+            f_read_count = f_reads_correctly_mapped + f_reads_incorrectly_mapped
+
+            if f_read_count > 0:
+                correct_ratio = f_reads_correctly_mapped / f_read_count
+                ratios.append(correct_ratio)
+
+                if correct_ratio < RATIO_MIN:
+                    ratio_min_count += 1
+                elif correct_ratio > RATIO_MAX:
+                    ratio_max_count += 1
+                else:
+                    ratio_bet_count += 1
+
+                #print("LOG: Fcorrect:{0} Fwrong:{1} Ftotal:{2} ratio:{3}".format(f_reads_correctly_mapped, f_reads_incorrectly_mapped, f_read_count, correct_ratio))
+
+    plt.hist(ratios, bins=100)
+    plt.xlabel("Correct read orientation alignment ratio")
+    plt.ylabel("Log of transcript count")
+    plt.grid(True)
+    #plt.ylim(0,5000)
+    plt.gca().set_yscale("log")
+    plt.savefig(args.output_file)
+
+    print("Count of ratios < {0}: {1}".format(RATIO_MIN, ratio_min_count))
+    print("Count where {0} > ratio < {1}: {2}".format(RATIO_MIN, RATIO_MAX, ratio_bet_count))
+    print("Count of ratios > {0}: {1}".format(RATIO_MAX, ratio_max_count))
+
+    
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
+
