@@ -14,6 +14,9 @@ from collections import defaultdict
 ## constants
 DEFAULT_PRODUCT_NAME = "hypothetical protein"
 
+## example invocation:
+# parse_ergatis_euk_functional_pipeline.py -f HUZ239124.metagenemark.nt.faa -m hmmpfam3.htab.list -bs ncbi-blastp.btab.list --hmm_db /usr/local/projects/jorvis/dbs/coding_hmm_lib.sqlite3 -u /usr/local/projects/jorvis/dbs/uniprot_sprot.sqlite3 -a gff3 -s HUZ239124.metagenemark.nt.gff3 -e 1e-10 -o HUZ239124.metagenemark.nt.annotated.gff3 -g HUZ239124.fas
+
 next_ids = defaultdict(int)
 
 def main():
