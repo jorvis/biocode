@@ -514,11 +514,12 @@ class Gene( LocatableThing ):
     elements necessary to encode a functional transcript. A gene may include regulatory
     regions, transcribed regions and/or other functional sequence regions."
     '''
-    def __init__( self, id=None, locus_tag=None, locations=None, children=None ):
+    def __init__( self, id=None, locus_tag=None, locations=None, children=None, residues=None ):
         super().__init__(locations)
         self.id = id
         self.locus_tag = locus_tag
         self.children = children
+        self.residues = residues
 
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'mRNA')
@@ -552,6 +553,27 @@ class Gene( LocatableThing ):
     def add_tRNA(self, rna):
         rna.parent = self
         self.children['tRNA'].append(rna)
+
+    def get_residues(self):
+        if len(self.locations) == 0:
+            raise Exception("ERROR: gene.get_residues() requested but gene {0} isn't located on anything.".format(self.id))
+        elif len(self.locations) > 1:
+            raise Exception("ERROR: gene {0} is located on multiple molecules.  Can't automatically extract the residues.".format(self.id))
+
+        loc = self.location()
+        mol = loc.on
+
+        # make sure this thing has its residues populated
+        if len(mol.residues) <= 0:
+            raise Exception("ERROR: gene.get_residues() requested but its molecule {0} has no stored residues".format(mol.id))
+
+        self.residues = mol.residues[loc.fmin:loc.fmax]
+        self.length = len(self.residues)
+
+        if loc.strand == -1:
+            self.residues = biocodeutils.reverse_complement(self.residues)
+
+        return self.residues
 
     def mRNA_count(self):
         return len(self.mRNAs())
