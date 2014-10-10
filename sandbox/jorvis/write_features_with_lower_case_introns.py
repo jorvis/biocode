@@ -37,7 +37,7 @@ def main():
         assembly = assemblies[assembly_id]
         
         for gene in assembly.genes():
-            gene_seq = gene.get_residues()
+            gene_seq = gene.get_residues().upper()
             gene_loc = gene.location_on(assembly)
             #print("INFO: Got gene with length {0}".format(len(gene_seq)))
             
