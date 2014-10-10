@@ -40,6 +40,9 @@ def main():
             gene_seq = gene.get_residues().upper()
             gene_loc = gene.location_on(assembly)
             #print("INFO: Got gene with length {0}".format(len(gene_seq)))
+
+            if len(gene.mRNAs()) > 1:
+                raise Exception("ERROR: script doesn't currently support multi-isoform genes, but found one: {0}".format(gene.id))
             
             for mRNA in gene.mRNAs():
                 introns = mRNA.introns( on=assembly )
