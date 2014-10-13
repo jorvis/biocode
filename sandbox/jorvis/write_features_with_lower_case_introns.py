@@ -3,33 +3,8 @@
 '''
 Author:  Joshua Orvis
 
-DEBUGGING:
-ChromosomeII_BmicrotiR1	IGS	gene	386	1316	.	-	.	ID=668964A84D72393D98D75CDE21350D8E;locus_tag=BBM_02g00005
-ChromosomeII_BmicrotiR1	IGS	mRNA	386	1316	.	-	.	ID=0B1EFA9216B66647BA4D71E5C7357CB5;Parent=668964A84D72393D98D75CDE21350D8E;locus_tag=BBM_02g00005
-ChromosomeII_BmicrotiR1	IGS	CDS	1127	1316	.	-	0	ID=8FA8F579C457ECDBC8EE19D9840BE201;Parent=0B1EFA9216B66647BA4D71E5C7357CB5
-ChromosomeII_BmicrotiR1	IGS	CDS	386	780	.	-	0	ID=8FA8F579C457ECDBC8EE19D9840BE201;Parent=0B1EFA9216B66647BA4D71E5C7357CB5
-ChromosomeII_BmicrotiR1	IGS	exon	386	780	.	-	.	ID=44CBC669F9D2F01A2570184F1FB3F95A;Parent=0B1EFA9216B66647BA4D71E5C7357CB5
-ChromosomeII_BmicrotiR1	IGS	exon	1127	1316	.	-	.	ID=FBB24EE033098AE83B751D9475B5C0D4;Parent=0B1EFA9216B66647BA4D71E5C7357CB5
-ChromosomeII_BmicrotiR1	IGS	polypeptide	386	1316	.	-	.	ID=0B1EFA9216B66647BA4D71E5C7357CB5;Parent=0B1EFA9216B66647BA4D71E5C7357CB5;product_name=hypothetical protein
-
-# wrong:
->668964A84D72393D98D75CDE21350D8E
-ATGTTATTATTTAAATCGATATTAATTCCTTCTTTTACATTCTTTTTAATGAGTGTATCA
-GCTTTTCCTGGTGATACAGATGGCGGTCCTAGTGGAAATGGTGGAGTTGGTAGACCTAGT
-GGAATTGGTAGAGCAGGTGTGCCTAATGGAAATGGTGTGGGTCCAGATGTTAATTCTACT
-ATAATATCTCGTATATTTCAGATAGGTTTAGAACGTATTGTTCTGTCCTTATTTGATATA
-TTAATGATGAAAAGAATAGTGCATGTCAGCCAAATATTGTAACTGGATATAGTTAGAAAT
-TTACGTTATTTAGGAGAGAAGGTTGATAAGTTAACAAAGTTGCCAAACCAGTTACATGAA
-AGTGCTAAAAAATATAATGATGGTAATAGTTCTAAttacaattattttgatgagctttct
-aacattattgtcaaatcttttgcaatagttgatgaaatgcacggagggcttatgatacat
-tgaggaatgattatgatggtatacatgatttagaatacggggataagaagattaaggcga
-gtttatttgtgagaatttgggagtgtatattgtcattattgacattgccatcgaggcctg
-tcctaatattgcggagctcaataatgtcaaggaatcattcagaaaatacaaatctaatgt
-tgatgacttgaagcgaaagatctataataaggatgggtattatagaagtcattttgggga
-catggtcagggagatgaatagTGCAGTTAGTGAGTTCAATGACACTTTTATTGATCTTTT
-GGTTACCAGCTTAGAAACTCCAGATGCCAAATTTGACGAAAATATTATTTCAAGTTTCAA
-ATCATTTATTTCAACAATCTCCAAAGTTTCTAATTCAATAATTCTTGGACTAATGACACT
-AATAGTCTTTGTTTATTTGATATTGATTTAA
+If the GFF has gene.locus_tag annotation that will be used for the FASTA headers, else it will
+be the ID attributes.
 
 '''
 
@@ -69,6 +44,11 @@ def main():
             # for debugging only
             #if gene.id != '668964A84D72393D98D75CDE21350D8E':
                 #continue
+
+            if gene.locus_tag is None:
+                gene_label = gene.id
+            else:
+                gene_label = gene.locus_tag
             
             gene_seq = gene.get_residues().upper()
             gene_loc = gene.location_on(assembly)
@@ -103,7 +83,7 @@ def main():
                 gene_seq = "".join(reversed(gene_seq))
                     
             #print("INFO: Got gene with length {0} after modification".format(len(gene_seq)))
-            ofh.write(">{0}\n{1}\n".format(gene.id, biocodeutils.wrapped_fasta(gene_seq)))
+            ofh.write(">{0}\n{1}\n".format(gene_label, biocodeutils.wrapped_fasta(gene_seq)))
 
 
 
