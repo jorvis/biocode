@@ -9,6 +9,7 @@ there's no real 'official' specification that I'm aware of, isn't perfect.
 
 Here's what it does check for:
 
+- ERROR: Entry with 0-length sequence
 - ERROR: No > symbols embedded in sequence residues (suggests merged records)
 - ERROR: Nonzero-length identifier after > symbol until first whitespace
 - ERROR: Multiple records within an individual file with same identifier
@@ -75,6 +76,7 @@ def main():
         line_number = 0
         ids_found = list()
         long_line_count = 0
+        current_seq_length = None
         
         for line in open(ifile):
             line = line.rstrip()
@@ -82,7 +84,13 @@ def main():
             
             if line.startswith('>'):
                 total_records += 1
-                
+
+                # found a new sequence entry - make sure the last one (if there was one) had residues
+                if current_seq_length == 0:
+                    fout.write("ERROR: Entry without residues found just before line {0} of {1}\n".format(line_number, ifile))
+                    error_count += 1
+
+                current_seq_length = 0
                 m = re.match(">(\S+)", line)
                 if m:
                     if m.group(1) in ids_found:
@@ -102,6 +110,7 @@ def main():
             else:
                 # residue line
                 total_residues += len(line)
+                current_seq_length += len(line)
 
                 if '>' in line:
                     fout.write("ERROR: > character embedded in sequence residues on line {0} of {1}\n".format(line_number, ifile))
@@ -110,6 +119,10 @@ def main():
                 # not practical to print warnings for each line here, so we'll just do it once per file
                 if len(line) > RESIDUE_LINE_LENGTH_LIMIT:
                     long_line_count += 1
+
+        if current_seq_length == 0:
+            fout.write("ERROR: Entry without residues found on line {0} of {1}\n".format(line_number, ifile))
+            error_count += 1
         
         if long_line_count > 0:
             fout.write("WARNING: {0} residue line(s) were detected longer than {1} in file {2}\n".format(long_line_count, RESIDUE_LINE_LENGTH_LIMIT, ifile))
