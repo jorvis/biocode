@@ -105,7 +105,7 @@ def main():
             if fasta_cov[id][i] > 0:
                 covered_bases += 1
 
-        print("{0}\t{1}\t{2}".format(id, len(fasta[id]['s']), covered_bases))
+        ofh.write("{0}\t{1}\t{2}\n".format(id, len(fasta[id]['s']), covered_bases))
 
 
 def parse_sam(cov, ev_file):
