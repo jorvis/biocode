@@ -19,6 +19,7 @@ Supported evidence types (type relies on matching the file extension):
    gff, gff3 - Such as a reference annotation to compare
    bed - Such as aligned probe locations
    sam - Such as RNA-Seq read alignments
+   pileup - As created by "samtools pileup"
 
 OUTPUT
 
@@ -57,7 +58,7 @@ def main():
     ####################################################
     ## Sanity checks
 
-    allowed_extensions = ['gff3', 'bed', 'sam']
+    allowed_extensions = ['bed', 'gff3', 'pileup', 'sam']
     for ev_file in args.evidence_files:
         valid_ext_found = False
         
@@ -92,7 +93,9 @@ def main():
     ## Now parse the evidence files
         
     for ev_file in args.evidence_files:
-        if ev_file.endswith('sam'):
+        if ev_file.endswith('pileup'):
+            parse_pileup(fasta_cov, ev_file)
+        elif ev_file.endswith('sam'):
             parse_sam(fasta_cov, ev_file)
         else:
             print("INFO: ignoring evidence file {0} because code to handle its file type isn't currently implemented".format(ev_file))
@@ -106,6 +109,15 @@ def main():
                 covered_bases += 1
 
         ofh.write("{0}\t{1}\t{2}\n".format(id, len(fasta[id]['s']), covered_bases))
+
+
+def parse_pileup(cov, ev_file):
+    for line in open(ev_file):
+        cols = line.split("\t")
+        
+        if len(cols) < 5: continue
+
+        cov[cols[0]][int(cols[1])] += int(cols[3])
 
 
 def parse_sam(cov, ev_file):
@@ -126,7 +138,7 @@ def parse_sam(cov, ev_file):
                 try:
                     cov[cols[2]][i] += 1
                 except IndexError:
-                    #print("ERROR: attempted to access position {0} of molecule {1}".format(i, cols[2]))
+                    print("WARNING: attempted to access position {0} of molecule {1}".format(i, cols[2]))
                     pass
                 except KeyError:
                     print("ERROR: Molecule ID {0} wasn't found on line {1}".format(cols[2], line_number))
