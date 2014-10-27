@@ -116,8 +116,9 @@ def parse_pileup(cov, ev_file):
         cols = line.split("\t")
         
         if len(cols) < 5: continue
+        pos = int(cols[1]) - 1
 
-        cov[cols[0]][int(cols[1])] += int(cols[3])
+        cov[cols[0]][pos] += int(cols[3])
 
 
 def parse_sam(cov, ev_file):
