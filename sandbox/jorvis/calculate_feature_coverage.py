@@ -18,7 +18,7 @@ Supported evidence types (type relies on matching the file extension):
 
    gff, gff3 - Such as a reference annotation to compare
    bed - Such as aligned probe locations
-   bam - Such as RNA-Seq read alignments
+   sam - Such as RNA-Seq read alignments
 
 OUTPUT
 
@@ -47,19 +47,26 @@ def main():
     ## parse the fasta
     fasta = biocodeutils.fasta_dict_from_file(args.fasta)
 
-    ## initialize the coverage array for each file (and do a sanity check so we don't waste the user's time)
-    cov = dict()  # structure here is like cov['ev_file'][pos:coverage]
-    allowed_extensions = ['gff3', 'bed', 'bam']
-    for ev_file in args.evidence_files:
-        
-        for ext in allowed_extensions:
-
     ## open the output file
     fout = None
     if args.output_file is None:
         fout = codecs.getwriter('utf8')(sys.stdout.buffer)
     else:
         fout = open(args.output_file, "w")
+
+    ####################################################
+    ## Sanity checks
+
+    allowed_extensions = ['gff3', 'bed', 'sam']
+    for ev_file in args.evidence_files:
+        valid_ext_found = False
+        
+        for ext in allowed_extensions:
+            if ev_file.endswith(ext):
+                valid_ext_found = True
+
+        if valid_ext_found == False:
+            raise Exception("ERROR: Evidence file passed with unsupported file extension: {0}.  Supported extensions are {1}".format(ev_file, allowed_extensions))
 
     ## The input file should be defined as $path:$feattype
     if ':' not in args.reference:
@@ -73,12 +80,59 @@ def main():
     else:
         raise Exception("ERROR: Expected input file (-i) to have a gff3 extension, got {0}".format(ref_file_parts[0]))
 
-    for ev_file in args.evidence_files:
-        if ev_file.endswith('bed'):
-            pass
-        else:
-            print("INFO: ignoring evidence file {0} because it doesn't have a recognized file extension")
+    ####################################################
+    ## Initialize the coverage arrays
+
+    fasta_cov = dict()
+    for seq_id in fasta:
+        # create a list of 0s the length of the molecule
+        fasta_cov[seq_id] = [0] * len(fasta[seq_id]['s'])
+
+    ####################################################
+    ## Now parse the evidence files
         
+    for ev_file in args.evidence_files:
+        if ev_file.endswith('sam'):
+            parse_sam(fasta_cov, ev_file)
+        else:
+            print("INFO: ignoring evidence file {0} because code to handle its file type isn't currently implemented".format(ev_file))
+        
+
+    for id in fasta_cov:
+        covered_bases = 0
+        
+        for i in fasta_cov[id]:
+            if fasta_cov[id][i] > 0:
+                covered_bases += 1
+
+        print("{0}\t{1}\t{2}".format(id, len(fasta[id]['s']), covered_bases))
+
+
+def parse_sam(cov, ev_file):
+    line_number = 1
+    
+    for line in open(ev_file):
+        cols = line.split("\t")
+        if len(cols) < 11: continue
+
+        cols[3] = int(cols[3])
+
+        #if cols[3] != 0 and cols[3] != '*':
+        # http://samtools.github.io/hts-specs/SAMv1.pdf
+        # https://wiki.python.org/moin/BitwiseOperators
+        #if int(cols[1]) & 4:
+        if cols[2] != '*':
+            for i in range(cols[3] - 1, cols[3] + len(cols[9]) - 1):
+                try:
+                    cov[cols[2]][i] += 1
+                except IndexError:
+                    #print("ERROR: attempted to access position {0} of molecule {1}".format(i, cols[2]))
+                    pass
+                except KeyError:
+                    print("ERROR: Molecule ID {0} wasn't found on line {1}".format(cols[2], line_number))
+
+        line_number += 1
+                    
 
 
 
