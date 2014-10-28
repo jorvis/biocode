@@ -23,6 +23,7 @@ MAJOR assumptions:
 import argparse
 import biocodegenbank
 import biocodegff
+import biocodeutils
 import os
 import sys
 
@@ -41,6 +42,7 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GFF3 file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to a Genbank flat file to be created. Supersedes --output_dir if both are specified.' )
     parser.add_argument('-od', '--output_dir', type=str, required=False, help='Path to an output directory. If this option is specified then each input assembly will be written to a separate GenBank output file, named with the assembly_id.' )
+    parser.add_argument('-g', '--genome_fasta', type=str, required=False, help='Optional.  You must specify this unless the FASTA sequences for the molecules are embedded in the GFF')
     parser.add_argument('-mt', '--molecule_type', type=str, required=False, default='DNA', help='Molecule type' )
     parser.add_argument('-gbd', '--genbank_division', type=str, required=False, default='.', help='GenBank Division (3-letter abbreviation)' )
     parser.add_argument('-md', '--modification_date', type=str, required=False, default='DD-MMM-YYYY', help='The modification date for header in format like 21-JUN-1999' )
@@ -70,6 +72,10 @@ def main():
             ofh = open(args.output_file, 'wt')
         else:
             sys.stderr.write("WARN: both -o/--output_file and -od/--output_dir were passed so the former will be ignored\n")
+
+    # deal with the FASTA file if the user passed one
+    if args.genome_fasta is not None:
+        process_assembly_fasta(assemblies, args.genome_fasta)
 
     for assembly_id in assemblies:
         locus_id = args.locus_id_prefix + assembly_id
@@ -112,6 +118,17 @@ def main():
     # there is only one output file
     if args.output_dir is None:
         ofh.close()
+
+def process_assembly_fasta(mols, fasta_file):
+    fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
+
+    for mol_id in mols:
+        # check if the FASTA file provides sequence for this
+        if mol_id in fasta_seqs:
+            mol = mols[mol_id]
+            mol.residues = fasta_seqs[mol_id]['s']
+            mol.length   = len(mol.residues)
+        
 
 if __name__ == '__main__':
     main()
