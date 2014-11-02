@@ -169,6 +169,30 @@ def fasta_dict_from_file( file ):
 
     return seqs
 
+
+def fasta_sizes_from_file(file):
+    """
+    Reads a file of FASTA entries and returns a dict where each key is a sequence ID and
+    the value is just the size of each sequence.  This is as almost as computationally
+    intensive as fasta_dict_from_file() but takes less memory and is appropriate when you
+    only care about the residue lengths.
+    """
+    seqs = dict()
+    current_id = None
+    
+    for line in open(file):
+        line = line.rstrip()
+        m = re.search('>(\S+)\s*(.*)', line)
+        if m:
+            ## new residue line matched, set the new seq ID
+            current_id = m.group(1)
+            seqs[current_id] = 0
+        else:
+            seqs[current_id] += len(line)
+
+    return seqs
+
+
 def add_assembly_fasta(mols, fasta_file):
     fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
 
