@@ -45,7 +45,12 @@ def main():
                 if mRNA.locus_tag is not None:
                     export_id = mRNA.locus_tag
 
-                ## get any annotation to add to the header here
+                ## Add the gene product name if there is one
+                for polypeptide in mRNA.polypeptides():
+                    if polypeptide.annotation is not None:
+                        if polypeptide.annotation.product_name is not None:
+                            export_header = polypeptide.annotation.product_name
+                            break
                 
                 fout.write(">{0}".format(export_id))
                 if export_header is not None:
