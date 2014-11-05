@@ -2,8 +2,16 @@
 
 """
 
-Put some general, high-level documentation here
+This utility reads an annotated GFF3 file and writes FASTA of different feature types,
+either the CDS or protein sequences (protein seqs are translated from the CDS).  In
+either case, the genomic FASTA must be available, either embedded at the end of the
+GFF3 or as a separate file (passed via -f).
 
+The exported IDs will be the ID attributes of the mRNA features unless these have
+locus_tag values in the 9th column.  Also, if the polypeptides associated with each
+mRNA have product_name values, that will also be written to the FASTA header.
+
+Author:  Joshua Orvis (jorvis AT gmail)
 """
 
 import argparse
