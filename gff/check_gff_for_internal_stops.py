@@ -39,7 +39,7 @@ def main():
 
     # deal with the FASTA file if the user passed one
     if args.genome_fasta is not None:
-        process_assembly_fasta(assemblies, args.genome_fasta)
+        biocodeutils.add_assembly_fasta(assemblies, args.genome_fasta)
 
     total_mRNAs = 0
     mRNAs_with_stops = 0
@@ -82,17 +82,6 @@ def main():
     print("\nTotal mRNAs found:{0}".format(total_mRNAs))
     print("mRNAs with embedded stops: {0}".format(mRNAs_with_stops))
 
-
-def process_assembly_fasta(mols, fasta_file):
-    fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
-
-    for mol_id in mols:
-        # check if the FASTA file provides sequence for this
-        if mol_id in fasta_seqs:
-            mol = mols[mol_id]
-            mol.residues = fasta_seqs[mol_id]['s']
-            mol.length   = len(mol.residues)
-        
 
 if __name__ == '__main__':
     main()
