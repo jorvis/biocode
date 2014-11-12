@@ -9,7 +9,7 @@ Note: This was written/tested using the file created by cegma named like 'output
 variant with 'local' in the file name.
 
 
-Example input:
+Example input (CEGMA 2.4):
     jcf7180000788954        cegma   First   113875  113877  -6.54   +       0       KOG0002.9
     jcf7180000788954        cegma   Exon    113875  113877  -6.54   +       .       KOG0002.9
     jcf7180000788954        cegma   Internal        113937  114040  36.65   +       0       KOG0002.9
@@ -21,6 +21,18 @@ Example input:
 
     jcf7180000788614        cegma   Single  100757  101674  133.99  +       0       KOG0003.5
     jcf7180000788614        cegma   Exon    100757  101674  133.99  +       .       KOG0003.5
+
+Example input (CEGMA 2.5):
+    Scaffold9	cegma	First	1282294	1282324	2.54	-	0	KOG0018.9
+    Scaffold9	cegma	Internal	1282135	1282228	42.86	-	2	KOG0018.9
+    Scaffold9	cegma	Internal	1280282	1282085	512.31	-	1	KOG0018.9
+    Scaffold9	cegma	Internal	1279142	1280233	308.01	-	0	KOG0018.9
+    Scaffold9	cegma	Terminal	1278352	1279071	304.09	-	0	KOG0018.9
+
+    or
+
+    Scaffold9	cegma	First	870770	871027	142.35	-	0	KOG0019.4
+    Scaffold9	cegma	Terminal	868869	870713	1029.84	-	0	KOG0019.4
 
 Example output:
 
@@ -51,7 +63,7 @@ import biothings
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Converts CEGMA GFF output to GFF3')
+    parser = argparse.ArgumentParser( description='Converts CEGMA GFF output to spec-legal GFF3')
 
     # output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to parse' )
@@ -71,9 +83,8 @@ def main():
     current_gene_fmax = None
     current_gene_strand = None
     
-    last_phase = None
-
     next_id_nums = {'gene':1, 'mRNA':1, 'CDS':1, 'exon':1}
+    exon_column_types = ['First', 'Internal', 'Terminal', 'Single']
 
     for line in open(args.input_file, 'r'):
         if line.startswith('#'):
@@ -119,23 +130,14 @@ def main():
             gene.add_mRNA(mRNA)
             current_mRNA = mRNA
 
-            last_phase = int(cols[7])
-            
-        # CEGMA is pretty annoying here in that it has two rows for all exonic features.  In the first
-        #  its type classifies them and the second is actually the 'Exon' with the same coordintes.
-        #  The biggest pain of it is that the phase is correct on the classifying feature, but omitted
-        #  from the Exon one.  So we track that and use the last one.
-        elif feat_type == 'Internal' or feat_type == 'Terminal':
-            last_phase = int(cols[7])
-            
-        elif feat_type == 'Exon':
+        # CEGMA versions < 2.5 had two rows for each exon.  We don't need to process both of them, so
+        #  we skip the Exon one because its phase information is incorrect.
+        if feat_type in exon_column_types:
             CDS_id = "cegma.CDS.{0}".format(next_id_nums['CDS'])
             next_id_nums['CDS'] += 1
             CDS = biothings.CDS( id=CDS_id, parent=current_mRNA )
-            CDS.locate_on( target=current_assembly, fmin=feat_fmin, fmax=feat_fmax, strand=cols[6], phase=last_phase )
+            CDS.locate_on( target=current_assembly, fmin=feat_fmin, fmax=feat_fmax, strand=cols[6], phase=cols[7] )
             current_mRNA.add_CDS(CDS)
-
-            #print("DEBUG: Added CDS {0}".format(CDS))
 
             exon_id = "cegma.exon.{0}".format(next_id_nums['exon'])
             next_id_nums['exon'] += 1
