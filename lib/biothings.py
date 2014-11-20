@@ -405,7 +405,6 @@ class Location:
         self.phase = 0 if phase is None else phase
 
 
-
 class Organism:
     '''
     This is a pretty high-level representation of an organism, and (currently) mostly serves as a
@@ -448,6 +447,9 @@ class Assembly( LocatableThing ):
         self.residues = residues
         self.children = children
 
+        if length is None and len(self.residues) > 0:
+            self.length = len(self.residues)
+
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'gene')
 
@@ -460,6 +462,60 @@ class Assembly( LocatableThing ):
         '''
         return self.children['gene']
 
+
+class AssemblySet():
+    '''
+    This is a convenience class for when operations need to be performed on a set of contigs/scaffolds
+    such as N50 calculation or writing to a FASTA file.
+    '''
+    def __init__( self, assemblies=None ):
+        self.assemblies = assemblies
+
+        if self.assemblies is None:
+            self.assemblies = list()
+
+    def add( self, assembly ):
+        self.assemblies.append( assembly )
+
+    def load_from_file(self, file):
+        seqs = biocodeutils.fasta_dict_from_file(file)
+        
+        for seq_id in seqs:
+            assembly = Assembly(id=seq_id, residues=seqs[seq_id]['s'])
+            self.add(assembly)
+
+    def N50( self ):
+        '''
+        N50 is a statistical measure of average length of a set of sequences. It is used widely in
+        genomics, especially in reference to contig or supercontig lengths within a draft assembly.
+
+        Given a set of sequences of varying lengths, the N50 length is defined as the length N for
+        which 50% of all bases in the sequences are in a sequence of length L < N. This can be found
+        mathematically as follows: Take a list L of positive integers. Create another list L' ,
+        which is identical to L, except that every element n in L has been replaced with n copies of
+        itself. Then the median of L' is the N50 of L. For example: If L = {2, 2, 2, 3, 3, 4, 8, 8},
+        then L' consists of six 2's, six 3's, four 4's, and sixteen 8's; the N50 of L is the median
+        of L' , which is 6.
+        
+        Source: http://www.broadinstitute.org/crd/wiki/index.php/N50
+        '''
+        current_len = 0
+        total_len = 0
+        lengths = list()
+
+        for assembly in self.assemblies:
+            total_len += assembly.length
+            lengths.append(assembly.length)
+
+        lengths = sorted(lengths)
+
+        count = 0
+        half = 0
+
+        for i in range(len(lengths)):
+            count += lengths[i]
+            if (count >= total_len / 2) and (half == 0):
+                return lengths[i]
 
 
 class CDS( LocatableThing ):
