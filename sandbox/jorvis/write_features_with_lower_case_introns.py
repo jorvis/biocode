@@ -6,6 +6,9 @@ Author:  Joshua Orvis
 If the GFF has gene.locus_tag annotation that will be used for the FASTA headers, else it will
 be the ID attributes.
 
+By default this writes the sequences of the mRNA features with introns included.  If you
+pass --type=CDS it will instead do the CDS range.
+
 '''
 
 import argparse
@@ -21,9 +24,14 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to the input GFF3' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
     parser.add_argument('-f', '--fasta', type=str, required=False, help='Required if you don\'t have GFF3 with embedded FASTA')
+    parser.add_argument('-t', '--type', type=str, required=False, default='mRNA', choices=['mRNA', 'CDS'], help='Feature type to export (mRNA or CDS)')
     args = parser.parse_args()
 
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+
+    # set this to None if you don't want the debug print statements
+    debugging_gene = 'E9E664DD0822ADF32A0D000845542B01'
+    debugging_gene = None
 
     if args.fasta is not None:
         seqs = biocodeutils.fasta_dict_from_file( args.fasta )
@@ -41,9 +49,12 @@ def main():
         assembly = assemblies[assembly_id]
         
         for gene in assembly.genes():
-            # for debugging only
-            #if gene.id != '668964A84D72393D98D75CDE21350D8E':
-                #continue
+
+            if debugging_gene is not None and gene.id == debugging_gene:
+                debug_mode = True
+            else:
+                debug_mode = False
+                continue
 
             if gene.locus_tag is None:
                 gene_label = gene.id
@@ -56,27 +67,49 @@ def main():
             ## we have to do this here because of the coordinates
             if gene_loc.strand == -1:
                 gene_seq = "".join(reversed(gene_seq))
-            
-            #print("INFO: Processing gene with length {0} at {1}-{2}".format(len(gene_seq), gene_loc.fmin, gene_loc.fmax))
+
+            if debug_mode:
+                print("INFO: Processing gene with length {0} at {1}-{2}".format(len(gene_seq), gene_loc.fmin, gene_loc.fmax))
 
             if len(gene.mRNAs()) > 1:
-                raise Exception("ERROR: script doesn't currently support multi-isoform genes, but found one: {0}".format(gene.id))
+                #raise Exception("ERROR: script doesn't currently support multi-isoform genes, but found one: {0}".format(gene.id))
+                print("ERROR: skipping gene {0} because it appears to have multiple isoforms (not currently supported)".format(gene.id))
+                continue
+
             
             for mRNA in gene.mRNAs():
                 introns = mRNA.introns( on=assembly )
+
+                # this helps us get where the intron is on the gene
+                offset = gene_loc.fmin
                 
                 for intron in introns:
                     intron_loc = intron.location_on(assembly)
-
-                    # this helps us get where the intron is on the gene
-                    offset = gene_loc.fmin
-                    
-                    #print("INFO:\tfound intron at {0}-{1}".format(intron_loc.fmin, intron_loc.fmax))
                     lower_mid = gene_seq[intron_loc.fmin - offset:intron_loc.fmax - offset].lower()
-                    #print("INFO:\tlower-casing offset adjusted coordinates: {0}-{1}".format(intron_loc.fmin - offset, intron_loc.fmax - offset))
-                    #print("INFO:\tgenerating lower case seq of length: {0}\n".format(len(lower_mid)) )
                     gene_seq = gene_seq[0:intron_loc.fmin - offset] + lower_mid + gene_seq[intron_loc.fmax - offset:]
 
+                    if debug_mode:
+                        print("INFO:\tfound intron at {0}-{1}".format(intron_loc.fmin, intron_loc.fmax))
+                        print("INFO:\tlower-casing offset adjusted coordinates: {0}-{1}".format(intron_loc.fmin - offset, intron_loc.fmax - offset))
+                        print("INFO:\tgenerating lower case seq of length: {0}\n".format(len(lower_mid)) )
+
+                ## do we need to trim down to the CDS range?
+                if args.type == 'CDS':
+                    CDSs = sorted(mRNA.CDSs())
+                    CDS_min = CDSs[0].location_on(assembly).fmin
+                    CDS_max = CDSs[-1].location_on(assembly).fmax
+
+                    if gene_loc.fmin != CDS_min and gene_loc.fmax != CDS_max:
+                        if gene_loc.fmin > 1:
+                            print("gene:{0} coords:{1}-{2} ({3}), CDS coords: {4}-{5}".format(gene.id, gene_loc.fmin, \
+                                                                                      gene_loc.fmax, gene_loc.strand, \
+                                                                                      CDS_min, CDS_max \
+                                                                                     ))
+                            fmin_chomp = CDS_min - offset
+                            fmax_chomp = gene_loc.fmax - CDS_max
+                            gene_seq = gene_seq[fmin_chomp : len(gene_seq) - fmin_chomp - fmax_chomp]
+                            print("\tfmin_chomp:{0}, fmax_chomp:{1}".format(fmin_chomp, fmax_chomp))
+                            print("\tGene {0} CDS seq: {1}".format(gene.id, gene_seq))
 
             ## make sure to switch it back
             if gene_loc.strand == -1:
