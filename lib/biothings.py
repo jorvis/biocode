@@ -499,7 +499,6 @@ class AssemblySet():
         
         Source: http://www.broadinstitute.org/crd/wiki/index.php/N50
         '''
-        current_len = 0
         total_len = 0
         lengths = list()
 
@@ -510,11 +509,10 @@ class AssemblySet():
         lengths = sorted(lengths)
 
         count = 0
-        half = 0
 
         for i in range(len(lengths)):
             count += lengths[i]
-            if (count >= total_len / 2) and (half == 0):
+            if count >= total_len / 2:
                 return lengths[i]
 
 
