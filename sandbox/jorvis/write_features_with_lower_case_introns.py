@@ -30,7 +30,7 @@ def main():
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
 
     # set this to None if you don't want the debug print statements
-    debugging_gene = 'E9E664DD0822ADF32A0D000845542B01'
+    #debugging_gene = 'C54A70F1C84256A740AC9A8156CB7772'
     debugging_gene = None
 
     if args.fasta is not None:
@@ -50,11 +50,11 @@ def main():
         
         for gene in assembly.genes():
 
-            if debugging_gene is not None and gene.id == debugging_gene:
+            if debugging_gene is not None:
                 debug_mode = True
+                if gene.id != debugging_gene: continue
             else:
                 debug_mode = False
-                continue
 
             if gene.locus_tag is None:
                 gene_label = gene.id
@@ -93,22 +93,34 @@ def main():
                         print("INFO:\tlower-casing offset adjusted coordinates: {0}-{1}".format(intron_loc.fmin - offset, intron_loc.fmax - offset))
                         print("INFO:\tgenerating lower case seq of length: {0}\n".format(len(lower_mid)) )
 
+                if debug_mode:
+                    print("INFO: seq length before CDS processing is: {0}".format(len(gene_seq)))
+
                 ## do we need to trim down to the CDS range?
                 if args.type == 'CDS':
                     CDSs = sorted(mRNA.CDSs())
                     CDS_min = CDSs[0].location_on(assembly).fmin
                     CDS_max = CDSs[-1].location_on(assembly).fmax
 
+                    if debug_mode:
+                        print("INFO: Calculated CDS range, with introns, should be: {0}-{1}={2}".format(CDS_max, CDS_min, CDS_max - CDS_min))
+
                     if gene_loc.fmin != CDS_min and gene_loc.fmax != CDS_max:
-                        if gene_loc.fmin > 1:
+                        fmin_chomp = CDS_min - offset
+                        fmax_chomp = gene_loc.fmax - CDS_max
+
+                        if debug_mode:
                             print("gene:{0} coords:{1}-{2} ({3}), CDS coords: {4}-{5}".format(gene.id, gene_loc.fmin, \
                                                                                       gene_loc.fmax, gene_loc.strand, \
                                                                                       CDS_min, CDS_max \
                                                                                      ))
-                            fmin_chomp = CDS_min - offset
-                            fmax_chomp = gene_loc.fmax - CDS_max
-                            gene_seq = gene_seq[fmin_chomp : len(gene_seq) - fmin_chomp - fmax_chomp]
+
                             print("\tfmin_chomp:{0}, fmax_chomp:{1}".format(fmin_chomp, fmax_chomp))
+                            print("\tpulling range: gene_seq[{0} : {1}]".format(fmin_chomp, len(gene_seq) - fmax_chomp))
+                            
+                        gene_seq = gene_seq[fmin_chomp : len(gene_seq) - fmax_chomp]
+
+                        if debug_mode:
                             print("\tGene {0} CDS seq: {1}".format(gene.id, gene_seq))
 
             ## make sure to switch it back
