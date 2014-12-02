@@ -35,6 +35,16 @@ EXPECTED INPUT example (the commented lines are ignored):
 ##SQKEVEVTYDLQPQAGQDNLNSNGTANLFDIDESTGTYKETIYVNNKQREQNNTRILIEN
 
 
+EXPECTED INPUT (v3.25+)
+
+In my tests of v 3.25 the use of 'gene' in the column above has been replaced with CDS instead.
+The rest appears to be the same.
+
+SRS019986_Baylor_scaffold_53    GeneMark.hmm    CDS     3       512     -635.997977     +       0       gene_id=18, length=510, gene_score=-635.997977, rbs_score=-0.020000, rbs_spacer=-1, stop_enforced=N, start_codon=0, logodd=37.242660
+SRS019986_Baylor_scaffold_53    GeneMark.hmm    CDS     530     1501    -1202.233893    +       0       gene_id=19, length=972, gene_score=-1202.233893, rbs_score=-0.020000, rbs_spacer=-1, stop_enforced=N, start_codon=0, logodd=62.393607
+SRS019986_Baylor_scaffold_53    GeneMark.hmm    CDS     1603    2109    -608.550058     +       0       gene_id=20, length=507, gene_score=-608.550058, rbs_score=-0.020000, rbs_spacer=-1, stop_enforced=N, start_codon=0, logodd=52.060246
+
+
 EXAMPLE OUTPUT:
 
 855	GeneMark.hmm	gene	1	852	.	-	.	ID=HUZ239124.gene.1
@@ -84,10 +94,10 @@ def main():
             feat_type = cols[2]
 
             ## we expect only gene types here
-            if feat_type != 'gene':
-                raise Exception("ERROR: expected only 'gene' feature types as input.")
+            if feat_type not in ['gene', 'CDS']:
+                raise Exception("ERROR: expected only 'gene' or 'CDS' feature types as input (depending on metagenemark version).")
 
-            m_gene = re.match('gene_id (\d+)', cols[8])
+            m_gene = re.match('gene_id[ =](\d+)', cols[8])
 
             if m_gene:
                 gene_num = m_gene.group(1)
