@@ -447,7 +447,7 @@ class Assembly( LocatableThing ):
         self.residues = residues
         self.children = children
 
-        if length is None and len(self.residues) > 0:
+        if length is None and self.residues is not None and len(self.residues) > 0:
             self.length = len(self.residues)
 
         ## initialize any types needed
