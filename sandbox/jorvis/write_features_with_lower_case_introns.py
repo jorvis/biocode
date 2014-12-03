@@ -30,8 +30,8 @@ def main():
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
 
     # set this to None if you don't want the debug print statements
-    debugging_gene = 'D9AE6116893A0D5711D56C0F1E6CF58C'
-    #debugging_gene = None
+    #debugging_gene = 'D9AE6116893A0D5711D56C0F1E6CF58C'
+    debugging_gene = None
 
     if args.fasta is not None:
         seqs = biocodeutils.fasta_dict_from_file( args.fasta )
