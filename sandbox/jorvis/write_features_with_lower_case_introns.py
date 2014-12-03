@@ -30,8 +30,8 @@ def main():
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
 
     # set this to None if you don't want the debug print statements
-    #debugging_gene = 'C54A70F1C84256A740AC9A8156CB7772'
-    debugging_gene = None
+    debugging_gene = 'D9AE6116893A0D5711D56C0F1E6CF58C'
+    #debugging_gene = None
 
     if args.fasta is not None:
         seqs = biocodeutils.fasta_dict_from_file( args.fasta )
@@ -105,7 +105,7 @@ def main():
                     if debug_mode:
                         print("INFO: Calculated CDS range, with introns, should be: {0}-{1}={2}".format(CDS_max, CDS_min, CDS_max - CDS_min))
 
-                    if gene_loc.fmin != CDS_min and gene_loc.fmax != CDS_max:
+                    if gene_loc.fmin != CDS_min or gene_loc.fmax != CDS_max:
                         fmin_chomp = CDS_min - offset
                         fmax_chomp = gene_loc.fmax - CDS_max
 
