@@ -27,6 +27,7 @@ def main():
     parser.add_argument('-m', '--hmm_htab_list', type=str, required=True, help='List of htab files from hmmpfam3' )
     parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=True, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
     parser.add_argument('-bt', '--blast_trembl_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/Trembl' )
+    parser.add_argument('-tm', '--tmhmm_raw_list', type=str, required=False, help='List of raw files from a tmhmm search' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=True, help='SQLite3 db with UNIPROT/SWISSPROT information' )
     parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are: "tab", "fasta", "gff3"' )
@@ -71,6 +72,10 @@ def main():
     if args.blast_trembl_btab_list is not None:
         print("INFO: parsing BLAST (TrEMBL) evidence")
         parse_trembl_blast_evidence(polypeptides, args.blast_trembl_btab_list, args.blast_eval_cutoff)
+
+    if args.tmhmm_raw_list is not None:
+        print("INFO: parsing TMHMM evidence")
+        parse_tmhmm_evidence(sources_log_fh, polypeptides, args.tmhmm_raw_list)
 
     ## output will either be a file or STDOUT
     print("INFO: writing output")
@@ -172,8 +177,6 @@ def write_fasta_results( f, polypeptides ):
         f.write( ">{0}\n".format( header ) )
         f.write( "{0}\n".format( biocodeutils.wrapped_fasta(polypeptide.residues) ) )
         
-        
-
 
 def write_tab_results( f, polypeptides ):
     f.write("# polypeptide ID\tpolypeptide_length\tgene_product_name\tGO_terms\tEC_nums\tgene_symbol\n")
@@ -335,7 +338,83 @@ def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cur
                 last_qry_id = this_qry_id
 
 
+def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
+    '''
+    Reads a list of raw TMHMM evidence and a dict of polypeptides, adding annotation
+    attributes where possible.
 
+    Notes from the esteemed M Giglio:
+    The GO term to use would be GO:0016021 "integral component of membrane"
+    Or if you want to be more conservative you could go with GO:0016020 "membrane"
+    
+    Depends on the evidence. For the prok pipe we are pretty conservative, we require five TMHMM
+    domains and then we call it putative integral membrane protein. 
+
+    On ECO - in fact Marcus and I are the developers of ECO.  It is an ontology of evidence types.
+    An annotation to an ECO term is used in conjunction with another annotation, like a GO term
+    (but many other types of annotation can, and are, used with ECO). It provides additional
+    information about the annotation. In fact for GO, the assignment of an evidence term along
+    with a GO term is a required part of a GO annotation. (ECO terms are the "evidence codes" in GO.)
+
+    INPUT: Expected TMHMM input (all HTML lines are skipped)
+    # CHARM010_V2.mRNA.887 Length: 904
+    # CHARM010_V2.mRNA.887 Number of predicted TMHs:  6
+    # CHARM010_V2.mRNA.887 Exp number of AAs in TMHs: 133.07638
+    # CHARM010_V2.mRNA.887 Exp number, first 60 AAs:  21.83212
+    # CHARM010_V2.mRNA.887 Total prob of N-in:        0.99994
+    # CHARM010_V2.mRNA.887 POSSIBLE N-term signal sequence
+    CHARM010_V2.mRNA.887	TMHMM2.0	inside	     1    11
+    CHARM010_V2.mRNA.887	TMHMM2.0	TMhelix	    12    34
+    CHARM010_V2.mRNA.887	TMHMM2.0	outside	    35   712
+    CHARM010_V2.mRNA.887	TMHMM2.0	TMhelix	   713   735
+    CHARM010_V2.mRNA.887	TMHMM2.0	inside	   736   755
+    CHARM010_V2.mRNA.887	TMHMM2.0	TMhelix	   756   773
+    CHARM010_V2.mRNA.887	TMHMM2.0	outside	   774   782
+    CHARM010_V2.mRNA.887	TMHMM2.0	TMhelix	   783   805
+    CHARM010_V2.mRNA.887	TMHMM2.0	inside	   806   809
+    CHARM010_V2.mRNA.887	TMHMM2.0	TMhelix	   810   832
+    CHARM010_V2.mRNA.887	TMHMM2.0	outside	   833   871
+    CHARM010_V2.mRNA.887	TMHMM2.0	TMhelix	   872   894
+    CHARM010_V2.mRNA.887	TMHMM2.0	inside	   895   904
+    '''
+    # The number of helices spanning the membrane required before counted as a membrane protein
+    MIN_HELICAL_SPANS = 3
+
+    # For successful matches, this is the product name which gets applied
+    GENE_PRODUCT_NAME = 'Putative integral membrane protein'
+    
+    for file in biocodeutils.read_list_file(htab_list):
+        last_qry_id = None
+        current_helix_count = 0
+        
+        for line in open(file):
+            if line.startswith('<'): continue
+            m = re.match("# (.+?)\s+Length: \d+", line)
+
+            if m:
+                current_id = m.group(1)
+                
+                # purge previous result
+                if current_helix_count >= MIN_HELICAL_SPANS:
+                    annot = polypeptides[last_qry_id].annotation
+
+                    if annot.product_name == DEFAULT_PRODUCT_NAME:
+                        annot.product_name = GENE_PRODUCT_NAME
+                        log_fh.write("INFO: {0}: Updated product name to '{1}' because it had {2} TMHelix domains predicted by TMHMM".format(last_qry_id, GENE_PRODUCT_NAME, current_helix_count))
+                    else:
+                        log_fh.write("INFO: {0}: TMHMM predicted {1} TMHelix domains but gene product name unchanged because of previous assignment".format(last_qry_id, current_helix_count))
+
+                    ## we add the GO terms no matter what
+                    annot.add_go_annotation( bioannotation.GOAnnotation(go_id='0016021')
+
+                # reset
+                last_qry_id = current_id
+                current_helix_count = 0
+                continue
+
+            cols = line.split()
+            if len(cols) == 5 and cols[2] == 'TMhelix':
+                current_helix_count += 1
 
 
 def parse_hmm_evidence( log_fh, polypeptides, htab_list, cursor ):
