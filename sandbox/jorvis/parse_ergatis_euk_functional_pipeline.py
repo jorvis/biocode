@@ -400,12 +400,12 @@ def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
 
                     if annot.product_name == DEFAULT_PRODUCT_NAME:
                         annot.product_name = GENE_PRODUCT_NAME
-                        log_fh.write("INFO: {0}: Updated product name to '{1}' because it had {2} TMHelix domains predicted by TMHMM".format(last_qry_id, GENE_PRODUCT_NAME, current_helix_count))
+                        log_fh.write("INFO: {0}: Updated product name to '{1}' because it had {2} TMHelix domains predicted by TMHMM\n".format(last_qry_id, GENE_PRODUCT_NAME, current_helix_count))
                     else:
-                        log_fh.write("INFO: {0}: TMHMM predicted {1} TMHelix domains but gene product name unchanged because of previous assignment".format(last_qry_id, current_helix_count))
+                        log_fh.write("INFO: {0}: TMHMM predicted {1} TMHelix domains but gene product name unchanged because of previous assignment\n".format(last_qry_id, current_helix_count))
 
                     ## we add the GO terms no matter what
-                    annot.add_go_annotation( bioannotation.GOAnnotation(go_id='0016021')
+                    annot.add_go_annotation( bioannotation.GOAnnotation(go_id='0016021') )
 
                 # reset
                 last_qry_id = current_id
