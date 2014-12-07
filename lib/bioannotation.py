@@ -43,7 +43,27 @@ class FunctionalAnnotation:
         Right now it expects an ECAnnotation object
         """
         self.ec_numbers.append( ec_num )
-        
+
+class Dbxref:
+    """
+    These allow for specification of an identifier in another database by ID.  These
+    are not meant to be used for Ontology term linking, but rather limited only to
+    identifiers.  Examples:
+    
+       SGD:S0006169
+       KEGG:K06223
+
+    The first part is the 'db' and the second is the 'identifier'.
+
+    jorvis: You'd write a @classmethod. I'd name it "fromstring"
+    jorvis: the classmethod would parse that string into values which it would use to
+            invoke the normal constructor, as appropriate.
+    """
+    def __init__( self, db=None, identifier=None ):
+        self.db = db
+        self.identifier = identifier
+
+
 class GOAnnotation:
     """
     A functional annotation can have an infinite number of associated GO Annotations

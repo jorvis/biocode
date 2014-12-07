@@ -27,6 +27,7 @@ def main():
     parser.add_argument('-m', '--hmm_htab_list', type=str, required=True, help='List of htab files from hmmpfam3' )
     parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=True, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
     parser.add_argument('-bt', '--blast_trembl_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/Trembl' )
+    parser.add_argument('-bk', '--blast_kegg_btab_list', type=str, required=False, help='List of btab files from BLAST against KEGG' )
     parser.add_argument('-tm', '--tmhmm_raw_list', type=str, required=False, help='List of raw files from a tmhmm search' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=True, help='SQLite3 db with UNIPROT/SWISSPROT information' )
@@ -73,6 +74,10 @@ def main():
         print("INFO: parsing BLAST (TrEMBL) evidence")
         parse_trembl_blast_evidence(polypeptides, args.blast_trembl_btab_list, args.blast_eval_cutoff)
 
+    if args.blast_kegg_btab_list is not None:
+        print("INFO: parsing BLAST (KEGG) evidence")
+        parse_kegg_blast_evidence(sources_log_fh, polypeptides, args.blast_kegg_btab_list, args.blast_eval_cutoff)
+        
     if args.tmhmm_raw_list is not None:
         print("INFO: parsing TMHMM evidence")
         parse_tmhmm_evidence(sources_log_fh, polypeptides, args.tmhmm_raw_list)
@@ -220,13 +225,73 @@ def initialize_polypeptides( log_fh, fasta_file ):
     
     return polypeptides
 
+def parse_kegg_blast_evidence(log_fh, polypeptides, blast_list, eval_cutoff):
+    '''
+    Reads a list file of NCBI BLAST evidence against KEGG and a dict of polypeptides,
+    populating each with Annotation evidence where appropriate.  Only attaches evidence if
+    the product name is the default.
+
+    Currently only considers the top BLAST hit for each query which doesn't have
+    'uncharacterized' or hypothetical in the product name.
+    '''
+    for file in biocodeutils.read_list_file(blast_list):
+        last_qry_id = None
+        
+        for line in open(file):
+            line = line.rstrip()
+            cols = line.split("\t")
+
+            # We're going to ignore any lines which have a few keywords in the name
+            # First character left off for initcap reasons
+            if 'ncharacterized' in cols[15] or 'ypothetical' in cols[15]:
+                continue
+            
+            this_qry_id = cols[0]
+
+            # skip this line if it doesn't meet the cutoff
+            if float(cols[19]) > eval_cutoff:
+                continue
+
+            # the BLAST hits are sorted already with the top hit for each query first
+            if last_qry_id != this_qry_id:
+                annot = polypeptides[this_qry_id].annotation
+
+                # get the accession from the cols[5]
+                accession = cols[5]
+
+                # save it, unless the gene product name has already changed from the default
+                if annot.product_name == DEFAULT_PRODUCT_NAME:
+                    accession = cols[5]
+
+                    # the product field looks like this:
+                    # dam; adenine-specific DNA methyltransferase; K06223 DNA adenine methylase [EC:2.1.1.72]
+                    # troponin I type 1 (skeletal, slow); K10371 troponin I, slow skeletal muscle
+                    if ' [EC' in cols[15] and cols[15].endswith(']'):
+                        m = re.search("\; (K\d+)\s+(.+) \[EC\:(.+)\]", cols[15])
+                    else:
+                        m = re.search("\; (K\d+)\s+(.+)", cols[15])
+
+                    if m:
+                        kegg_id = m.groups(1)
+                        product = m.groups(2)
+                        ec_num  = m.groups(3)
+                        annot.product_name = product
+                        log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to KEGG accession '{2}'".format(this_qry_id, annot.product_name, accession))
+
+                        if ec_num is not None and ec_num is not '':
+                            annot.add_ec_number(bioannotation.ECAnnotation(ec_num))
+                        
+                # remember the ID we just saw
+                last_qry_id = this_qry_id
+
 def parse_trembl_blast_evidence(polypeptides, blast_list, eval_cutoff):
     '''
     Reads a list file of NCBI BLAST evidence against TrEMBL and a dict of polypeptides,
     populating each with Annotation evidence where appropriate.  Only attaches evidence if
     the product name is the default.
 
-    Currently only considers the top BLAST hit for each query.
+    Currently only considers the top BLAST hit for each query which doesn't have
+    'uncharacterized' in the product name.
     '''
     for file in biocodeutils.read_list_file(blast_list):
         last_qry_id = None
@@ -268,6 +333,7 @@ def parse_trembl_blast_evidence(polypeptides, blast_list, eval_cutoff):
 
                 # remember the ID we just saw
                 last_qry_id = this_qry_id
+
 
 def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cursor, eval_cutoff ):
     '''
@@ -400,7 +466,7 @@ def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
 
                     if annot.product_name == DEFAULT_PRODUCT_NAME:
                         annot.product_name = GENE_PRODUCT_NAME
-                        log_fh.write("INFO: {0}: Updated product name to '{1}' because it had {2} TMHelix domains predicted by TMHMM\n".format(last_qry_id, GENE_PRODUCT_NAME, current_helix_count))
+                        log_fh.write("INFO: {0}: Updated product name to '{1}' because it had {2} TMHelix domains predicted by TMHMM\n".format(last_qry_id, annot.product_name, current_helix_count))
                     else:
                         log_fh.write("INFO: {0}: TMHMM predicted {1} TMHelix domains but gene product name unchanged because of previous assignment\n".format(last_qry_id, current_helix_count))
 
