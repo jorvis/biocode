@@ -18,11 +18,12 @@ class FunctionalAnnotation:
     and hopefully enjoy the utility of having the most direct properties always
     directly available.
     """
-    def __init__( self, product_name=None, gene_symbol=None, go_annotations=None, ec_numbers=None ):
+    def __init__( self, product_name=None, gene_symbol=None, go_annotations=None, ec_numbers=None, dbxrefs=None ):
         self.product_name     = product_name
         self.gene_symbol      = gene_symbol
         self.go_annotations   = go_annotations
         self.ec_numbers       = ec_numbers
+        self.dbxrefs          = dbxrefs
 
         if self.go_annotations is None:
             self.go_annotations = list()
@@ -30,19 +31,30 @@ class FunctionalAnnotation:
         if self.ec_numbers is None:
             self.ec_numbers = list()
 
-    def add_go_annotation( self, go ):
+        if self.dbxrefs is None:
+            self.dbxrefs = list()
+
+    
+
+    def add_dbxref(self, dbxref):
         """
-        Note to self: Modify this to allow passing GOAnnotation object or string.
-        Right now it expects an GOAnnotation object
+        Stores a Dbxref object within an annotation
         """
-        self.go_annotations.append( go )
+        self.dbxrefs.append(dbxref)
         
-    def add_ec_number( self, ec_num ):
+    def add_ec_number(self, ec_num):
         """
         Note to self: Modify this to allow passing ECAnnotation object or string.
         Right now it expects an ECAnnotation object
         """
-        self.ec_numbers.append( ec_num )
+        self.ec_numbers.append(ec_num)
+
+    def add_go_annotation(self, go):
+        """
+        Note to self: Modify this to allow passing GOAnnotation object or string.
+        Right now it expects an GOAnnotation object
+        """
+        self.go_annotations.append(go)
 
 class Dbxref:
     """
@@ -55,6 +67,7 @@ class Dbxref:
 
     The first part is the 'db' and the second is the 'identifier'.
 
+    ## notes on method signature overloading (for future use)
     jorvis: You'd write a @classmethod. I'd name it "fromstring"
     jorvis: the classmethod would parse that string into values which it would use to
             invoke the normal constructor, as appropriate.
