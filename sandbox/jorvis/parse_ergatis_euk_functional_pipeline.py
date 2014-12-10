@@ -272,14 +272,20 @@ def parse_kegg_blast_evidence(log_fh, polypeptides, blast_list, eval_cutoff):
                         m = re.search("\; (K\d+)\s+(.+)", cols[15])
 
                     if m:
-                        kegg_id = m.groups(1)
-                        product = m.groups(2)
-                        ec_num  = m.groups(3)
+                        kegg_id = m.group(1)
+                        product = m.group(2)
+                        
+                        if len(m.groups()) == 3:
+                            ec_num = m.group(3)
+                        else:
+                            ec_num = None
+
                         annot.product_name = product
-                        log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to KEGG accession '{2}'".format(this_qry_id, annot.product_name, accession))
+                        log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to KEGG accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
 
                         if ec_num is not None and ec_num is not '':
-                            annot.add_ec_number(bioannotation.ECAnnotation(ec_num))
+                            ec = bioannotation.ECAnnotation(number=ec_num)
+                            annot.add_ec_number(ec)
                         
                 # remember the ID we just saw
                 last_qry_id = this_qry_id
@@ -384,7 +390,7 @@ def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cur
                     else:
                         annot.product_name = cols[15]
 
-                    log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to SPROT accession '{2}'".format(this_qry_id, annot.product_name, accession))
+                    log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to SPROT accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
 
                 # if no EC numbers have been set, they can inherit from this
                 if len(annot.ec_numbers) == 0:
