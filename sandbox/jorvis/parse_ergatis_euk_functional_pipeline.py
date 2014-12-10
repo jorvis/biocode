@@ -286,6 +286,9 @@ def parse_kegg_blast_evidence(log_fh, polypeptides, blast_list, eval_cutoff):
                         if ec_num is not None and ec_num is not '':
                             ec = bioannotation.ECAnnotation(number=ec_num)
                             annot.add_ec_number(ec)
+
+                        kegg_dbxref = bioannotation.Dbxref(db='KEGG', identifier=kegg_id)
+                        annot.add_dbxref(kegg_dbxref)
                         
                 # remember the ID we just saw
                 last_qry_id = this_qry_id
