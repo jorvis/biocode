@@ -565,15 +565,16 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
                 if annot.gene_symbol is not None:
                     assertions['gene_symbol'] = annot.gene_symbol
 
-                if len(annot.ec_numbers):
-                    # should this construction be in build_column_9() instead?
-                    # this is treating each EC number as a string, but each should be an ECAnnotation object
-                    for ec in annot.ec_numbers:
-                        dbxref_strs.append("EC:{0}".format(ec.number))
+                # should this construction be in build_column_9() instead?
+                # this is treating each EC number as a string, but each should be an ECAnnotation object
+                for ec in annot.ec_numbers:
+                    dbxref_strs.append("EC:{0}".format(ec.number))
 
-                if len(annot.go_annotations):
-                    for go in annot.go_annotations:
-                        ontology_strs.append("GO:{0}".format(go.go_id))
+                for go in annot.go_annotations:
+                    ontology_strs.append("GO:{0}".format(go.go_id))
+
+                for dbxref in annot.dbxrefs:
+                    dbxref_strs.append("{0}:{1}".format(dbxref.db, dbxref.identifier))
 
             if len(dbxref_strs) > 0:
                 assertions['Dbxref'] = ",".join(dbxref_strs)
