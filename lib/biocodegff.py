@@ -456,6 +456,44 @@ def parse_gff3_by_relationship( gff3_file ):
     return fgraph
 
 
+def print_gff3_from_assemblies(assemblies=None, ofh=None):
+    if type(ofh).__name__ != 'TextIOWrapper':
+        ofh = sys.stdout #TextIOWrapper
+    
+    ofh.write("##gff-version 3\n")
+
+    for assembly_id in assemblies:
+        current_assembly = assemblies[assembly_id]
+        
+        for gene in assemblies[assembly_id].genes():
+            rnas_found = 0
+            mRNAs = gene.mRNAs()
+            
+            for mRNA in mRNAs:
+                mRNA_loc = mRNA.location_on(current_assembly)
+                rnas_found += 1
+
+                if rnas_found > 1:
+                    gene.remove_mRNA(mRNA)
+                    
+                    print("INFO: splitting mRNA off gene {0}".format(gene.id))
+                    new_gene = biothings.Gene( id="{0}_{1}".format(gene.id, rnas_found) )
+                    new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
+                    new_gene.add_RNA(mRNA)
+                    new_gene.print_as(fh=ofh, format='gff3')
+
+            if len(mRNAs) > 1:
+                gene_loc = gene.location_on(current_assembly)
+                mRNA_loc = mRNAs[0].location_on(current_assembly)
+                gene_loc.fmin = mRNA_loc.fmin
+                gene_loc.fmax = mRNA_loc.fmax
+                gene_loc.strand = mRNA_loc.strand
+
+            gene.print_as(fh=ofh, format='gff3')
+    
+    
+
+
 def print_biogene( gene=None, fh=None, source=None, on=None ):
     '''
     This method accepts a Gene object located on an Assembly object (from biothings.py) and prints
