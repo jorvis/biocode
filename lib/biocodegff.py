@@ -457,6 +457,9 @@ def parse_gff3_by_relationship( gff3_file ):
 
 
 def print_gff3_from_assemblies(assemblies=None, ofh=None):
+    """
+    Utility function to write a complete GFF3 file from a list() of biothings.Assembly objects
+    """
     if type(ofh).__name__ != 'TextIOWrapper':
         ofh = sys.stdout #TextIOWrapper
     
