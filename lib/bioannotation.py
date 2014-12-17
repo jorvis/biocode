@@ -38,9 +38,20 @@ class FunctionalAnnotation:
 
     def add_dbxref(self, dbxref):
         """
-        Stores a Dbxref object within an annotation
+        Stores a Dbxref object within an annotation. The thing passed can either be a
+        Dbxref object or string like "sourcedb:identifier" and it will be automatically
+        parsed.
         """
-        self.dbxrefs.append(dbxref)
+        if type(dbxref).__name__ == 'Dbxref':
+            self.dbxrefs.append(dbxref)
+        elif type(dbxref).__name__ == 'str':
+            m = re.match("(.+)\:(.+)", dbxref)
+            if m:
+                self.dbxrefs.append(Dbxref(db=m.group(1), identifier=m.group(2)))
+            else:
+                raise Exception("ERROR: Annotation.add_dbxref(): If string passed, expected format was 'source:identifier'")
+        else:
+            raise Exception("ERROR: Annotation.add_dbxref expected a Dbxref object or string to be passed")
         
     def add_ec_number(self, ec_num):
         """
