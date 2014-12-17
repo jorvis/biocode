@@ -635,6 +635,18 @@ class Gene( LocatableThing ):
     def mRNAs(self):
         return self.children['mRNA']
 
+    def polypeptides(self):
+        """
+        Returns a list() of all Polypeptide objects for all mRNA children.
+        """
+        polypeptides = list()
+
+        for rna in self.RNAs():
+            polypeptides.extend(rna.polypeptides())
+
+        return polypeptides
+        
+
     def RNAs(self):
         return self.children['mRNA'] + self.children['tRNA'] + self.children['rRNA']
 
