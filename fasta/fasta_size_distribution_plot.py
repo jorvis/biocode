@@ -59,6 +59,7 @@ def main():
                         'maximum bound of your bins (prevents long tails in plots)')
     parser.add_argument('-l', '--legend_names', type=str, required=False, help='For a legend with labels ' + \
                         'of each of your datasets, pass a comma-separated list with no spaces.')
+    parser.add_argument('-g', '--log_scale', type=bool, required=False, default=False, help='Set to true for log10 Y scale')
     args = parser.parse_args()
 
     data_ranges = []
@@ -94,7 +95,12 @@ def main():
     plot.xlabel('Sequence size (bins)')
     plot.ylabel('Sequence counts')
     plot.title(args.title)
-    n, bins, patches = plot.hist( data_ranges, bin_opt, normed=0, histtype='bar'  )
+
+    if args.log_scale == True:
+        n, bins, patches = plot.hist(data_ranges, bin_opt, normed=0, histtype='bar', log=True)
+    else:
+        n, bins, patches = plot.hist(data_ranges, bin_opt, normed=0, histtype='bar')
+
     plot.grid(True)
 
     legend_labels = get_legend_labels( args.legend_names, len(fasta_files) )
