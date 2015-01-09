@@ -37,7 +37,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Optional output file path (else STDOUT)' )
     parser.add_argument('-r', '--organism_table', type=str, required=False, help='Optional table with counts of organism frequency based on top BLAST match for each protein' )
     parser.add_argument('-g', '--genomic_fasta', type=str, required=False, help='If passed, the genomic FASTA sequence will be included in the exported GFF3')
-    parser.add_argument('-eon', "--export_organism_names", help="If passed, includes organism names from top BLAST hit into 9th column when available.  Mostly useful for metagenomic samples.", action="store_true")
+    parser.add_argument('-eon', '--export_organism_names', help='If passed, includes organism names from top BLAST hit into 9th column when available.  Mostly useful for metagenomic samples.', action='store_true')
     args = parser.parse_args()
 
     check_arguments(args)
