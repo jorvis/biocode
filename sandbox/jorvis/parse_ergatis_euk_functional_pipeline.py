@@ -37,6 +37,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Optional output file path (else STDOUT)' )
     parser.add_argument('-r', '--organism_table', type=str, required=False, help='Optional table with counts of organism frequency based on top BLAST match for each protein' )
     parser.add_argument('-g', '--genomic_fasta', type=str, required=False, help='If passed, the genomic FASTA sequence will be included in the exported GFF3')
+    parser.add_argument('-eon', "--export_organism_names", help="If passed, includes organism names from top BLAST hit into 9th column when available.  Mostly useful for metagenomic samples.", action="store_true")
     args = parser.parse_args()
 
     check_arguments(args)
@@ -54,7 +55,8 @@ def main():
     # this is a dict of biothings.Polypeptide objects
     polypeptides = initialize_polypeptides( sources_log_fh, args.input_fasta )
 
-    # keyed on polypeptide ID, the values here are the organism name for the top BLAST match of each
+    # Keyed on polypeptide ID (from the FASTA, which is actually the mRNA gff feature ID), the
+    #  values here are the organism name for the top BLAST match of each
     polypeptide_blast_org = dict()
 
     # get source structural annotation, if necessary:
@@ -97,8 +99,45 @@ def main():
     
     fout.close()
 
+    ## There isn't a method in biocodegff3 to add arbitrary key=value pairs.  So we have to cheat here.
+    if args.export_organism_names is True:
+        if args.output_file:
+            append_organism_names_to_gff(args.output_file, polypeptide_blast_org)
+        else:
+            raise Exception("ERROR: an --output_file must be specified when using the --export_organism_names option.")
+
     if args.organism_table is not None:
         create_organism_table(args.organism_table, polypeptide_blast_org)
+
+
+def append_organism_names_to_gff(file_path, poly_orgs):
+    # we have to write to a temp file and copy over
+    fout = open("{0}.orgtmp".format(file_path), 'wt')
+    orgs_found = 0
+    last_RNA_id = None
+    
+    for line in open(file_path):
+        line = line.rstrip()
+        cols = line.split("\t")
+
+        if len(cols) == 9 and cols[2].endswith('RNA'):
+            last_RNA_id = biocodegff.column_9_value(cols[8], 'ID')
+        if len(cols) == 9 and cols[2] == 'polypeptide':
+            if last_RNA_id in poly_orgs:
+                cols[8] += ";top_organism_from_blast={0}".format(poly_orgs[last_RNA_id], biocodegff.escape(poly_orgs[last_RNA_id]))
+                orgs_found += 1
+
+            fout.write("{0}\n".format("\t".join(cols)) )
+
+        else:
+            fout.write("{0}\n".format(line))
+
+    if orgs_found == 0:
+        print("WARNING: The --export_organism_names option was passed, but parsing failed to find any organism names at all.  This might be an error.")
+            
+    ## now move the temp file over the original copy
+    fout.close()
+
 
 def check_arguments( args ):
     # Check the acceptable values for format
