@@ -137,6 +137,7 @@ def append_organism_names_to_gff(file_path, poly_orgs):
             
     ## now move the temp file over the original copy
     fout.close()
+    os.rename("{0}.orgtmp".format(file_path), file_path)
 
 
 def check_arguments( args ):
