@@ -17,6 +17,8 @@ DEFAULT_PRODUCT_NAME = "hypothetical protein"
 ## example invocation:
 # parse_ergatis_euk_functional_pipeline.py -f HUZ239124.metagenemark.nt.faa -m hmmpfam3.htab.list -bs ncbi-blastp.btab.list --hmm_db /usr/local/projects/jorvis/dbs/coding_hmm_lib.sqlite3 -u /usr/local/projects/jorvis/dbs/uniprot_sprot.sqlite3 -a gff3 -s HUZ239124.metagenemark.nt.gff3 -e 1e-10 -o HUZ239124.metagenemark.nt.annotated.gff3 -g HUZ239124.fas
 
+# /home/jorvis/git/biocode/sandbox/jorvis/parse_ergatis_euk_functional_pipeline.py -f SRS019986.scaffolds.metagenemark.faa -s SRS019986.scaffolds.metagenemark.gff3 -e 1e-10 -g SRS019986.scaffolds.fa -m hmmpfam3.htab.list --hmm_db /usr/local/projects/jorvis/dbs/coding_hmm_lib.sqlite3 -o SRS019986.scaffolds.metagenemark.annotated.hmm.gff3  --format=gff3 
+
 next_ids = defaultdict(int)
 
 def main():
@@ -24,12 +26,12 @@ def main():
 
     ## output file to be written
     parser.add_argument('-f', '--input_fasta', type=str, required=True, help='Protein FASTA file of source molecules' )
-    parser.add_argument('-m', '--hmm_htab_list', type=str, required=True, help='List of htab files from hmmpfam3' )
+    parser.add_argument('-m', '--hmm_htab_list', type=str, required=False, help='List of htab files from hmmpfam3' )
     parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
     parser.add_argument('-bt', '--blast_trembl_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/Trembl' )
     parser.add_argument('-bk', '--blast_kegg_btab_list', type=str, required=False, help='List of btab files from BLAST against KEGG' )
     parser.add_argument('-tm', '--tmhmm_raw_list', type=str, required=False, help='List of raw files from a tmhmm search' )
-    parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
+    parser.add_argument('-d', '--hmm_db', type=str, required=False, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=False, help='SQLite3 db with UNIPROT/SWISSPROT information' )
     parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are: "tab", "fasta", "gff3"' )
     parser.add_argument('-s', '--source_gff', type=str, required=False, help='Source GFF file from which proteins were derived.  Required if you want to export any format other than tab-delimited.' )
@@ -41,10 +43,6 @@ def main():
     args = parser.parse_args()
 
     check_arguments(args)
-
-    # connection to the HMM-associated SQLite3 database
-    hmm_db_conn = sqlite3.connect(args.hmm_db)
-    hmm_db_curs = hmm_db_conn.cursor()
 
     sources_log_fh = open("{0}.sources.log".format(args.output_file), 'wt')
     
@@ -60,9 +58,17 @@ def main():
         print("INFO: parsing source GFF")
         (assemblies, features) = biocodegff.get_gff3_features( args.source_gff )
 
-    print("INFO: parsing HMM evidence")
-    parse_hmm_evidence( sources_log_fh, polypeptides, args.hmm_htab_list, hmm_db_curs )
-    hmm_db_curs.close()
+    if args.hmm_htab_list is not None:
+        # connection to the HMM-associated SQLite3 database
+        hmm_db_conn = sqlite3.connect(args.hmm_db)
+        hmm_db_curs = hmm_db_conn.cursor()
+        
+        if args.hmm_db is None:
+            raise Exception("ERROR: You specified HMM results but not the db with the -d option")
+        
+        print("INFO: parsing HMM evidence")
+        parse_hmm_evidence( sources_log_fh, polypeptides, args.hmm_htab_list, hmm_db_curs )
+        hmm_db_curs.close()
 
     if args.blast_sprot_btab_list is not None:
         if args.uniprot_sprot_db is None:
