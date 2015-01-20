@@ -25,12 +25,12 @@ def main():
     ## output file to be written
     parser.add_argument('-f', '--input_fasta', type=str, required=True, help='Protein FASTA file of source molecules' )
     parser.add_argument('-m', '--hmm_htab_list', type=str, required=True, help='List of htab files from hmmpfam3' )
-    parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=True, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
+    parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
     parser.add_argument('-bt', '--blast_trembl_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/Trembl' )
     parser.add_argument('-bk', '--blast_kegg_btab_list', type=str, required=False, help='List of btab files from BLAST against KEGG' )
     parser.add_argument('-tm', '--tmhmm_raw_list', type=str, required=False, help='List of raw files from a tmhmm search' )
     parser.add_argument('-d', '--hmm_db', type=str, required=True, help='SQLite3 db with HMM information' )
-    parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=True, help='SQLite3 db with UNIPROT/SWISSPROT information' )
+    parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=False, help='SQLite3 db with UNIPROT/SWISSPROT information' )
     parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are: "tab", "fasta", "gff3"' )
     parser.add_argument('-s', '--source_gff', type=str, required=False, help='Source GFF file from which proteins were derived.  Required if you want to export any format other than tab-delimited.' )
     parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
@@ -45,10 +45,6 @@ def main():
     # connection to the HMM-associated SQLite3 database
     hmm_db_conn = sqlite3.connect(args.hmm_db)
     hmm_db_curs = hmm_db_conn.cursor()
-
-    # connection to the UniProt_Sprot SQLite3 database
-    usp_db_conn = sqlite3.connect(args.uniprot_sprot_db)
-    usp_db_curs = usp_db_conn.cursor()
 
     sources_log_fh = open("{0}.sources.log".format(args.output_file), 'wt')
     
@@ -68,9 +64,16 @@ def main():
     parse_hmm_evidence( sources_log_fh, polypeptides, args.hmm_htab_list, hmm_db_curs )
     hmm_db_curs.close()
 
-    print("INFO: parsing BLAST (SWISS-PROT) evidence")
-    parse_sprot_blast_evidence( sources_log_fh, polypeptides, polypeptide_blast_org, args.blast_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff )
-    usp_db_curs.close()
+    if args.blast_sprot_btab_list is not None:
+        if args.uniprot_sprot_db is None:
+            raise Exception("ERROR: You specified BLAST evidence vs UnitProt/SwissProt results but not the db with the -u option")
+        
+        # connection to the UniProt_Sprot SQLite3 database
+        usp_db_conn = sqlite3.connect(args.uniprot_sprot_db)
+        usp_db_curs = usp_db_conn.cursor()
+        print("INFO: parsing BLAST (SWISS-PROT) evidence")
+        parse_sprot_blast_evidence( sources_log_fh, polypeptides, polypeptide_blast_org, args.blast_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff )
+        usp_db_curs.close()
 
     if args.blast_trembl_btab_list is not None:
         print("INFO: parsing BLAST (TrEMBL) evidence")
