@@ -158,8 +158,9 @@ def check_arguments( args ):
 
     # make sure all passed files are found before we do anything else:
     for path in ( args.input_fasta, args.hmm_htab_list, args.blast_sprot_btab_list, args.hmm_db, args.uniprot_sprot_db ):
-        if not os.path.isfile( path ):
-            raise Exception("ERROR: You passed this file but the script failed to find it: {0}".format(path))
+        if path is not None:
+            if not os.path.isfile( path ):
+                raise Exception("ERROR: You passed this file but the script failed to find it: {0}".format(path))
 
 
 def write_gff3_results( f, polypeptides, assemblies, features, genomic_fasta ):
