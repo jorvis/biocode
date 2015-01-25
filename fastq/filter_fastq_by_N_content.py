@@ -85,7 +85,8 @@ def main():
     #counts = {'left_kept':0, 'left_discarded':0, 'right_kept':0, 'right_discarded':0, 'singlets_kept':0, 'singlets_discarded':0}
     counts = {'total_reads':0, 'pairs_kept':0, 'pairs_discarded':0, \
               'left_only_kept':0, 'left_only_discarded':0, \
-              'right_only_kept':0, 'right_only_discarded':0
+              'right_only_kept':0, 'right_only_discarded':0, \
+              'singletons_kept':0, 'singletons_discarded':0
     }
 
     # for debugging purposes on large files only
@@ -157,6 +158,38 @@ def main():
                     if l_keep:
                         l_keep.write(l_line)
                 
+
+    if args.singletons is not None:
+        # s_in_fh
+        # s_out_fh
+        line_count = 0
+        record_count = 0
+        last_header = None
+        keep = False
+        
+        for line in s_in_fh:
+            line_count += 1
+
+            if line_count % 4 == 1:
+                record_count += 1
+                last_header = line
+                keep = False
+
+            elif line_count % 4 == 2:
+                counts['total_reads'] += 1
+                pct_n = (line.count('N') / (len(line) - 1)) * 100
+
+                if pct_n < args.percent_n_cutoff:
+                    keep = True
+                    s_out_fh.write(last_header)
+                    s_out_fh.write(line)
+                    counts['singletons_kept'] += 1
+                else:
+                    counts['singletons_discarded'] += 1
+            else:
+                if keep:
+                    s_out_fh.write(line)
+        
     
     if args.output_report is not None:
         report_fh = open(args.output_report, 'wt')
@@ -168,6 +201,8 @@ def main():
         report_fh.write("Left only reads discarded: {0}\n".format(counts['left_only_discarded']))
         report_fh.write("Right only reads kept: {0}\n".format(counts['right_only_kept']))
         report_fh.write("Right only reads discarded: {0}\n".format(counts['right_only_discarded']))
+        report_fh.write("Singleton reads kept: {0}\n".format(counts['singletons_kept']))
+        report_fh.write("Singleton reads discarded: {0}\n".format(counts['singletons_discarded']))
 
 
 if __name__ == '__main__':
