@@ -19,6 +19,8 @@ DEFAULT_PRODUCT_NAME = "hypothetical protein"
 
 # /home/jorvis/git/biocode/sandbox/jorvis/parse_ergatis_euk_functional_pipeline.py -f SRS019986.scaffolds.metagenemark.faa -s SRS019986.scaffolds.metagenemark.gff3 -e 1e-10 -g SRS019986.scaffolds.fa -m hmmpfam3.htab.list --hmm_db /usr/local/projects/jorvis/dbs/coding_hmm_lib.sqlite3 -o SRS019986.scaffolds.metagenemark.annotated.hmm.gff3  --format=gff3 
 
+
+
 next_ids = defaultdict(int)
 
 def main():
@@ -30,6 +32,7 @@ def main():
     parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
     parser.add_argument('-bt', '--blast_trembl_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/Trembl' )
     parser.add_argument('-bk', '--blast_kegg_btab_list', type=str, required=False, help='List of btab files from BLAST against KEGG' )
+    parser.add_argument('-bu100', '--blast_uniref100_btab_list', type=str, required=False, help='List of btab files from BLAST against UniRef100' )
     parser.add_argument('-tm', '--tmhmm_raw_list', type=str, required=False, help='List of raw files from a tmhmm search' )
     parser.add_argument('-d', '--hmm_db', type=str, required=False, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=False, help='SQLite3 db with UNIPROT/SWISSPROT information' )
@@ -88,6 +91,10 @@ def main():
     if args.blast_kegg_btab_list is not None:
         print("INFO: parsing BLAST (KEGG) evidence")
         parse_kegg_blast_evidence(sources_log_fh, polypeptides, args.blast_kegg_btab_list, args.blast_eval_cutoff)
+
+    if args.blast_uniref100_btab_list is not None:
+        print("INFO: parsing BLAST (UniRef100) evidence")
+        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.blast_uniref100_btab_list, args.blast_eval_cutoff)
         
     if args.tmhmm_raw_list is not None:
         print("INFO: parsing TMHMM evidence")
@@ -541,6 +548,59 @@ def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
             if len(cols) == 5 and cols[2] == 'TMhelix':
                 current_helix_count += 1
 
+def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, eval_cutoff ):
+    '''
+    Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
+    each with Annotation evidence where appropriate.  Only attaches evidence if
+    the product name is the default.
+
+    Currently only considers the top BLAST hit for each query.
+    '''
+    for file in biocodeutils.read_list_file(blast_list):
+        last_qry_id = None
+        
+        for line in open(file):
+            line = line.rstrip()
+            cols = line.split("\t")
+            this_qry_id = cols[0]
+
+            # We're going to ignore any lines which have a few keywords in the name
+            # First character left off for initcap reasons
+            skip_products = ['ncharacterized', 'ypothetical', 'enomic scaffold']
+            skip = False
+            for keyword in skip_products:
+                if keyword in cols[15]:
+                    skip = True
+
+            if skip == True:
+                continue
+
+            # skip this line if it doesn't meet the cutoff
+            if float(cols[19]) > eval_cutoff:
+                continue
+
+            # the BLAST hits are sorted already with the top hit for each query first
+            if last_qry_id != this_qry_id:
+                annot = polypeptides[this_qry_id].annotation
+
+                # get the accession from the cols[5]
+                #  then process for known accession types
+                accession = cols[5]
+
+                # save it, unless the gene product name has already changed from the default
+                if annot.product_name == DEFAULT_PRODUCT_NAME:
+                    # these hits look like this:
+                    #  AD-specific glutamate dehydrogenase n=1 Tax=Ceriporiopsis subvermispora (strain B) RepID=M2RLB9_CERS8
+                    m = re.match("(.+) n\=.+", cols[15])
+                    if m:
+                        annot.product_name = m.group(1)
+                    else:
+                        raise Exception("ERROR: Unexpected product format in UniRef100 BLAST results: {0}".format(cols[15]))
+
+                    log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to UniRef100 accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
+
+                # remember the ID we just saw
+                last_qry_id = this_qry_id
 
 def parse_hmm_evidence( log_fh, polypeptides, htab_list, cursor ):
     '''
