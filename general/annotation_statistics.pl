@@ -164,6 +164,10 @@ for my $mol_id ( keys %$annot ) {
     ## these are used for intergenic sequence tracking
     my $last_gene_pos = -1;
 
+    if ( $$annot{$mol_id}{genes} == undef ) {
+        $$annot{$mol_id}{genes} = [];
+    }
+
     ## iterate through the genes, in order
     for my $gene ( sort { $$a{fmin}<=>$$b{fmin} } @{$$annot{$mol_id}{genes}} ) {
         $$stats{gene_count}++;
