@@ -18,6 +18,11 @@ Count of ratios > 0.95: 52188
 Count of ratios < 0.05: 49941
 Count of ratios > 0.95: 55683
 
+Ranges wanted:
+0.125 - 0.875
+0.25 - 0.75
+0.475 - 0.525
+
 """
 
 import argparse
@@ -41,8 +46,18 @@ def main():
 
     ratios = list()
     
-    RATIO_MIN = 0.05
-    RATIO_MAX = 0.95
+    #RATIO_MIN = 0.05
+    #RATIO_MAX = 0.95
+
+    #RATIO_MIN = 0.125
+    #RATIO_MAX = 0.875
+
+    #RATIO_MIN = 0.25
+    #RATIO_MAX = 0.75
+
+    RATIO_MIN = 0.475
+    RATIO_MAX = 0.525
+    
     LENGTH_CUTOFF = 350
     ratio_min_count = 0
     ratio_bet_count = 0
