@@ -49,7 +49,8 @@ def main():
     parser.add_argument('fasta_files', metavar='N', type=str, nargs='*', help='Pass one or more FASTA files')
     parser.add_argument('-o', '--output_file', type=str, required=False, default=None, help='Optional path to an output file to be created' )
     parser.add_argument('-l', '--input_list', type=str, required=False, default=None, help='Optional path to a list of list of input files' )
-    parser.add_argument('-erc', '--expected_record_count', type=int, required=False, default=None, help='Option count of records expected in the input.  An exception is raised if this is not matched.' )
+    parser.add_argument('-erc', '--expected_record_count', type=int, required=False, default=None, help='Optional count of records expected in the input.  An exception is raised if this is not matched.' )
+    parser.add_argument('-hl', '--homopolymer_limit', type=int, required=False, default=None, help='Issues a warning for any sequences with a homopolymer of length > this' )
     args = parser.parse_args()
 
     ## output will either be a file or STDOUT
@@ -77,6 +78,9 @@ def main():
         ids_found = list()
         long_line_count = 0
         current_seq_length = None
+        current_seq_id = None
+        current_homopolymer_base = None
+        current_homopolymer_length = 0
         
         for line in open(ifile):
             line = line.rstrip()
@@ -93,11 +97,12 @@ def main():
                 current_seq_length = 0
                 m = re.match(">(\S+)", line)
                 if m:
-                    if m.group(1) in ids_found:
-                        fout.write("ERROR: Duplicate ID ({2}) found on line {0} of {1}\n".format(line_number, ifile, m.group(1)))
+                    current_seq_id = m.group(1)
+                    if current_seq_id in ids_found:
+                        fout.write("ERROR: Duplicate ID ({2}) found on line {0} of {1}\n".format(line_number, ifile, current_seq_id))
                         error_count += 1
                     else:
-                        ids_found.append(m.group(1))
+                        ids_found.append(current_seq_id)
                 else:
                     fout.write("ERROR: Record without ID on line {0} of {1}\n".format(line_number, ifile))
                     error_count += 1
@@ -111,6 +116,18 @@ def main():
                 # residue line
                 total_residues += len(line)
                 current_seq_length += len(line)
+
+                if args.homopolymer_limit is not None:
+                    for base in line:
+                        if base == current_homopolymer_base:
+                            current_homopolymer_length += 1
+                        else:
+                            if current_homopolymer_length > args.homopolymer_limit:
+                                fout.write("WARNING: Sequence ID {0} in file {1} contains a homopolymer run ({2}) of length {3}\n".format(current_seq_id, ifile, current_homopolymer_base, current_homopolymer_length))
+                                warning_count += 1
+
+                            current_homopolymer_base = base
+                            current_homopolymer_length = 1
 
                 if '>' in line:
                     fout.write("ERROR: > character embedded in sequence residues on line {0} of {1}\n".format(line_number, ifile))
