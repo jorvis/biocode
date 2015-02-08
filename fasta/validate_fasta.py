@@ -17,7 +17,7 @@ Here's what it does check for:
 - ERROR: Make sure the file ends with a blank line (else commonly used tools like cat will cause errors)
 - WARNING: Residue lines > 60bp
 - WARNING: Comment lines with # (most parsers will fail to handle this)
-
+- WARNING: Homopolymers of length > --homopolymer_limit which are not Ns
 
 Input: 
 
@@ -122,7 +122,7 @@ def main():
                         if base == current_homopolymer_base:
                             current_homopolymer_length += 1
                         else:
-                            if current_homopolymer_length > args.homopolymer_limit:
+                            if current_homopolymer_length > args.homopolymer_limit and current_homopolymer_base != 'N':
                                 fout.write("WARNING: Sequence ID {0} in file {1} contains a homopolymer run ({2}) of length {3}\n".format(current_seq_id, ifile, current_homopolymer_base, current_homopolymer_length))
                                 warning_count += 1
 
