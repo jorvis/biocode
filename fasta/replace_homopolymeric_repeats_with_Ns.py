@@ -63,7 +63,7 @@ def main():
                 current_homopolymer_length += 1
             else:
                 if current_homopolymer_length > args.homopolymer_length_limit and current_homopolymer_base != 'N':
-                    sys.stderr.write("WARNING: Replacing {3} bp of {2} bases in Sequence ID {0} starting at position {1}\n".format(
+                    sys.stderr.write("WARNING: Replacing {3} bp of {2}s in Sequence ID {0} starting at position {1}\n".format(
                         seq_id, current_homopolymer_start_idx + 1, current_homopolymer_base, current_homopolymer_length))
                     sys.stderr.flush()
 
