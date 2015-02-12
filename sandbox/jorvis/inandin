@@ -2,6 +2,9 @@
 
 use strict;
 
+# Change to 0 to ignore case
+my $CASE_SENSITIVE = 1;
+
 unless ( scalar @ARGV == 4 ) {
     print STDERR "USAGE: $0 file1 column file2 column\n\n";
     exit(1);
@@ -35,6 +38,8 @@ sub read_file {
     while (my $line = <$ifh> ) {
         next if ( $line =~ /^\s*$/ );
         chomp $line;
+
+        $line = lc($line) if $CASE_SENSITIVE == 0;
         
         my @cols = split('\t', $line);
         
