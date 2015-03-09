@@ -66,6 +66,9 @@ def main():
     ## convert SAM to BAM
     run_command("samtools view -bS {0}.sam > {0}.bam".format(args.output_base))
 
+    ## delete the SAM
+    run_command("rm {0}.sam".format(args.output_base))
+
 def run_command(cmd):
     print("INFO: Running command: {0}",format(cmd), flush=True)
     return_code = subprocess.call(cmd, shell=True)
