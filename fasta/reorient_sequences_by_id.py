@@ -32,7 +32,7 @@ import biocodeutils
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Reverse or reverse-complement selected sequences within a multi-FASTA')
 
     ## output file to be written
     parser.add_argument('-f', '--fasta_file', type=str, required=True, help='Path to an input FASTA file' )
