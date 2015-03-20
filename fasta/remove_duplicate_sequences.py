@@ -28,7 +28,7 @@ import hashlib
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Read a multi-FASTA file sequence and remove duplicates (by MD5 hash)')
 
     ## output file to be written
     parser.add_argument('-i', '--fasta_file', type=str, required=True, help='Path to an input FASTA file' )

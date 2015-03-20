@@ -39,7 +39,7 @@ import biocodeutils
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Split multi-FASTA file into separate protein and nucleotide files')
 
     ## output file to be written
     parser.add_argument('-i', '--input', type=str, required=True, help='Path to an input FASTA file' )

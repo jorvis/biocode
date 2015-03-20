@@ -22,7 +22,7 @@ import biocodeutils
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Merge masked FASTA files')
 
     ## output file to be written
     parser.add_argument('fasta_files', metavar='N', type=str, nargs='+', help='Pass one or more FASTA files')

@@ -16,7 +16,7 @@ import re
 import sys
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Filter FASTQ file by N content')
 
     ## output file to be written
     parser.add_argument('-l', '--left', type=str, required=False, help='FASTQ: Left (R1) mate pair file' )
