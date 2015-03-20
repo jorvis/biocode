@@ -27,7 +27,7 @@ import biocodegff
 import biocodeutils
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Convert GenBank flat files to GFF3 format')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input GBK file' )

@@ -9,7 +9,7 @@ import gzip
 import argparse
 
 def interface():
-	args = argparse.ArgumentParser()
+	args = argparse.ArgumentParser(description="Interleave two FASTQ files")
 	args.add_argument('-l', '--left-input',
 		help='The first input file in fastq format.')
 

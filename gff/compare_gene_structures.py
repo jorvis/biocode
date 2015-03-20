@@ -103,7 +103,7 @@ import sys
 
 
 def interface():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Compare two GFF3 files and generate PPV and SN')
     parser.add_argument('-a1', '--annotation_1',type=str, required=True,
 		      help='The first annotation file.')
     parser.add_argument('-a2', '--annotation_2',type=str, required=False,

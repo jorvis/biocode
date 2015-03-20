@@ -25,7 +25,7 @@ import os
 import sys
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Split a large FASTA file into new evenly sized files')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input FASTA file to be read' )

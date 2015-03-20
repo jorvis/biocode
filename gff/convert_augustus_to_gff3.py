@@ -60,7 +60,7 @@ FO082871        AUGUSTUS        transcription_end_site  18816   18816   .       
 '''
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Convert native (GTF) or GFF output from Augustus into GFF3 format')
 
     ## output file to be written
     parser.add_argument('-i', '--input', type=str, required=True, help='Path to a GFF file created by Augustus' )

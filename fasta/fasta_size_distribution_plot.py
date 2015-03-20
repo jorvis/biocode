@@ -43,7 +43,7 @@ def get_legend_labels(label_arg, file_count):
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Generate FASTA file(s) size distribution plot')
 
     parser.add_argument('fasta_files', metavar='N', type=str, nargs='+', help='Pass one or more FASTA files')
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
