@@ -76,7 +76,10 @@ def main():
 
     for line in open(args.input):
         if line.startswith("#"):
-            current_gene_comment_lines.append(line)
+            if line.startswith("##FASTA"):
+                current_gene_comment_lines.append("#{0}".format(line))
+            else:
+                current_gene_comment_lines.append(line)
 
         else:
             cols = line.split("\t")
