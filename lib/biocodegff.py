@@ -186,10 +186,12 @@ def get_gff3_features(gff3_file, assemblies=None):
     in_fasta_section = False
     is_assembly_fasta = False
     current_fasta_id = None
-
+    lnum = 0
+    FASTA_RE = re.compile(r'^\#\#FASTA\s*$')
 
     for line in open(gff3_file):
-        #print("INFO: processing line: {0}".format(line))
+        lnum = lnum + 1
+        #print("INFO: processing line: {0}".format(line) + " in_fasta_section=" + str(in_fasta_section))
 
         if in_fasta_section == True:
             m = re.search('>(\S+)\s*(.*)', line)
@@ -202,6 +204,9 @@ def get_gff3_features(gff3_file, assemblies=None):
                     is_assembly_fasta = False
 
             else:
+                if current_fasta_id is None:
+                    if (len(str(line.rstrip())) > 0):
+                        raise Exception("FASTA parse error - sequence appears without preceding fasta id at line " + str(lnum))
                 if is_assembly_fasta == True:
                     # must be a sequence line for an assembly
                     # python 2.6+ makes string concatenation amortized O(n)
@@ -211,7 +216,7 @@ def get_gff3_features(gff3_file, assemblies=None):
 
             continue
 
-        elif line.startswith("##FASTA"):
+        elif FASTA_RE.match(line):
             # all data to the end of the file must be FASTA
             in_fasta_section = True
             continue
