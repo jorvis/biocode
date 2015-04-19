@@ -108,7 +108,6 @@ def main():
                     bad_chars[ubase] += 1
                 else:
                     bad_chars[ubase] = 1
-
         
         if args.list is not None and len(bad_chars) > 0:
             list_fh.write("{0}".format(seq_id))
