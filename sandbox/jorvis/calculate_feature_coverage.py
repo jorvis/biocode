@@ -103,7 +103,7 @@ def main():
 
     for id in fasta_cov:
         covered_bases = 0
-        
+
         for i in fasta_cov[id]:
             if fasta_cov[id][i] > 0:
                 covered_bases += 1

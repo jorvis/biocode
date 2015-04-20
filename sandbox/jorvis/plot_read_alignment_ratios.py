@@ -32,7 +32,7 @@ import biocodeutils
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
-
+import sys
 
 
 def main():
@@ -45,9 +45,12 @@ def main():
     args = parser.parse_args()
 
     ratios = list()
+
+    # if set to true, the IDs in the mid-range will be printed to STDOUT
+    print_ids = True
     
-    #RATIO_MIN = 0.05
-    #RATIO_MAX = 0.95
+    RATIO_MIN = 0.05
+    RATIO_MAX = 0.95
 
     #RATIO_MIN = 0.125
     #RATIO_MAX = 0.875
@@ -55,8 +58,8 @@ def main():
     #RATIO_MIN = 0.25
     #RATIO_MAX = 0.75
 
-    RATIO_MIN = 0.475
-    RATIO_MAX = 0.525
+    #RATIO_MIN = 0.475
+    #RATIO_MAX = 0.525
     
     LENGTH_CUTOFF = 350
     ratio_min_count = 0
@@ -93,6 +96,8 @@ def main():
                     ratio_max_count += 1
                 else:
                     ratio_bet_count += 1
+                    if print_ids == True:
+                        print(seq_id)
 
                 #print("LOG: Fcorrect:{0} Fwrong:{1} Ftotal:{2} ratio:{3}".format(f_reads_correctly_mapped, f_reads_incorrectly_mapped, f_read_count, correct_ratio))
 
@@ -104,9 +109,9 @@ def main():
     plt.gca().set_yscale("log")
     plt.savefig(args.output_file)
 
-    print("Count of ratios < {0}: {1}".format(RATIO_MIN, ratio_min_count))
-    print("Count where {0} > ratio < {1}: {2}".format(RATIO_MIN, RATIO_MAX, ratio_bet_count))
-    print("Count of ratios > {0}: {1}".format(RATIO_MAX, ratio_max_count))
+    sys.stderr.write("Count of ratios < {0}: {1}\n".format(RATIO_MIN, ratio_min_count))
+    sys.stderr.write("Count where {0} > ratio < {1}: {2}\n".format(RATIO_MIN, RATIO_MAX, ratio_bet_count))
+    sys.stderr.write("Count of ratios > {0}: {1}\n".format(RATIO_MAX, ratio_max_count))
 
     
 
