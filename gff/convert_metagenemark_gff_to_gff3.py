@@ -51,6 +51,7 @@ EXAMPLE OUTPUT:
 855	GeneMark.hmm	mRNA	1	852	.	-	.	ID=HUZ239124.mRNA.1;Parent=HUZ239124.gene.1
 855	GeneMark.hmm	CDS	1	852	.	-	0	ID=HUZ239124.CDS.1;Parent=HUZ239124.mRNA.1
 855	GeneMark.hmm	exon	1	852	.	-	.	ID=HUZ239124.exon.1;Parent=HUZ239124.mRNA.1
+855	GeneMark.hmm	polypeptide	1	852	.	-	.	ID=HUZ239124.polypeptide.1;Parent=HUZ239124.mRNA.1
 
 '''
 
@@ -61,10 +62,15 @@ def main():
     parser.add_argument('-i', '--input', type=str, required=True, help='Path to a GFF file created by Metagenemark' )
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-p', '--prefix', type=str, required=True, help='Prefix to use in ID generation')
+    parser.add_argument('-pf', '--protein_fasta', type=str, required=False, help='Optional protein FASTA to be written')
     args = parser.parse_args()
 
     assemblies = dict()
     current_assembly = None
+
+    # key like 2 = SRS014890.polypeptide.2
+    polypeptide_lookup = dict()
+    writing_protein = False
     
     gene = None
     mRNAs = dict()
@@ -74,11 +80,27 @@ def main():
     fout = open(args.output, mode='wt', encoding='utf-8')
     fout.write("##gff-version 3\n")
 
+    if args.protein_fasta is not None:
+        protein_out = open(args.protein_fasta, mode='wt', encoding='utf-8')
+
     for line in open(args.input):
         if line.startswith("#"):
             if line.startswith("##FASTA"):
                 current_gene_comment_lines.append("#{0}".format(line))
+            elif line.startswith("##end-Protein"):
+                writing_protein = False
+                current_gene_comment_lines.append(line)
             else:
+                if line.startswith("##Protein "):
+                    m = re.match("##Protein (\d+)", line)
+                    if m:
+                        writing_protein = True
+                        protein_out.write(">{0}\n".format(polypeptide_lookup[m.group(1)]))
+                    else:
+                        raise Exception("ERROR: Expected line to match: ##Protein N")
+                elif writing_protein == True:
+                    protein_out.write(line[2:])
+                    
                 current_gene_comment_lines.append(line)
 
         else:
@@ -127,6 +149,12 @@ def main():
             exon = biothings.Exon( id="{0}.exon.{1}".format(args.prefix, gene_num), parent=mRNA.id )
             exon.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
             mRNA.add_exon(exon)
+
+            polypeptide_id = "{0}.polypeptide.{1}".format(args.prefix, gene_num)
+            polypeptide = biothings.Polypeptide( id=polypeptide_id, parent=mRNA.id )
+            polypeptide.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
+            mRNA.add_polypeptide(polypeptide)
+            polypeptide_lookup[gene_num] = polypeptide_id
 
             gene.print_as(fh=fout, source='GeneMark.hmm', format='gff3')
             fout.write( "".join(current_gene_comment_lines) )
