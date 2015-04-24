@@ -87,9 +87,14 @@ def main():
         if line.startswith("#"):
             if line.startswith("##FASTA"):
                 current_gene_comment_lines.append("#{0}".format(line))
+                
             elif line.startswith("##end-Protein"):
                 writing_protein = False
                 current_gene_comment_lines.append(line)
+                
+            # since we're already doing our own header, don't duplicate the old one
+            elif line.startswith("##gff-version"):
+                continue
             else:
                 if line.startswith("##Protein "):
                     m = re.match("##Protein (\d+)", line)
