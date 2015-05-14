@@ -271,6 +271,8 @@ def get_gff3_features(gff3_file, assemblies=None):
         else:
             rstrand = 0
 
+        phase = cols[7]
+
         if cols[2] == 'gene':
             gene = biothings.Gene(id=feat_id, locus_tag=locus_tag)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
@@ -302,8 +304,13 @@ def get_gff3_features(gff3_file, assemblies=None):
             features[feat_id] = exon
 
         elif cols[2] == 'CDS':
-            CDS = biothings.CDS(id=feat_id, parent=parent_feat)
-            CDS.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            if phase == '.':
+                phase = 0
+            else:
+                phase = int(phase)
+
+            CDS = biothings.CDS(id=feat_id, parent=parent_feat, phase=phase)
+            CDS.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand, phase=phase)
             parent_feat.add_CDS(CDS)
             features[feat_id] = CDS
 

@@ -520,6 +520,11 @@ class CDS( LocatableThing ):
     '''
     SO definition (2013-05-22): "A contiguous sequence which begins with, and includes, a start codon
     and ends with, and includes, a stop codon."
+
+    Note that there is a minor variation from this, in that there is no enforcement or expectation
+    that the sequence coordinates or residues stored begin with a start or end with a stop.  This is
+    so that we can still use this object to represent CDS within partial gene predictions, which may
+    or may not have complete ends.
     '''
     def __init__( self, id=None, locations=None, parent=None, phase=None, length=None, residues=None, annotation=None ):
         super().__init__(locations)
@@ -941,7 +946,11 @@ class RNA( LocatableThing ):
 
         return utrs
 
-    def get_CDS_residues(self):
+    def get_CDS_residues(self, for_translation=False):
+        '''
+        Returns a DNA string representing the CDS based on the coordinate spans.  Note that phase
+        will NOT be respected unless you pass for_translation=True
+        '''
         if len(self.locations) == 0:
             raise Exception("ERROR: RNA.get_CDS_residues() requested but RNA {0} isn't located on anything.".format(self.id))
         elif len(self.locations) > 1:
@@ -950,17 +959,27 @@ class RNA( LocatableThing ):
         loc = self.location()
         segments = list()
 
+        chop = None
+
         # these MUST be handled in a sorted order
-        for cds in sorted(self.CDSs()):
-            segments.append(cds.get_residues())
+        sorted_cds = sorted(self.CDSs())
+        for cds in sorted_cds:
+            cds_segment = cds.get_residues()
+            segments.append(cds_segment)
 
         if loc.strand == -1:
             segments = reversed(segments)
+            chop = sorted_cds[-1].phase
+        else:
+            chop = sorted_cds[0].phase
 
         residues = ''
 
         for segment in segments:
             residues += segment
+
+        if chop is not None:
+            residues = residues[chop:]
 
         return residues
 
