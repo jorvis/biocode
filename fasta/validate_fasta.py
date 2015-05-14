@@ -41,7 +41,7 @@ import biocodeutils
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Reports base/residue composition of a FASTA file')
+    parser = argparse.ArgumentParser( description='Performs selected validation of a FASTA file')
 
     RESIDUE_LINE_LENGTH_LIMIT = 60
 
