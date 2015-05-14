@@ -18,6 +18,7 @@ Here's what it does check for:
 - WARNING: Residue lines > 60bp
 - WARNING: Comment lines with # (most parsers will fail to handle this)
 - WARNING: Homopolymers of length > --homopolymer_limit which are not Ns
+- WARNING: Internal stops (*) detected in protein FASTA (if --check_internal_stops is passed)
 
 Input: 
 
@@ -51,6 +52,8 @@ def main():
     parser.add_argument('-l', '--input_list', type=str, required=False, default=None, help='Optional path to a list of list of input files' )
     parser.add_argument('-erc', '--expected_record_count', type=int, required=False, default=None, help='Optional count of records expected in the input.  An exception is raised if this is not matched.' )
     parser.add_argument('-hl', '--homopolymer_limit', type=int, required=False, default=None, help='Issues a warning for any sequences with a homopolymer of length > this' )
+    parser.add_argument('-cis', '--check_internal_stops', dest='check_internal_stops', action='store_true', help='Meant when processing protein files, checks for internal * characters')
+    parser.set_defaults(check_internal_stops=False)
     args = parser.parse_args()
 
     ## output will either be a file or STDOUT
@@ -79,6 +82,7 @@ def main():
         long_line_count = 0
         current_seq_length = None
         current_seq_id = None
+        current_seq = ''
         current_homopolymer_base = None
         current_homopolymer_length = 0
         
@@ -94,6 +98,12 @@ def main():
                     fout.write("ERROR: Entry without residues found just before line {0} of {1}\n".format(line_number, ifile))
                     error_count += 1
 
+                if args.check_internal_stops == True:
+                    if '*' in current_seq[0:-1]:
+                        fout.write("WARNING: Internal stops found within {0} of {1}\n".format(current_seq_id, ifile))
+                        warning_count += 1
+                
+                current_seq = ''
                 current_seq_length = 0
                 m = re.match(">(\S+)", line)
                 if m:
@@ -116,6 +126,7 @@ def main():
                 # residue line
                 total_residues += len(line)
                 current_seq_length += len(line)
+                current_seq += line
 
                 if args.homopolymer_limit is not None:
                     for base in line:
