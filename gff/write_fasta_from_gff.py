@@ -83,7 +83,7 @@ def main():
                 else:
                     fout.write("\n")
                 
-                coding_seq = mRNA.get_CDS_residues()
+                coding_seq = mRNA.get_CDS_residues(for_translation=True)
 
                 if args.check_ends == True:
                     # check the starting codon
