@@ -36,6 +36,7 @@ def main():
     parser.add_argument('-tm', '--tmhmm_raw_list', type=str, required=False, help='List of raw files from a tmhmm search' )
     parser.add_argument('-d', '--hmm_db', type=str, required=False, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=False, help='SQLite3 db with UNIPROT/SWISSPROT information' )
+    parser.add_argument('-ur', '--uniref_db', type=str, required=False, help='SQLite3 db with UNIREF information' )
     parser.add_argument('-a', '--format', type=str, required=False, default='tab', help='Output format.  Current options are: "tab", "fasta", "gff3"' )
     parser.add_argument('-s', '--source_gff', type=str, required=False, help='Source GFF file from which proteins were derived.  Required if you want to export any format other than tab-delimited.' )
     parser.add_argument('-e', '--blast_eval_cutoff', type=float, required=False, default=1e-5, help='Skip BLAST hits unless they have an E-value at least as low as this' )
@@ -94,7 +95,11 @@ def main():
 
     if args.blast_uniref100_btab_list is not None:
         print("INFO: parsing BLAST (UniRef100) evidence")
-        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.blast_uniref100_btab_list, args.blast_eval_cutoff)
+        # connection to the UniRef SQLite3 database
+        usp_db_conn = sqlite3.connect(args.uniref_db)
+        usp_db_curs = usp_db_conn.cursor()
+        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.blast_uniref100_btab_list, usp_db_curs, args.blast_eval_cutoff)
+        usp_db_curs.close()
         
     if args.tmhmm_raw_list is not None:
         print("INFO: parsing TMHMM evidence")
@@ -548,7 +553,7 @@ def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
             if len(cols) == 5 and cols[2] == 'TMhelix':
                 current_helix_count += 1
 
-def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, eval_cutoff ):
+def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, cursor, eval_cutoff ):
     '''
     Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
     each with Annotation evidence where appropriate.  Only attaches evidence if
@@ -585,7 +590,15 @@ def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, eval_cutof
 
                 # get the accession from the cols[5]
                 #  then process for known accession types
-                accession = cols[5]
+                accession = None
+                
+                m = re.search("RepID\=(\S+)", cols[15])
+                if m:
+                    accession = m.group(1)
+                else:
+                    raise Exception("ERROR: Unexpected product format in UniRef BLAST results: {0}".format(cols[15]))
+
+                assertions = get_uspdb_annot( accession, cursor )
 
                 # save it, unless the gene product name has already changed from the default
                 if annot.product_name == DEFAULT_PRODUCT_NAME:
@@ -595,10 +608,24 @@ def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, eval_cutof
                     if m:
                         annot.product_name = m.group(1)
                     else:
-                        raise Exception("ERROR: Unexpected product format in UniRef100 BLAST results: {0}".format(cols[15]))
+                        raise Exception("ERROR: Unexpected product format in UniRef BLAST results: {0}".format(cols[15]))
 
                     log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to UniRef100 accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
 
+                # if no EC numbers have been set, they can inherit from this
+                if len(annot.ec_numbers) == 0:
+                    for ec_annot in get_uspdb_ec_nums( accession, cursor ):
+                        annot.add_ec_number(ec_annot)
+
+                # if no GO IDs have been set, they can inherit from this
+                if len(annot.go_annotations) == 0:
+                    for go_annot in get_uspdb_go_terms( accession, cursor ):
+                        annot.add_go_annotation(go_annot)
+
+                # if no gene symbol has been set, it can inherit from this
+                if annot.gene_symbol is None:
+                    annot.gene_symbol = assertions['symbol']
+                    
                 # remember the ID we just saw
                 last_qry_id = this_qry_id
 
