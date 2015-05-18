@@ -15,9 +15,7 @@ The first is the accession and later in the description contains the link to the
 
   A8PWR2_MALGO
 
-Entries for these are found in the XXX file.
-
-
+Entries for these are found in the uniprot_trembl.dat.gz file.
 
 We're primarily looking for the following attributes:
   - id
@@ -158,6 +156,8 @@ def main():
             if record_count % 1000 == 0:
                 print("{0} records processed ...".format(record_count))
                 conn.commit()
+                # for debugging only
+                break
             
         elif line.startswith("ID"):
             id = line.split()[1]
