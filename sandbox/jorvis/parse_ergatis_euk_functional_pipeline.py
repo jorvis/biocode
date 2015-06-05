@@ -96,10 +96,10 @@ def main():
     if args.blast_uniref100_btab_list is not None:
         print("INFO: parsing BLAST (UniRef100) evidence")
         # connection to the UniRef SQLite3 database
-        usp_db_conn = sqlite3.connect(args.uniref_db)
-        usp_db_curs = usp_db_conn.cursor()
-        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.blast_uniref100_btab_list, usp_db_curs, args.blast_eval_cutoff)
-        usp_db_curs.close()
+        uniref_db_conn = sqlite3.connect(args.uniref_db)
+        uniref_db_curs = uniref_db_conn.cursor()
+        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.blast_uniref100_btab_list, uniref_db_curs, args.blast_eval_cutoff)
+        uniref_db_curs.close()
         
     if args.tmhmm_raw_list is not None:
         print("INFO: parsing TMHMM evidence")
@@ -598,7 +598,7 @@ def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, cursor, ev
                 else:
                     raise Exception("ERROR: Unexpected product format in UniRef BLAST results: {0}".format(cols[15]))
 
-                assertions = get_uspdb_annot( accession, cursor )
+                assertions = get_uniref_annot( accession, cursor )
 
                 # save it, unless the gene product name has already changed from the default
                 if annot.product_name == DEFAULT_PRODUCT_NAME:
@@ -614,12 +614,12 @@ def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, cursor, ev
 
                 # if no EC numbers have been set, they can inherit from this
                 if len(annot.ec_numbers) == 0:
-                    for ec_annot in get_uspdb_ec_nums( accession, cursor ):
+                    for ec_annot in get_uniref_ec_nums( accession, cursor ):
                         annot.add_ec_number(ec_annot)
 
                 # if no GO IDs have been set, they can inherit from this
                 if len(annot.go_annotations) == 0:
-                    for go_annot in get_uspdb_go_terms( accession, cursor ):
+                    for go_annot in get_uniref_go_terms( accession, cursor ):
                         annot.add_go_annotation(go_annot)
 
                 # if no gene symbol has been set, it can inherit from this
@@ -670,8 +670,40 @@ def parse_hmm_evidence( log_fh, polypeptides, htab_list, cursor ):
                 for go_annot in get_hmmdb_go_terms( accession, cursor ):
                     annot.add_go_annotation(go_annot)
 
+                # do we have a gene symbol for this accession?
+                annot.gene_symbol = get_hmmdb_gene_symbol( accession, cursor )
+
+                # do we have an EC number?
+                for ec_annot in get_hmmdb_ec_nums( accession, cursor ):
+                    annot.add_ec_number(ec_annot)
+
                 ## remember the ID we just saw
                 last_qry_id = this_qry_id
+
+
+def get_uniref_annot( acc, c ):
+    """
+    This returns a dict of any annotation assertions for a given accession
+    in which there will only be one.  Examples: organism name, gene symbol, etc.
+
+    Other methods pull GO terms and EC numbers
+    """
+    qry = """
+          SELECT us.organism, us.symbol
+            FROM uniref us
+           WHERE us.id = ?
+          """
+    c.execute(qry, (acc,))
+    #print("DEBUG: executing annot query where accession = ({0})".format(acc))
+
+    assertions = { 'organism':None, 'symbol':None }
+
+    for row in c:
+        assertions['organism'] = row[0]
+        assertions['symbol'] = row[1]
+        break
+
+    return assertions
 
 
 def get_uspdb_annot( acc, c ):
@@ -700,9 +732,29 @@ def get_uspdb_annot( acc, c ):
     return assertions
 
 
+def get_uniref_ec_nums( acc, c ):
+    """
+    This returns a list of bioannotation:ECAnnotation objects
+    """
+    qry = """
+          SELECT us_ec.ec_num
+            FROM uniref_ec us_ec
+           WHERE us_ec.id = ?
+          """
+    c.execute(qry, (acc,))
+
+    ec_annots = list()
+
+    for row in c:
+        ec = bioannotation.ECAnnotation(number=row[0])
+        ec_annots.append(ec)
+
+    return ec_annots
+
+
 def get_uspdb_ec_nums( acc, c ):
     """
-    This returns a lsit of bioannotation:ECAnnotation objects
+    This returns a list of bioannotation:ECAnnotation objects
     """
     qry = """
           SELECT us_ec.ec_num
@@ -720,6 +772,24 @@ def get_uspdb_ec_nums( acc, c ):
 
     return ec_annots
 
+def get_uniref_go_terms( acc, c ):
+    """
+    This returns a list of bioannotation:GOAnnotation objects
+    """
+    qry = """
+          SELECT us_go.go_id
+            FROM uniref_go us_go
+           WHERE us_go.id = ?
+          """
+    c.execute(qry, (acc,))
+
+    go_annots = list()
+    
+    for row in c:
+        go = bioannotation.GOAnnotation(go_id=row[0], ev_code='ISA', with_from=acc)
+        go_annots.append(go)
+    
+    return go_annots
 
 def get_uspdb_go_terms( acc, c ):
     """
@@ -742,6 +812,34 @@ def get_uspdb_go_terms( acc, c ):
     return go_annots
 
     
+def get_hmmdb_ec_nums( acc, c ):
+    """
+    This returns a list of bioannotation:ECAnnotation objects
+    """
+    qry = "SELECT he.ec_id FROM hmm_ec he JOIN hmm ON he.hmm_id=hmm.id WHERE hmm.accession = ?"
+    c.execute(qry, (acc,))
+
+    ec_annots = list()
+
+    for row in c:
+        ec = bioannotation.ECAnnotation(number=row[0])
+        ec_annots.append(ec)
+    
+    return ec_annots
+
+def get_hmmdb_gene_symbol( acc, c):
+    """
+    This returns a list of bioannotation:ECAnnotation objects
+    """
+    qry = "SELECT gene_symbol FROM hmm WHERE accession = ?"
+    c.execute(qry, (acc,))
+
+    sym = None
+
+    for row in c:
+        sym = row[0]
+
+    return sym
 
 
 def get_hmmdb_go_terms( acc, c ):
