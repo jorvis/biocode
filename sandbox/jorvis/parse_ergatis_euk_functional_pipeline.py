@@ -7,6 +7,7 @@ import bioannotation
 import biocodeutils
 import biothings
 import biocodegff
+import math
 import sqlite3
 import re
 from collections import defaultdict
@@ -30,9 +31,12 @@ def main():
     parser.add_argument('-f', '--input_fasta', type=str, required=True, help='Protein FASTA file of source molecules' )
     parser.add_argument('-m', '--hmm_htab_list', type=str, required=False, help='List of htab files from hmmpfam3' )
     parser.add_argument('-bs', '--blast_sprot_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/SWISS-PROT' )
+    parser.add_argument('-rs', '--rapsearch_sprot_btab_list', type=str, required=False, help='List of m8 files from RAPSEARCH2 against UniProtKB/SWISS-PROT' )
     parser.add_argument('-bt', '--blast_trembl_btab_list', type=str, required=False, help='List of btab files from BLAST against UniProtKB/Trembl' )
     parser.add_argument('-bk', '--blast_kegg_btab_list', type=str, required=False, help='List of btab files from BLAST against KEGG' )
     parser.add_argument('-bu100', '--blast_uniref100_btab_list', type=str, required=False, help='List of btab files from BLAST against UniRef100' )
+    parser.add_argument('-ru100', '--rapsearch_uniref100_btab_list', type=str, required=False, help='List of m8 files from RAPSEARCH2 against UniRef100' )
+    parser.add_argument('-u100f', '--uniref100_fasta', type=str, required=False, help='Only required if also passing RAPSEARCH2 against UniRef100 evidence' )
     parser.add_argument('-tm', '--tmhmm_raw_list', type=str, required=False, help='List of raw files from a tmhmm search' )
     parser.add_argument('-d', '--hmm_db', type=str, required=False, help='SQLite3 db with HMM information' )
     parser.add_argument('-u', '--uniprot_sprot_db', type=str, required=False, help='SQLite3 db with UNIPROT/SWISSPROT information' )
@@ -47,6 +51,11 @@ def main():
     args = parser.parse_args()
 
     check_arguments(args)
+
+    # If --rapsearch_uniref100_btab_list passed, --uniref100_fasta is required
+    if args.rapsearch_uniref100_btab_list is not None:
+        if args.uniref100_fasta is None:
+            raise Exception("ERROR: --uniref100_fasta required if --rapsearch_uniref100_btab_list is passed")
 
     sources_log_fh = open("{0}.sources.log".format(args.output_file), 'wt')
     
@@ -82,7 +91,18 @@ def main():
         usp_db_conn = sqlite3.connect(args.uniprot_sprot_db)
         usp_db_curs = usp_db_conn.cursor()
         print("INFO: parsing BLAST (SWISS-PROT) evidence")
-        parse_sprot_blast_evidence( sources_log_fh, polypeptides, polypeptide_blast_org, args.blast_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff )
+        parse_sprot_blast_evidence( sources_log_fh, polypeptides, polypeptide_blast_org, args.blast_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff, 'blast' )
+        usp_db_curs.close()
+
+    if args.rapsearch_sprot_btab_list is not None:
+        if args.uniprot_sprot_db is None:
+            raise Exception("ERROR: You specified RAPSEARCH2 evidence vs UnitProt/SwissProt results but not the db with the -u option")
+        
+        # connection to the UniProt_Sprot SQLite3 database
+        usp_db_conn = sqlite3.connect(args.uniprot_sprot_db)
+        usp_db_curs = usp_db_conn.cursor()
+        print("INFO: parsing RAPSEARCH2 (SWISS-PROT) evidence")
+        parse_sprot_blast_evidence( sources_log_fh, polypeptides, polypeptide_blast_org, args.rapsearch_sprot_btab_list, usp_db_curs, args.blast_eval_cutoff, 'rapsearch2' )
         usp_db_curs.close()
 
     if args.blast_trembl_btab_list is not None:
@@ -98,7 +118,15 @@ def main():
         # connection to the UniRef SQLite3 database
         uniref_db_conn = sqlite3.connect(args.uniref_db)
         uniref_db_curs = uniref_db_conn.cursor()
-        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.blast_uniref100_btab_list, uniref_db_curs, args.blast_eval_cutoff)
+        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.blast_uniref100_btab_list, uniref_db_curs, args.blast_eval_cutoff, 'blast', args.uniref100_fasta)
+        uniref_db_curs.close()
+
+    if args.rapsearch_uniref100_btab_list is not None:
+        print("INFO: parsing RAPSEARCH2 (UniRef100) evidence")
+        # connection to the UniRef SQLite3 database
+        uniref_db_conn = sqlite3.connect(args.uniref_db)
+        uniref_db_curs = uniref_db_conn.cursor()
+        parse_uniref100_blast_evidence(sources_log_fh, polypeptides, args.rapsearch_uniref100_btab_list, uniref_db_curs, args.blast_eval_cutoff, 'rapsearch2', args.uniref100_fasta)
         uniref_db_curs.close()
         
     if args.tmhmm_raw_list is not None:
@@ -188,8 +216,8 @@ def write_gff3_results( f, polypeptides, assemblies, features, genomic_fasta ):
         for gene in assemblies[assembly_id].genes():
             for mRNA in gene.mRNAs():
                 # the polypeptide ID needs to be the same as the mRNA one but with the type changed
-                #polypeptide_id = mRNA.id.replace('mRNA', 'polypeptide')
-                polypeptide_id = mRNA.id
+                polypeptide_id = mRNA.id.replace('mRNA', 'polypeptide')
+                #polypeptide_id = mRNA.id
                 
                 # add polypeptides to the mRNAs
                 if polypeptide_id in polypeptides:
@@ -406,7 +434,7 @@ def parse_trembl_blast_evidence(polypeptides, blast_list, eval_cutoff):
                 last_qry_id = this_qry_id
 
 
-def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cursor, eval_cutoff ):
+def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cursor, eval_cutoff, algorithm ):
     '''
     Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
     each with Annotation evidence where appropriate.  Only attaches evidence if
@@ -414,16 +442,33 @@ def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cur
 
     Currently only considers the top BLAST hit for each query.
     '''
+    if algorithm not in ['blast', 'rapsearch2']:
+        raise Exception("algorithm argument must be either blast or rapsearch2")
+    
     for file in biocodeutils.read_list_file(blast_list):
         last_qry_id = None
         
         for line in open(file):
+            # 0 indexing is faster than startswith()
+            if line[0] == '#':
+                continue
+            
             line = line.rstrip()
             cols = line.split("\t")
             this_qry_id = cols[0]
 
+            if algorithm == 'blast':
+                e_value = float(cols[19])
+            elif algorithm == 'rapsearch2':
+                ## rapsearch2 can actually report values outside of python's double range.  Handle these 
+                try:
+                    e_value = math.pow(10, float(cols[10]))
+                except OverflowError:
+                    print("WARN: couldn't handle E-value math on the following line (setting to 0):\n{0}".format(line))
+                    e_value = 0
+
             # skip this line if it doesn't meet the cutoff
-            if float(cols[19]) > eval_cutoff:
+            if e_value > eval_cutoff:
                 continue
 
             # the BLAST hits are sorted already with the top hit for each query first
@@ -432,7 +477,10 @@ def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cur
 
                 # get the accession from the cols[5]
                 #  then process for known accession types
-                accession = cols[5]
+                if algorithm == 'blast':
+                    accession = cols[5]
+                elif algorithm == 'rapsearch2':
+                    accession = cols[1]
 
                 if accession.startswith('sp|'):
                     # pluck the second part out of this:
@@ -441,19 +489,22 @@ def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cur
 
                 assertions = get_uspdb_annot( accession, cursor )
                 blast_org[this_qry_id] = assertions['organism']
-                    
+
                 # save it, unless the gene product name has already changed from the default
                 if annot.product_name == DEFAULT_PRODUCT_NAME:
-                    # current hack until DB is updated:
-                    # some products look like this:
-                    #    Coatomer subunit gamma-2 OS=Bos taurus GN=COPG2 PE=2 SV=1
-                    # take off everything after the OS=
-                    m = re.search("(.+) OS=", cols[15])
+                    if algorithm == 'blast':
+                        # current hack until DB is updated:
+                        # some products look like this:
+                        #    Coatomer subunit gamma-2 OS=Bos taurus GN=COPG2 PE=2 SV=1
+                        # take off everything after the OS=
+                        m = re.search("(.+) OS=", cols[15])
 
-                    if m:
-                        annot.product_name = m.group(1)
-                    else:
-                        annot.product_name = cols[15]
+                        if m:
+                            annot.product_name = m.group(1)
+                        else:
+                            annot.product_name = cols[15]
+                    elif algorithm == 'rapsearch2':
+                        annot.product_name = assertions['product']
 
                     log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to SPROT accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
 
@@ -553,7 +604,7 @@ def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
             if len(cols) == 5 and cols[2] == 'TMhelix':
                 current_helix_count += 1
 
-def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, cursor, eval_cutoff ):
+def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, cursor, eval_cutoff, algorithm, uniref100_fasta_path ):
     '''
     Reads a list file of NCBI BLAST evidence and a dict of polypeptides, populating
     each with Annotation evidence where appropriate.  Only attaches evidence if
@@ -561,57 +612,93 @@ def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, cursor, ev
 
     Currently only considers the top BLAST hit for each query.
     '''
+    if algorithm not in ['blast', 'rapsearch2']:
+        raise Exception("algorithm argument must be either blast or rapsearch2")
+
+    ## need to load the UniRef100 to TREMBL accession lookup from teh FASTA
+    # like UniRef100_K1T359 -> K1T359_9ZZZZ
+    uniref2acc = dict()
+    print("INFO: parsing UniRef100 FASTA headers for annotation")
+    if algorithm == 'rapsearch2':
+        for line in open(uniref100_fasta_path):
+            if line[0] == '>':
+                m = re.match("\>(\S+) (.+) n=.+RepID=(\S+)", line)
+                if m:
+                    uniref2acc[m.group(1)] = {'acc': m.group(3), 'prod': m.group(2)}
+    
     for file in biocodeutils.read_list_file(blast_list):
         last_qry_id = None
         
         for line in open(file):
+            # 0 indexing is faster than startswith()
+            if line[0] == '#':
+                continue
+            
             line = line.rstrip()
             cols = line.split("\t")
             this_qry_id = cols[0]
 
             # We're going to ignore any lines which have a few keywords in the name
             # First character left off for initcap reasons
-            skip_products = ['ncharacterized', 'ypothetical', 'enomic scaffold']
-            skip = False
-            for keyword in skip_products:
-                if keyword in cols[15]:
-                    skip = True
+            if algorithm == 'blast':
+                skip_products = ['ncharacterized', 'ypothetical', 'enomic scaffold']
+                skip = False
+                for keyword in skip_products:
+                    if keyword in cols[15]:
+                        skip = True
 
-            if skip == True:
-                continue
+                if skip == True:
+                    continue
+
+            if algorithm == 'blast':
+                e_value = float(cols[19])
+            elif algorithm == 'rapsearch2':
+                ## rapsearch2 can actually report values outside of python's double range.  Handle these 
+                try:
+                    e_value = math.pow(10, float(cols[10]))
+                except OverflowError:
+                    print("WARN: couldn't handle E-value math on the following line (setting to 0):\n{0}".format(line))
+                    e_value = 0
 
             # skip this line if it doesn't meet the cutoff
-            if float(cols[19]) > eval_cutoff:
+            if e_value > eval_cutoff:
                 continue
 
             # the BLAST hits are sorted already with the top hit for each query first
             if last_qry_id != this_qry_id:
                 annot = polypeptides[this_qry_id].annotation
 
-                # get the accession from the cols[5]
-                #  then process for known accession types
+                # get the accession then process for known accession types
                 accession = None
-                
-                m = re.search("RepID\=(\S+)", cols[15])
-                if m:
-                    accession = m.group(1)
-                else:
-                    raise Exception("ERROR: Unexpected product format in UniRef BLAST results: {0}".format(cols[15]))
+
+                if algorithm == 'blast':
+                    # UniRef100_K1T359 -> K1T359_9ZZZZ
+                    m = re.search("RepID\=(\S+)", cols[15])
+                    if m:
+                        accession = m.group(1)
+                    else:
+                        raise Exception("ERROR: Unexpected product format in UniRef BLAST results: {0}".format(cols[15]))
+                elif algorithm == 'rapsearch2':
+                    accession = uniref2acc[cols[1]]['acc']
 
                 assertions = get_uniref_annot( accession, cursor )
 
                 # save it, unless the gene product name has already changed from the default
                 if annot.product_name == DEFAULT_PRODUCT_NAME:
-                    # these hits look like this:
-                    #  AD-specific glutamate dehydrogenase n=1 Tax=Ceriporiopsis subvermispora (strain B) RepID=M2RLB9_CERS8
-                    m = re.match("(.+) n\=.+", cols[15])
-                    if m:
-                        annot.product_name = m.group(1)
-                    else:
-                        raise Exception("ERROR: Unexpected product format in UniRef BLAST results: {0}".format(cols[15]))
+                    if algorithm == 'blast':
+                        # these hits look like this:
+                        #  AD-specific glutamate dehydrogenase n=1 Tax=Ceriporiopsis subvermispora (strain B) RepID=M2RLB9_CERS8
+                        m = re.match("(.+) n\=.+", cols[15])
+                        if m:
+                            annot.product_name = m.group(1)
+                        else:
+                            raise Exception("ERROR: Unexpected product format in UniRef BLAST results: {0}".format(cols[15]))
 
-                    log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to UniRef100 accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
-
+                        log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to UniRef100 accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
+                        
+                    elif algorithm == 'rapsearch2':
+                        annot.product_name = uniref2acc[cols[1]]['prod']
+                        
                 # if no EC numbers have been set, they can inherit from this
                 if len(annot.ec_numbers) == 0:
                     for ec_annot in get_uniref_ec_nums( accession, cursor ):
@@ -714,7 +801,7 @@ def get_uspdb_annot( acc, c ):
     Other methods pull GO terms and EC numbers
     """
     qry = """
-          SELECT us.organism, us.symbol
+          SELECT us.organism, us.symbol, us.full_name
             FROM uniprot_sprot us
                  JOIN uniprot_sprot_acc us_acc ON us.id = us_acc.id
            WHERE us_acc.accession = ?
@@ -727,6 +814,7 @@ def get_uspdb_annot( acc, c ):
     for row in c:
         assertions['organism'] = row[0]
         assertions['symbol'] = row[1]
+        assertions['product'] = row[2]
         break
 
     return assertions
