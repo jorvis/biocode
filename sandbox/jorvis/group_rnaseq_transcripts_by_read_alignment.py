@@ -55,8 +55,10 @@ TO ADD:
 """
 
 import argparse
+from itertools import repeat
 import os
 import re
+import sys
 #import pypy (not ready for py3.4 yet)
 
 
@@ -92,8 +94,6 @@ def main():
         elif other_transcript == '=':
             continue
 
-        ## first parse through and 
-
         m = re.match("(.+)__[12]$", ref_read)
         if m:
             ref_read_base = m.group(1)
@@ -106,6 +106,30 @@ def main():
 
         transcripts = sorted([ref_transcript, other_transcript])
 
+        rstart = cols[3]
+        cigar = cols[5]
+
+        # query
+        qstart = 1
+        m = re.match("^(\d+)[SH]", cigar)
+        if m:
+            qstart += int(m.group(1))
+
+        qlen = 0
+        for m in re.finditer("(\d+)[M=XI]", cigar):
+            qlen += int(m.group(1))
+
+        qend = qstart + qlen - 1
+
+        # reference
+        rstart = int(cols[3])
+        rlen = 0
+        for m in re.finditer("(\d+)[M=XDN]", cigar):
+            rlen += int(m.group(1))
+
+        rend = rstart + rlen - 1
+        
+
         if transcripts[0] not in pairings:
             pairings[transcripts[0]] = dict()
             
@@ -113,7 +137,13 @@ def main():
             pairings[transcripts[0]][transcripts[1]] = list()
 
         if ref_read_base not in pairings[transcripts[0]][transcripts[1]]:
-            pairings[transcripts[0]][transcripts[1]].append(ref_read_base)
+            pairings[transcripts[0]][transcripts[1]].append( {
+                'id': ref_read_base, 'qstart':qstart, 'qend':qend, 'rstart':rstart, 'rend':rend
+            } )
+            
+            #print("DEBUG: t1:{0} t2:{1} rend:{2}, qstart:{3}, qend:{4}, rstart:{5}, rend:{6}".format(transcripts[0], transcripts[1],
+            #    ref_read_base, qstart, qend, rstart, rend
+            #))
 
     print("INFO: Creating transitive groups based on successful pairings")
 
@@ -121,10 +151,11 @@ def main():
     # Each element here is a list of transcripts in that group
     groups = list()
     
-    
     for transcript1 in pairings:
         for transcript2 in pairings[transcript1]:
-            if len(pairings[transcript1][transcript2]) >= args.min_mate_pair_count:
+
+            print("DEBUG: Check transcript {0} vs {1}, which has {2} bridges".format(transcript1, transcript2, len(pairings[transcript1][transcript2])))
+            if len(pairings[transcript1][transcript2]) >= args.min_mate_pair_count and meets_coverage(pairings[transcript1][transcript2]):
                 pairings_over_threshold += 1
 
                 group_found = False
@@ -148,6 +179,26 @@ def main():
         ofh.write("\t".join(group))
         ofh.write("\n")
 
+
+def meets_coverage(pairings):
+    min_bp_coverage = 300
+    max_transcript_size = 40000
+
+    # non of our transcripts are over 40k
+    qcovered = list(repeat(0,max_transcript_size))
+
+    for pair in pairings:
+        for i in range(pair['qstart'] - 1, pair['qend']):
+            print("DEBUG:\tqstart:{0}\tqend:{1}".format(pair['qstart'], pair['qend']))
+            qcovered[i] = 1
+
+    qbases_covered = qcovered.count(1)
+    print("DEBUG:\t{0} bases covered".format(qbases_covered))
+
+    if qbases_covered > min_bp_coverage:
+        return True
+    else:
+        return False
 
 if __name__ == '__main__':
     main()
