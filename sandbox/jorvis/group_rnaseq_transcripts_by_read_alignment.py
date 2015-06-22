@@ -188,9 +188,11 @@ def meets_coverage(pairings):
     qcovered = list(repeat(0,max_transcript_size))
 
     for pair in pairings:
-        for i in range(pair['qstart'] - 1, pair['qend']):
-            print("DEBUG:\tqstart:{0}\tqend:{1}".format(pair['qstart'], pair['qend']))
+        for i in range(pair['rstart'] - 1, pair['rend']):
             qcovered[i] = 1
+
+        print("DEBUG:\tqstart:{0}\tqend:{1}\trstart:{2}\trend:{3}".format(pair['qstart'], pair['qend'], pair['rstart'], pair['rend']))
+        print("DEBUG:qcovered now: {0}".format(qcovered.count(1)))
 
     qbases_covered = qcovered.count(1)
     print("DEBUG:\t{0} bases covered".format(qbases_covered))
