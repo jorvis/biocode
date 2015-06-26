@@ -166,6 +166,9 @@ def main():
                 atts[key] = m.group(2)
 
     conn.commit()
+
+    create_indexes(c)
+    
     c.close()
     
 
@@ -319,7 +322,10 @@ def create_tables( cursor ):
               )
     """)
 
-
+def create_indexes( cursor ):
+    cursor.execute("CREATE INDEX idx_hmm__accession ON hmm(accession)")
+    cursor.execute("CREATE INDEX idx_hmm_ec__hmm_id ON hmm_ec(hmm_id)")
+    cursor.execute("CREATE INDEX idx_hmm_go__hmm_id ON hmm_go(hmm_id)")
 
 
 if __name__ == '__main__':
