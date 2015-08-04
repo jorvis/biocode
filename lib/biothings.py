@@ -851,7 +851,27 @@ class Polypeptide( LocatableThing ):
         ## this should be an instance of FunctionalAnnotation from bioannotation.py
         self.annotation = annotation
 
+class PolypeptideSet():
+    '''
+    This is a convenience class for when operations need to be performed on a set of polypeptides
+    such as writing to a FASTA file.
+    '''
+    def __init__( self, polypeptides=None ):
+        self.polypeptides = polypeptides
 
+        if self.polypeptides is None:
+            self.polypeptides = list()
+
+    def add( self, polypeptide ):
+        self.polypeptides.append( polypeptide )
+
+    def load_from_file(self, file):
+        seqs = biocodeutils.fasta_dict_from_file(file)
+        
+        for seq_id in seqs:
+            polypeptide = Polypeptide(id=seq_id, residues=seqs[seq_id]['s'])
+            self.add(polypeptide)
+        
 class RNA( LocatableThing ):
     '''
     SO definition (2013-05-22): "An attribute describing a sequence consisting of nucleobases
