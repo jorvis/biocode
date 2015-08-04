@@ -17,7 +17,12 @@ of the Sequence Ontology but I found them relevant (or convenient) to include he
 
 Documentation should be shifted from pydoc to:
 http://sphinx-doc.org/
+
+A set of abstract classes are defined first, then the other classes, all within alphabetic order
+within each group.
 '''
+
+
 
 class LocatableThing:
     '''
@@ -404,6 +409,23 @@ class Location:
         self.strand = strand
         self.phase = 0 if phase is None else phase
 
+class MoleculeSet:
+    '''
+    Base class for any Set of different molecule types, such as AssemblySet or PolypeptideSet.
+
+    It is appropriate for use for all classes inheriting from LocatableThing.
+    '''
+    def __init__():
+        # Nothing here yet
+        pass
+
+    def load_from_dict(self, thedict):
+        for id in thedict:
+            self.add(thedict[id])
+
+    #def write_fasta(self):
+        
+        
 
 class Organism:
     '''
@@ -463,12 +485,13 @@ class Assembly( LocatableThing ):
         return self.children['gene']
 
 
-class AssemblySet():
+class AssemblySet( MoleculeSet ):
     '''
     This is a convenience class for when operations need to be performed on a set of contigs/scaffolds
     such as N50 calculation or writing to a FASTA file.
     '''
     def __init__( self, assemblies=None ):
+        super().__init__()
         self.assemblies = assemblies
 
         if self.assemblies is None:
@@ -476,10 +499,6 @@ class AssemblySet():
 
     def add( self, assembly ):
         self.assemblies.append( assembly )
-
-    def load_from_dict(self, thedict):
-        for id in thedict:
-            self.add(thedict[id])
 
     def load_from_file(self, file):
         seqs = biocodeutils.fasta_dict_from_file(file)
@@ -838,8 +857,7 @@ class MatchPart( LocatableThing ):
 
     #    return "\n".join(lines)
 
-
-
+    
 class Polypeptide( LocatableThing ):
     '''
     SO definition (2013-05-22): "A sequence of amino acids linked by peptide bonds which may lack
@@ -855,12 +873,13 @@ class Polypeptide( LocatableThing ):
         ## this should be an instance of FunctionalAnnotation from bioannotation.py
         self.annotation = annotation
 
-class PolypeptideSet():
+class PolypeptideSet( MoleculeSet ):
     '''
     This is a convenience class for when operations need to be performed on a set of polypeptides
     such as writing to a FASTA file.
     '''
     def __init__( self, polypeptides=None ):
+        super().__init__()
         self.polypeptides = polypeptides
 
         if self.polypeptides is None:
@@ -868,10 +887,6 @@ class PolypeptideSet():
 
     def add( self, polypeptide ):
         self.polypeptides.append( polypeptide )
-
-    def load_from_dict(self, thedict):
-        for id in thedict:
-            self.add(thedict[id])
 
     def load_from_file(self, file):
         seqs = biocodeutils.fasta_dict_from_file(file)
