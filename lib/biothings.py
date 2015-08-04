@@ -477,6 +477,10 @@ class AssemblySet():
     def add( self, assembly ):
         self.assemblies.append( assembly )
 
+    def load_from_dict(self, thedict):
+        for id in thedict:
+            self.add(thedict[id])
+
     def load_from_file(self, file):
         seqs = biocodeutils.fasta_dict_from_file(file)
         
@@ -864,6 +868,10 @@ class PolypeptideSet():
 
     def add( self, polypeptide ):
         self.polypeptides.append( polypeptide )
+
+    def load_from_dict(self, thedict):
+        for id in thedict:
+            self.add(thedict[id])
 
     def load_from_file(self, file):
         seqs = biocodeutils.fasta_dict_from_file(file)
