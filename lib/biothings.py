@@ -415,7 +415,7 @@ class MoleculeSet:
 
     It is appropriate for use for all classes inheriting from LocatableThing.
     '''
-    def __init__():
+    def __init__(self):
         # Nothing here yet
         pass
 
@@ -423,7 +423,30 @@ class MoleculeSet:
         for id in thedict:
             self.add(thedict[id])
 
-    #def write_fasta(self):
+    def write_fasta(self, fh=None, path=None):
+        '''
+        Writes the current set in FASTA format.  You can either pass the fh or path arguments.  If
+        an open file handle already exists, fh is appropriate.  Instead, if you have just a path you
+        want to be written to pass the 'path' argument instead.
+
+        The header format in the FASTA entries depends on the type of elements in the set.  
+        '''
+        if path is not None:
+            fh = open(path, 'wt')
+
+        if self.__class__ == PolypeptideSet:
+            molecules = self.polypeptides
+        elif self.__class__ == AssemblySet:
+            molecules = self.assemblies
+        else:
+            raise Exception("ERROR: writing FASTA not supported in MoleculeSets of this type: {0}".format(self.__class__))
+
+        for molecule in molecules:
+            header = molecule.annotation_string()
+            fh.write(">{0}\n".format(header))
+            fh.write("{0}\n".format(biocodeutils.wrapped_fasta(molecule.residues)))
+
+        fh.close()
         
         
 
@@ -498,7 +521,7 @@ class AssemblySet( MoleculeSet ):
             self.assemblies = list()
 
     def add( self, assembly ):
-        self.assemblies.append( assembly )
+        self.assemblies.append(assembly)
 
     def load_from_file(self, file):
         seqs = biocodeutils.fasta_dict_from_file(file)
@@ -873,6 +896,42 @@ class Polypeptide( LocatableThing ):
         ## this should be an instance of FunctionalAnnotation from bioannotation.py
         self.annotation = annotation
 
+    def annotation_string(self):
+        '''
+        Returns a string of the annotation attached to this Polypeptide, most often used as
+        a FASTA entry header
+        '''
+        header = ""
+        go_string = ""
+        ec_string = ""
+
+        if self.annotation is None:
+            return self.id
+        else:
+            for go_annot in self.annotation.go_annotations:
+                go_string += "GO:{0},".format(go_annot.go_id)
+
+            go_string = go_string.rstrip(',')
+
+            for ec_annot in self.annotation.ec_numbers:
+                ec_string += "{0},".format(ec_annot.number)
+
+            ec_string = ec_string.rstrip(',')
+
+            header = "{0} {1}".format(self.id, self.annotation.product_name)
+
+            if self.annotation.gene_symbol is not None:
+                header = "{0} gene::{1}".format(header, self.annotation.gene_symbol)
+
+            if ec_string != "":
+                header = "{0} ec::{1}".format(header, ec_string)
+
+            if go_string != "":
+                header = "{0} go::{1}".format(header, go_string)
+
+        return header
+
+    
 class PolypeptideSet( MoleculeSet ):
     '''
     This is a convenience class for when operations need to be performed on a set of polypeptides
