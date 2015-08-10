@@ -157,7 +157,7 @@ def main():
                 print("{0} records processed ...".format(record_count))
                 conn.commit()
                 # for debugging only
-                break
+                #break
             
         elif line.startswith("ID"):
             id = line.split()[1]
@@ -172,12 +172,16 @@ def main():
             
         elif line.startswith("DE"):
             m = re.match("DE\s+SubName: Full=(.+)", line.rstrip(';'))
-            if m:
+            if m and full_name is None:
                 full_name = m.group(1)
             else:
-                m = re.search("EC=(\S+)", line.rstrip(';'))
-                if m:
-                    ec_nums.append(m.group(1))
+                m = re.match("DE\s+RecName: Full=(.+)", line.rstrip(';'))
+                if m and full_name is None:
+                    full_name = m.group(1)
+                else:
+                    m = re.search("EC=(\S+)", line.rstrip(';'))
+                    if m:
+                        ec_nums.append(m.group(1))
 
         elif line.startswith("DR"):
             m = re.search("GO:(\d+)", line)
