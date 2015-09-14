@@ -180,7 +180,7 @@ def get_gff3_features(gff3_file, assemblies=None):
     if assemblies is None:
         assemblies = dict()
 
-    features   = dict()
+    features = dict()
 
     # these are related to parsing any embedded FASTA
     in_fasta_section = False
@@ -191,7 +191,6 @@ def get_gff3_features(gff3_file, assemblies=None):
 
     for line in open(gff3_file):
         lnum = lnum + 1
-        #print("INFO: processing line: {0}".format(line) + " in_fasta_section=" + str(in_fasta_section))
 
         if in_fasta_section == True:
             m = re.search('>(\S+)\s*(.*)', line)
@@ -254,7 +253,7 @@ def get_gff3_features(gff3_file, assemblies=None):
         else:
             locus_tag = None
 
-        # shared features is not yet supported
+        # shared features are not yet supported
         if isinstance(parent_id, list):
             raise Exception("This line contains a shared feature with multiple parents.  This isn't yet supported:\n{0}".format(line))
 
@@ -346,36 +345,42 @@ def parse_annotation_from_column_9(col9):
     annot = bioannotation.FunctionalAnnotation()
     atts = column_9_dict(col9)
 
-    if 'product_name' in atts:
-        annot.product_name = atts['product_name']
+    ## List of attributes which may be in column 9 that we want to skip as
+    #   as not being involved with annotation.
+    skip = ['ID', 'Parent']
 
-    if 'Dbxref' in atts:
-        ec_nums = list()
-        
-        if isinstance(atts['Dbxref'], str) and atts['Dbxref'].startswith("EC"):
-            ec_nums.append(atts['Dbxref'])
-        else:
-            for dbxref in atts['Dbxref']:
-                if dbxref.startswith("EC"):
-                    ec_nums.append(dbxref)
+    for att in atts:
+        if att == 'product_name':
+            annot.product_name = atts['product_name']
+        elif att == 'Dbxref':
+            ec_nums = list()
 
-        for ec_num in ec_nums:
-            ec_annot = bioannotation.ECAnnotation(number=ec_num)
-            annot.add_ec_number(ec_annot)
-    
-    if 'Ontology_term' in atts:
-        ont_terms = list()
+            if isinstance(atts['Dbxref'], str) and atts['Dbxref'].startswith("EC"):
+                ec_nums.append(atts['Dbxref'])
+            else:
+                for dbxref in atts['Dbxref']:
+                    if dbxref.startswith("EC"):
+                        ec_nums.append(dbxref)
 
-        if isinstance(atts['Ontology_term'], str) and atts['Ontology_term'].startswith("GO"):
-            ont_terms.append(atts['Ontology_term'])
-        else:
-            for term in atts['Ontology_term']:
-                if term.startswith("GO"):
-                    ont_terms.append(term)
-        
-        for go_id in ont_terms:
-            go_annot = bioannotation.GOAnnotation(go_id=go_id)
-            annot.add_go_annotation(go_annot)
+            for ec_num in ec_nums:
+                ec_annot = bioannotation.ECAnnotation(number=ec_num)
+                annot.add_ec_number(ec_annot)
+        elif att == 'Ontology_term':
+            ont_terms = list()
+
+            if isinstance(atts['Ontology_term'], str) and atts['Ontology_term'].startswith("GO"):
+                ont_terms.append(atts['Ontology_term'])
+            else:
+                for term in atts['Ontology_term']:
+                    if term.startswith("GO"):
+                        ont_terms.append(term)
+
+            for go_id in ont_terms:
+                go_annot = bioannotation.GOAnnotation(go_id=go_id)
+                annot.add_go_annotation(go_annot)
+        elif att not in skip:
+            ## just save any other attributes provided
+            annot.other_attributes[att] = atts[att]
 
         
         
@@ -628,6 +633,10 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
 
                 for dbxref in annot.dbxrefs:
                     dbxref_strs.append("{0}:{1}".format(dbxref.db, dbxref.identifier))
+
+                # are there other attributes to handle?
+                for att in annot.other_attributes:
+                    assertions[att] = annot.other_attributes[att]
 
             if len(dbxref_strs) > 0:
                 assertions['Dbxref'] = ",".join(dbxref_strs)
