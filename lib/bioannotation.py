@@ -12,11 +12,13 @@ class FunctionalAnnotation:
     While recognizing that an enormous variety of attributes could go here in
     describing the functional annotation of a BioThing, I'm starting with those
     we most often encounter and need to be available in common output formats.
+    These most common attributes are accessed by name, but the others are found
+    as a dict in the 'other_attributes' property.
 
     Also, there's a place for having attributes like this abstracted, stored in
     ontologies, etc.  We've done all that before.  For now I'm going to try
-    and hopefully enjoy the utility of having the most direct properties always
-    directly available.
+    and hopefully enjoy the utility of having the most common properties always
+    directly, and simply available.
     """
     def __init__( self, product_name=None, gene_symbol=None, go_annotations=None, ec_numbers=None, dbxrefs=None ):
         self.product_name     = product_name
@@ -24,6 +26,7 @@ class FunctionalAnnotation:
         self.go_annotations   = go_annotations
         self.ec_numbers       = ec_numbers
         self.dbxrefs          = dbxrefs
+        self.other_attributes = dict()
 
         if self.go_annotations is None:
             self.go_annotations = list()
@@ -33,8 +36,6 @@ class FunctionalAnnotation:
 
         if self.dbxrefs is None:
             self.dbxrefs = list()
-
-    
 
     def add_dbxref(self, dbxref):
         """
