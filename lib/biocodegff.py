@@ -355,12 +355,18 @@ def parse_annotation_from_column_9(col9):
         elif att == 'Dbxref':
             ec_nums = list()
 
-            if isinstance(atts['Dbxref'], str) and atts['Dbxref'].startswith("EC"):
-                ec_nums.append(atts['Dbxref'])
+            ## TODO: Review this whole conditional
+            if isinstance(atts['Dbxref'], str):
+                if atts['Dbxref'].startswith("EC"):
+                    ec_nums.append(atts['Dbxref'])
+                else:
+                    annot.add_dbxref(atts['Dbxref'])
             else:
                 for dbxref in atts['Dbxref']:
                     if dbxref.startswith("EC"):
                         ec_nums.append(dbxref)
+                    else:
+                        annot.add_dbxref(dbxref)
 
             for ec_num in ec_nums:
                 ec_annot = bioannotation.ECAnnotation(number=ec_num)
