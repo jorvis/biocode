@@ -112,7 +112,7 @@ def humancoords_to_0interbase( start, stop ):
     and features on a reverse strand are indicated by having start > stop.  This
     transforms them into the GMOD standard 0-based inter-base coordinates.
 
-    Returns a list of fmin, fmax and strand values
+    Returns a list of fmin, fmax and strand values.
     """
     fmin = start
     fmax = stop
@@ -126,6 +126,27 @@ def humancoords_to_0interbase( start, stop ):
     fmin -= 1
 
     return (fmin, fmax, strand)
+
+def interbase0_to_humancoords( fmin, fmax, strand ):
+    """
+    Takes GMOD-standard 0-based inter-base coordinates and transforms them
+    into the typical human-readable coordinates used in places like GBK flat
+    files.  Features on the reverse strand have a larger start than stop.
+
+    The strand values can be:
+
+    + or 1 for forward features
+    - or -1 for reverse features
+
+    Returns a list: [start, stop] where start < stop if on forward strand.
+    """
+
+    if strand == '+' or strand == 1:
+        return (fmin + 1, fmax)
+    elif strand == '-' or strand == -1:
+        return (fmax, fmin + 1)
+    else:
+        raise Exception("Invalid strand specified ({0}).  Expected +, -, 1 or -1".format(strand))
 
 
 def fasta_dict_from_file( file ):
