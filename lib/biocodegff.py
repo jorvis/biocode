@@ -491,7 +491,7 @@ def print_gff3_from_assemblies(assemblies=None, ofh=None):
     for assembly_id in assemblies:
         current_assembly = assemblies[assembly_id]
         
-        for gene in assemblies[assembly_id].genes():
+        for gene in sorted(assemblies[assembly_id].genes()):
             rnas_found = 0
             mRNAs = gene.mRNAs()
             
