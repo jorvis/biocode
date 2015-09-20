@@ -37,6 +37,35 @@ class FunctionalAnnotation:
         if self.dbxrefs is None:
             self.dbxrefs = list()
 
+    def __str__(self):
+        representation = "Product name: {0}\nGene symbol : {1}\n".format(self.product_name, self.gene_symbol)
+
+        if len(self.go_annotations) > 0:
+            representation += "GO annotations:\n"
+            for go_annot in self.go_annotations:
+                representation += "\tGO:{0}\n".format(go_annot.go_id)
+        else:
+            representation += "GO annotations: None\n"
+
+        if len(self.ec_numbers) > 0:
+            representation += "EC numbers:\n"
+            for ec in self.ec_numbers:
+                representation += "\t{0}\n".format(ec.number)
+        else:
+            representation += "EC numbers: None\n"
+
+        if len(self.dbxrefs) > 0:
+            representation += "Dbxrefs:\n"
+            for dbxref in self.dbxrefs:
+                representation += "\t{0}:{1}\n".format(dbxref.db, dbxref.identifier)
+        else:
+            representation += "Dbxrefs: None\n"
+
+        return representation
+                         
+        
+        
+
     def add_dbxref(self, dbxref):
         """
         Stores a Dbxref object within an annotation. The thing passed can either be a
