@@ -351,7 +351,7 @@ def parse_annotation_from_column_9(col9):
 
     for att in atts:
         if att == 'product_name':
-            annot.product_name = atts['product_name']
+            annot.product_name = atts[att]
         elif att == 'Dbxref':
             ec_nums = list()
 
@@ -384,6 +384,8 @@ def parse_annotation_from_column_9(col9):
             for go_id in ont_terms:
                 go_annot = bioannotation.GOAnnotation(go_id=go_id)
                 annot.add_go_annotation(go_annot)
+        elif att == 'gene_symbol':
+            annot.gene_symbol = atts[att]
         elif att not in skip:
             ## just save any other attributes provided
             annot.other_attributes[att] = atts[att]
