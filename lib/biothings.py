@@ -1,5 +1,6 @@
 import uuid
 import biocodegff
+import biocodetbl
 import biocodeutils
 import sys
 
@@ -759,24 +760,25 @@ class Gene( LocatableThing ):
         else:
             return False
 
+    def print_as(self, fh=None, source=None, format=None, lab=None):
+        '''
+        Prints the gene entry in a variety of available formats, with all children.
+        Is printed to STDOUT unless the fh option is passed.  Really, only checks are
+        done here before passing the info to the biocodegff module.
 
-    '''
-    Prints the gene as a GFF3 entry, with all children.  Is printed to STDOUT
-    unless the fh option is passed.  Really, only checks are done here before
-    passing the info to the biocodegff module
-    '''
-    '''
-    Overloading the print function allows users to directly print gene objects.
-    The options passed will decide the target and format of the print.
+        The options passed will decide the target and format of the print.
 
-        --fh = File handle to which we should print (default: STDOUT)
-        --format = Currently only 'gff3' or the default 'text'.
-    '''
-    def print_as(self, fh=None, source=None, format=None):
+            --fh = File handle to which we should print (default: STDOUT)
+            --format = Currently only 'gff3', 'tbl' or the default 'text'.
+            --source = Required for gff printing
+            --lab = Required for tbl printing
+        ''' 
         if format == 'text':
             _print_thing(self, fh=fh)
         elif format == 'gff3':
             biocodegff.print_biogene( gene=self, fh=fh, source=source )
+        elif format == 'tbl':
+            biocodetbl.print_biogene( gene=self, fh=fh, lab=lab )
         else:
             raise Exception("ERROR: the print_as method only accepts values of 'text' or 'gff3'")
 
