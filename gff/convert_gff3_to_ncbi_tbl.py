@@ -1,9 +1,24 @@
 #!/usr/bin/env python3
 
 """
+This script can be used to transform a GFF3 file into a TBL file suitable for submitting
+to NCBI.  Its encoding is meant to include prokaryotes and eukaryotes, though it was
+written/tested first for eukaryotes.
 
---lab_name:
-  Documentation: http://www.ncbi.nlm.nih.gov/genbank/eukaryotic_genome_submission_annotation#protein_id
+The options:
+
+--input_file:  Must follow the GFF3 specification
+
+--output_file:  NCBI table format, as defined here:
+                http://www.ncbi.nlm.nih.gov/genbank/eukaryotic_genome_submission_annotation
+
+--lab_name:  A short, unique identifier, no spaces, which will form part of the exported
+             protein and transcript IDs.  See the documentation for examples:
+             Documentation: http://www.ncbi.nlm.nih.gov/genbank/eukaryotic_genome_submission_annotation#protein_id
+                
+--go_obo:  Optional.  If your GFF3 annotation includes GO attributes, this is required because
+           the GFF3 has only the ID but the TBL file also requires the descriptor and class, so
+           this enables a lookup of these using the annotated GO ids.
 
 """
 
@@ -23,7 +38,6 @@ def main():
     parser.add_argument('-ln', '--lab_name', type=str, required=True, help='Required by NCBI to identify the submitting group' )
     args = parser.parse_args()
 
-    ## Do a full round-trip of the file and see how there are differences
     (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
     
     ofh = open(args.output_file, 'wt')
