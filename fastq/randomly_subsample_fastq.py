@@ -79,22 +79,17 @@ def main():
     
     check_input_options(args)
     input_read_count = args.input_read_count
-    single_files = list()
     left_files = list()
     right_files = list()
 
     if args.single is not None:
-        single_files = args.single.split(',')
+        left_files = args.single.split(',')
     elif args.left is not None:
         left_files = args.left.split(',')
         right_files = args.right.split(',')
 
     if input_read_count is None:
-        if args.single is None:
-            input_read_count = get_read_count(left_files)
-        else:
-            input_read_count = get_read_count(single_files)
-
+        input_read_count = get_read_count(left_files)
         print("INFO: parsed input read count is: {0}".format(input_read_count))
     else:
         print("INFO: user-passed input read count is: {0}".format(input_read_count))
@@ -112,40 +107,70 @@ def main():
     
     if args.single is not None:
         ofh = open("{0}.fastq".format(args.output_base), 'wt')
-        for path in single_files:
-            if path.endswith('.gz'):
-                ifh = gzip.open(path, 'rb')
-                is_compressed = True
-            else:
-                ifh = open(path, 'rU')
-                is_compressed = False
+        ofh_right = None
+    else:
+        ofh = open("{0}.R1.fastq".format(args.output_base), 'wt')
+        ofh_right = open("{0}.R2.fastq".format(args.output_base), 'wt')
 
-            for line1 in ifh:
-                line2 = ifh.readline()
-                line3 = ifh.readline()
-                line4 = ifh.readline()
+    lindex = 0
+    for lpath in left_files:
+        if lpath.endswith('.gz'):
+            ifh = gzip.open(lpath, 'rb')
+            left_is_compressed = True
 
-                if random.random() < individual_read_prop:
-                    if is_compressed:
-                        ofh.write(line1.decode())
-                        ofh.write(line2.decode())
-                        ofh.write(line3.decode())
-                        ofh.write(line4.decode())
-                    else:
-                        ofh.write(line1)
-                        ofh.write(line2)
-                        ofh.write(line3)
-                        ofh.write(line4)
+            if args.right is not None:
+                ifh_right = gzip.open(right_files[lindex], 'rb')
+        else:
+            ifh = open(lpath, 'rU')
+            left_is_compressed = False
+            if args.right is not None:
+                ifh_right = open(right_files[lindex], 'rU')
 
-                    output_reads_written += 1
+        for line1 in ifh:
+            line2 = ifh.readline()
+            line3 = ifh.readline()
+            line4 = ifh.readline()
 
-                    if output_reads_written == args.output_read_count:
-                        break
+            if args.right is not None:
+                rline1 = ifh_right.readline()
+                rline2 = ifh_right.readline()
+                rline3 = ifh_right.readline()
+                rline4 = ifh_right.readline()
 
-            if output_reads_written == args.output_read_count:
-                # This one shouldn't really happen, since it means the record count was reached
-                #  before all files were opened, but we still need to add it.
-                break
+            if random.random() < individual_read_prop:
+                if left_is_compressed:
+                    ofh.write(line1.decode())
+                    ofh.write(line2.decode())
+                    ofh.write(line3.decode())
+                    ofh.write(line4.decode())
+
+                    if args.right is not None:
+                        ofh_right.write(rline1.decode())
+                        ofh_right.write(rline2.decode())
+                        ofh_right.write(rline3.decode())
+                        ofh_right.write(rline4.decode())
+                else:
+                    ofh.write(line1)
+                    ofh.write(line2)
+                    ofh.write(line3)
+                    ofh.write(line4)
+
+                    if args.right is not None:
+                        ofh_right.write(rline1)
+                        ofh_right.write(rline2)
+                        ofh_right.write(rline3)
+                        ofh_right.write(rline4)
+
+                output_reads_written += 1
+
+                if output_reads_written == args.output_read_count:
+                    break
+        lindex += 1
+
+        if output_reads_written == args.output_read_count:
+            # This one shouldn't really happen, since it means the record count was reached
+            #  before all files were opened, but we still need to add it.
+            break
 
     print("INFO: {0} reads written to output file after first pass".format(output_reads_written))
             
