@@ -112,65 +112,66 @@ def main():
         ofh = open("{0}.R1.fastq".format(args.output_base), 'wt')
         ofh_right = open("{0}.R2.fastq".format(args.output_base), 'wt')
 
-    lindex = 0
-    for lpath in left_files:
-        if lpath.endswith('.gz'):
-            ifh = gzip.open(lpath, 'rb')
-            left_is_compressed = True
+    while output_reads_written < args.output_read_count:
+        print("INFO: Performing a pass through the files for random read selection")
+        lindex = 0
+        for lpath in left_files:
+            if lpath.endswith('.gz'):
+                ifh = gzip.open(lpath, 'rb')
+                left_is_compressed = True
 
-            if args.right is not None:
-                ifh_right = gzip.open(right_files[lindex], 'rb')
-        else:
-            ifh = open(lpath, 'rU')
-            left_is_compressed = False
-            if args.right is not None:
-                ifh_right = open(right_files[lindex], 'rU')
+                if args.right is not None:
+                    ifh_right = gzip.open(right_files[lindex], 'rb')
+            else:
+                ifh = open(lpath, 'rU')
+                left_is_compressed = False
+                if args.right is not None:
+                    ifh_right = open(right_files[lindex], 'rU')
 
-        for line1 in ifh:
-            line2 = ifh.readline()
-            line3 = ifh.readline()
-            line4 = ifh.readline()
+            for line1 in ifh:
+                line2 = ifh.readline()
+                line3 = ifh.readline()
+                line4 = ifh.readline()
 
-            if args.right is not None:
-                rline1 = ifh_right.readline()
-                rline2 = ifh_right.readline()
-                rline3 = ifh_right.readline()
-                rline4 = ifh_right.readline()
+                if args.right is not None:
+                    rline1 = ifh_right.readline()
+                    rline2 = ifh_right.readline()
+                    rline3 = ifh_right.readline()
+                    rline4 = ifh_right.readline()
 
-            if random.random() < individual_read_prop:
-                if left_is_compressed:
-                    ofh.write(line1.decode())
-                    ofh.write(line2.decode())
-                    ofh.write(line3.decode())
-                    ofh.write(line4.decode())
+                if random.random() < individual_read_prop:
+                    if left_is_compressed:
+                        ofh.write(line1.decode())
+                        ofh.write(line2.decode())
+                        ofh.write(line3.decode())
+                        ofh.write(line4.decode())
 
-                    if args.right is not None:
-                        ofh_right.write(rline1.decode())
-                        ofh_right.write(rline2.decode())
-                        ofh_right.write(rline3.decode())
-                        ofh_right.write(rline4.decode())
-                else:
-                    ofh.write(line1)
-                    ofh.write(line2)
-                    ofh.write(line3)
-                    ofh.write(line4)
+                        if args.right is not None:
+                            ofh_right.write(rline1.decode())
+                            ofh_right.write(rline2.decode())
+                            ofh_right.write(rline3.decode())
+                            ofh_right.write(rline4.decode())
+                    else:
+                        ofh.write(line1)
+                        ofh.write(line2)
+                        ofh.write(line3)
+                        ofh.write(line4)
 
-                    if args.right is not None:
-                        ofh_right.write(rline1)
-                        ofh_right.write(rline2)
-                        ofh_right.write(rline3)
-                        ofh_right.write(rline4)
+                        if args.right is not None:
+                            ofh_right.write(rline1)
+                            ofh_right.write(rline2)
+                            ofh_right.write(rline3)
+                            ofh_right.write(rline4)
 
-                output_reads_written += 1
+                    output_reads_written += 1
 
-                if output_reads_written == args.output_read_count:
-                    break
-        lindex += 1
+                    if output_reads_written == args.output_read_count:
+                        break
+            lindex += 1
 
-        if output_reads_written == args.output_read_count:
-            # This one shouldn't really happen, since it means the record count was reached
-            #  before all files were opened, but we still need to add it.
-            break
+            if output_reads_written == args.output_read_count:
+                # This should only really ever happen on a 2nd pass
+                break
 
     print("INFO: {0} reads written to output file after first pass".format(output_reads_written))
             
