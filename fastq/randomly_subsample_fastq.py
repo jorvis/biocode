@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 """
+WARNING: In its currently implementation there is a chance of duplicate read
+selection when multiple passes are required.  Working on a fix.
+
 A memory-efficient script for subsampling single or paired-end FASTQ files
 randomly (rather than taking the first N, or some other non-random approach)
 while keeping mate pairs together in order (if running with paired-end options)
