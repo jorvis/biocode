@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 """
-WARNING: In its currently implementation there is a chance of duplicate read
-selection when multiple passes are required.  Working on a fix.
-
 A memory-efficient script for subsampling single or paired-end FASTQ files
 randomly (rather than taking the first N, or some other non-random approach)
 while keeping mate pairs together in order (if running with paired-end options)
 
-In terms of compute complexity this is at best O(n) and at worst O(3n).  
+As with any script, the use of 'random' is relatively subjective.   You should
+be safe though, unless you somehow plan on using FASTQ selection for cryptographic
+purposes.  Don't.
+
+In terms of compute complexity this is at best O(n) and at worst O(2n).  
 The input file (or left file in the case of paired-end data) must be read once to
 get a read count (unless you pass the --input_read_count option), then a
 second time to do the subsampling, but no more than one record (4 lines) is ever
@@ -29,12 +30,24 @@ Overview of steps:
 1.  Parse --single or --left files to get a read count (skipped if --input_read_count provided)
 2.  Pass through files once, randomly selecting reads based on the probability
     needed for each to get the requested --output_read_count
-3.  A partial third pass through the files *might* be needed if not quite enough
-    were pulled randomly in the first selection pass.  This will usually be < 5%,
-    if needed at all.
 
 So, in practice, if you know the read count beforehand, the complexity will most often
-be around O(1.05N)
+be around O(n)
+    
+Probability multiplier:
+
+Why is this needed?  If you have a set of 100 reads and ask for 10 to be selected,
+this script applies the probability of selecting each one in a test as they are parsed.
+Naturally, sometimes you might select 10, sometimes 12, sometimes 8.  The case where
+more reads would be selected than desired is easy, just stop when you have enough.  But
+how do you handle when less are selected?  If you did a second pass, you'd have to
+index the positions of all those selected the first time, which gets us back into
+memory issues.  The solution I've implemented here is to slightly increase the probability
+of selecting any given read to provide a buffer, which is as arbitrary as performing
+a second, indexed pass.  By default, this probability increase is 5% (1.05) but you can
+set this to be higher/lower using the --probability_multiplier option.
+
+If not enough reads are selected after a full pass the script returns an error.
 
 Output:
 
@@ -74,6 +87,7 @@ def main():
     parser.add_argument('-irc', '--input_read_count', type=int, required=False, help='If passed, skips a step of reading over the file(s) once just to get the read count' )
     parser.add_argument('-orc', '--output_read_count', type=int, required=True, help='Subsample size - number of reads to export')
     parser.add_argument('-ob', '--output_base', type=str, required=True, help='Base name of output files to be created')
+    parser.add_argument('-pm', '--probability_multiplier', type=float, required=False, default=1.05, help='Increase the likelihood of a given read being selected, to prevent insufficient reads from being pulled' )
     args = parser.parse_args()
 
     ######################
@@ -103,8 +117,11 @@ def main():
 
     # Calculate the probability of selecting any individual read, given
     #  the proportion we want to select.
-    individual_read_prop = args.output_read_count / input_read_count
-    print("INFO: The probability of any individual read being selected is: {0}".format(individual_read_prop))
+    individual_read_prob = args.output_read_count / input_read_count
+    individual_read_prob_adj = individual_read_prob * args.probability_multiplier
+    
+    print("INFO: The probability of any individual read being selected is: {0} (raw), {1} (multiplier-adjusted)".format(
+        individual_read_prob, individual_read_prob_adj))
 
     output_reads_written = 0
     
@@ -115,68 +132,70 @@ def main():
         ofh = open("{0}.R1.fastq".format(args.output_base), 'wt')
         ofh_right = open("{0}.R2.fastq".format(args.output_base), 'wt')
 
-    while output_reads_written < args.output_read_count:
-        print("INFO: Performing a pass through the files for random read selection")
-        lindex = 0
-        for lpath in left_files:
-            if lpath.endswith('.gz'):
-                ifh = gzip.open(lpath, 'rb')
-                left_is_compressed = True
+    print("INFO: Performing a pass through the files for random read selection")
+    lindex = 0
+    for lpath in left_files:
+        if lpath.endswith('.gz'):
+            ifh = gzip.open(lpath, 'rb')
+            left_is_compressed = True
 
-                if args.right is not None:
-                    ifh_right = gzip.open(right_files[lindex], 'rb')
-            else:
-                ifh = open(lpath, 'rU')
-                left_is_compressed = False
-                if args.right is not None:
-                    ifh_right = open(right_files[lindex], 'rU')
+            if args.right is not None:
+                ifh_right = gzip.open(right_files[lindex], 'rb')
+        else:
+            ifh = open(lpath, 'rU')
+            left_is_compressed = False
+            if args.right is not None:
+                ifh_right = open(right_files[lindex], 'rU')
 
-            for line1 in ifh:
-                line2 = ifh.readline()
-                line3 = ifh.readline()
-                line4 = ifh.readline()
+        for line1 in ifh:
+            line2 = ifh.readline()
+            line3 = ifh.readline()
+            line4 = ifh.readline()
 
-                if args.right is not None:
-                    rline1 = ifh_right.readline()
-                    rline2 = ifh_right.readline()
-                    rline3 = ifh_right.readline()
-                    rline4 = ifh_right.readline()
+            if args.right is not None:
+                rline1 = ifh_right.readline()
+                rline2 = ifh_right.readline()
+                rline3 = ifh_right.readline()
+                rline4 = ifh_right.readline()
 
-                if random.random() < individual_read_prop:
-                    if left_is_compressed:
-                        ofh.write(line1.decode())
-                        ofh.write(line2.decode())
-                        ofh.write(line3.decode())
-                        ofh.write(line4.decode())
+            if random.random() < individual_read_prob_adj:
+                if left_is_compressed:
+                    ofh.write(line1.decode())
+                    ofh.write(line2.decode())
+                    ofh.write(line3.decode())
+                    ofh.write(line4.decode())
 
-                        if args.right is not None:
-                            ofh_right.write(rline1.decode())
-                            ofh_right.write(rline2.decode())
-                            ofh_right.write(rline3.decode())
-                            ofh_right.write(rline4.decode())
-                    else:
-                        ofh.write(line1)
-                        ofh.write(line2)
-                        ofh.write(line3)
-                        ofh.write(line4)
+                    if args.right is not None:
+                        ofh_right.write(rline1.decode())
+                        ofh_right.write(rline2.decode())
+                        ofh_right.write(rline3.decode())
+                        ofh_right.write(rline4.decode())
+                else:
+                    ofh.write(line1)
+                    ofh.write(line2)
+                    ofh.write(line3)
+                    ofh.write(line4)
 
-                        if args.right is not None:
-                            ofh_right.write(rline1)
-                            ofh_right.write(rline2)
-                            ofh_right.write(rline3)
-                            ofh_right.write(rline4)
+                    if args.right is not None:
+                        ofh_right.write(rline1)
+                        ofh_right.write(rline2)
+                        ofh_right.write(rline3)
+                        ofh_right.write(rline4)
 
-                    output_reads_written += 1
+                output_reads_written += 1
 
-                    if output_reads_written == args.output_read_count:
-                        break
-            lindex += 1
+                if output_reads_written == args.output_read_count:
+                    break
+        lindex += 1
 
-            if output_reads_written == args.output_read_count:
-                # This should only really ever happen on a 2nd pass
-                break
+        if output_reads_written == args.output_read_count:
+            # This shouldn't really ever happen, but doing it just in case
+            break
 
-    print("INFO: {0} reads written to output file after first pass".format(output_reads_written))
+    if output_reads_written < args.output_read_count:
+        raise Exception("ERROR: Unfortunately only {0} of the requested {1} reads were randomly selected.  " + \
+                        "You can either try again with the same options or increase the --probability_multiplier".format(
+                            output_reads_written, args.output_read_count))
             
 
 def check_input_options(args):
