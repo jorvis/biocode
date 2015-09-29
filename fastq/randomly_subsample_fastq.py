@@ -84,7 +84,9 @@ def main():
     parser.add_argument('-l', '--left', type=str, required=False, help='Comma-separated list of left reads in an paired set' )
     parser.add_argument('-r', '--right', type=str, required=False, help='Comma-separated list of right reads in an paired set' )
     parser.add_argument('-s', '--single', type=str, required=False, help='Use this if you have only one file of unpaired reads' )
-    parser.add_argument('-irc', '--input_read_count', type=int, required=False, help='If passed, skips a step of reading over the file(s) once just to get the read count' )
+    parser.add_argument('-irc', '--input_read_count', type=int, required=False,
+                        help='If passed, skips a step of reading over the file(s) once just to get the read count. ' +
+                        'Should be just the count of reads in either the --single or --left file(s)')
     parser.add_argument('-orc', '--output_read_count', type=int, required=True, help='Subsample size - number of reads to export')
     parser.add_argument('-ob', '--output_base', type=str, required=True, help='Base name of output files to be created')
     parser.add_argument('-pm', '--probability_multiplier', type=float, required=False, default=1.05, help='Increase the likelihood of a given read being selected, to prevent insufficient reads from being pulled' )
