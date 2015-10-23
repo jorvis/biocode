@@ -164,6 +164,14 @@ def unescape(s):
     return unquote(s)
 
 
+def add_annotation(features=None, polypeptide_set=None):
+    for polypeptide in polypeptide_set.polypeptides:
+        if polypeptide.id in features:
+            features[polypeptide.id].annotation = polypeptide.annotation
+        else:
+            raise Exception("ERROR: Failed to add annotation from {0} because it couldn't be found in the passed input feature set (gff)".format(polypeptide.id))
+
+
 def get_gff3_features(gff3_file, assemblies=None):
     '''
     Parses the passed GFF3 file and returns two dicts, loaded with biocode.biothings objects:
