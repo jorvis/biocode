@@ -1,8 +1,10 @@
 '''
 Warning: this module requires Python 3.2 or higher
 
-It's also in an initial development phase, so either don't use it or be tolerant of
-API changes.
+This is a set of classes to represent what I have most commonly needed when working on
+dozens (eukaryotic) or hundreds (prokaryotic) of annotation projects.  If you have
+other attributes that you'd like to see supported, please add an 'issue' on the
+biocode GitHub page.
 '''
 
 import re
