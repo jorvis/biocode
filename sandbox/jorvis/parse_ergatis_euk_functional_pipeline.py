@@ -299,7 +299,7 @@ def write_tab_results( f, polypeptides ):
 def initialize_polypeptides( log_fh, fasta_file ):
     '''
     Reads a FASTA file of (presumably) polypeptide sequences and creates a dict of Polypeptide
-    objects, keyed by ID.  No bioannotation.FunctionalAnnotation objects will be attached yet.
+    objects, keyed by ID, with bioannotation.FunctionalAnnotation objects attached.
     '''
     seqs = biocodeutils.fasta_dict_from_file( fasta_file )
 
