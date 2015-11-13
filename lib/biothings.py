@@ -443,7 +443,11 @@ class MoleculeSet:
             raise Exception("ERROR: writing FASTA not supported in MoleculeSets of this type: {0}".format(self.__class__))
 
         for molecule in molecules:
-            header = molecule.annotation_string()
+            if self.__class__ == PolypeptideSet:
+                header = molecule.annotation_string()
+            elif self.__class__ == AssemblySet:
+                header = molecule.id
+                
             fh.write(">{0}\n".format(header))
             fh.write("{0}\n".format(biocodeutils.wrapped_fasta(molecule.residues)))
 
