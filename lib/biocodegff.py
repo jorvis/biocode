@@ -180,7 +180,7 @@ def get_gff3_features(gff3_file, assemblies=None):
        children populated, so you can fully recover gene, RNA, exon and CDS features iterating on
        the assembly.
     2. The second dist is a flat structure of all the descendent feature objects of the Assemblies
-       keyed by the feature IDs.
+       keyed by the feature IDs.  
 
     See the documentation for each feature type in biocode.biothings for more info
     '''

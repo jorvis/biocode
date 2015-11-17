@@ -215,6 +215,10 @@ def fasta_sizes_from_file(file):
 
 
 def add_assembly_fasta(mols, fasta_file):
+    """
+    Takes a collection of molecules (Assembly) objects and adds sequence residues based on
+    their IDs being found in the passed FASTA file.
+    """
     fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
 
     for mol_id in mols:
