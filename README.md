@@ -29,8 +29,8 @@ following directories make up the initial groupings but will be expanded as need
 - general - Utility scripts that may not fit in any other existing directory or don't 
   warrant creation of their own. We should be selective about what we put here and 
   create or use other directories whenever appropriate.
-- gff - Extractions, conversions and manipulations of files in the Generic Feature 
-  Format (sequenceontology.org/gff3.shtml)
+- gff - Extractions, conversions and manipulations of files in the [Generic Feature 
+  Format](http://sequenceontology.org/gff3.shtml)
 - gtf - From Ensembl/WashU, the GTF format is the focus of scripts here.
 - hmm - Merging, manipulating or reading HMM libraries.
 - sam_bam - Analysis of and parsing SAM/BAM files.
