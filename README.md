@@ -5,7 +5,9 @@ Over the years most bioinformatics people amass a collection of small utility sc
 which make their lives easier. Too often they are kept either in private repositories 
 or as part of a public collection to which noone else can contribute. Biocode is a 
 curated repository of general-use utility scripts my colleagues and I have found 
-useful and want to share with others.
+useful and want to share with others.  I have also developed some code libraries/modules
+which have made my scripting work a lot easier.  Some have found these to be more
+useful than the scripts themselves.
 
 Look below if you want to learn more, contribute code yourself, or just get the 
 scripts.
@@ -31,6 +33,7 @@ following directories make up the initial groupings but will be expanded as need
   Format (sequenceontology.org/gff3.shtml)
 - gtf - From Ensembl/WashU, the GTF format is the focus of scripts here.
 - hmm - Merging, manipulating or reading HMM libraries.
+- sam_bam - Analysis of and parsing SAM/BAM files.
 - sandbox - Each committer gets their own personal directory here to add anything they 
   want while testing or waiting to be moved to the production directories.
 - sysadmin - While not specifically bioinformatics, our work tends to be on Unix machines, 
@@ -45,12 +48,11 @@ The best way to get the code for now is to just clone it:
 
    git clone https://github.com/jorvis/biocode.git
 
-Problems?
-=========
+Problems / Suggestions?
+=======================
 
-If you encounter any issues please submit to the [Issue tracking system](https://github.com/jorvis/biocode/issues)
-and those responsible will be sacked.
-
+If you encounter any issues with the existing code, or would like to request new
+features or scripts please submit to the [Issue tracking system](https://github.com/jorvis/biocode/issues).
 
 Contributing
 ============
