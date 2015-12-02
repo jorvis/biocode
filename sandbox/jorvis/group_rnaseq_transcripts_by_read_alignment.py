@@ -181,7 +181,7 @@ def main():
 
 
 def meets_coverage(pairings):
-    min_bp_coverage = 300
+    min_bp_coverage = 250
     max_transcript_size = 40000
 
     # non of our transcripts are over 40k
