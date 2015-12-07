@@ -31,6 +31,8 @@ def main():
     # assumes all child names are like: SRS147134.rapsearch2.m8.gz
     rapsearch2_base = '/local/hmp/dacc/t3/hhs/genome/microbiome/wgs/analysis/hmgi/rapsearch'
     attributor_path = '/home/hhuot/git/Attributor/assign_functional_annotation.py'
+    # names are like either SRS045739.metagenemark.gff3 or SRS045763.metagenemark3.gff3
+    gff_base_dir = '/local/hmp/dacc/t3/hhs/genome/microbiome/wgs/analysis/hmorf/gff3'
 
     # key = pipeline ID, value = SRS ID
     pipelines = dict()
@@ -82,6 +84,14 @@ def main():
             if m:
                 fasta_path = m.group(1)
 
+        ## get the source GFF path
+        if os.path.exists("{0}/{1}.metagenemark.gff3".format(gff_base_dir, pipelines[pipeline_id])):
+            gff3_path = "{0}/{1}.metagenemark.gff3".format(gff_base_dir, pipelines[pipeline_id])
+        elif os.path.exists("{0}/{1}.metagenemark3.gff3".format(gff_base_dir, pipelines[pipeline_id])):
+            gff3_path = "{0}/{1}.metagenemark.gff3".format(gff_base_dir, pipelines[pipeline_id])
+        else:
+            raise Exception("ERROR: failed to find GFF3 file for {0}".format(pipelines[pipeline_id]))
+
         if fasta_path is None:
             raise Exception("ERROR: failed to find FASTA path for pipeline {0}".format(pipeline_id))
         
@@ -119,11 +129,22 @@ def main():
                     ofh.write("     path: {0}/output_repository/lipoprotein_motif/{1}_default/lipoprotein_motif.bsml.list\n".format(project_area, pipeline_id))
                     continue
 
+            m = re.match("   polypeptide_fasta: (\S+)", line)
+            if m:
+                ofh.write("   polypeptide_fasta: {0}\n".format(fasta_path))
+                continue
+
+            m = re.match("   gff3: (\S+)", line)
+            if m:
+                ofh.write("   gff3: {0}\n".format(gff3_path))
+                continue
+
             ofh.write("{0}\n".format(line))
         
         ofh.close()
         shutil.move(tmp_config_path, config_path)
-        batch_fh.write("{0} -f {4} -c {1} -o {2}/{3}\n".format(attributor_path, config_path,args.output_directory, pipelines[pipeline_id], fasta_path))
+        batch_fh.write("{0} -f gff3 -c {1} -o {2}/{3}\n".format(attributor_path, config_path, args.output_directory,
+                                                        pipelines[pipeline_id]))
         
 
 
