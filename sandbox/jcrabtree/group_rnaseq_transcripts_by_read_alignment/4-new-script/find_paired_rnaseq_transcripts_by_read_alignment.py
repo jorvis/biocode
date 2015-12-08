@@ -271,7 +271,7 @@ def main():
         n_reads, covered_bp = rc
 
         # determine whether the pair now meets the selection criteria
-        if (n_reads >= args.min_mate_pair_count) and (covered_bp >= min_bp_coverage):
+        if (n_reads >= args.min_mate_pair_count) and (covered_bp >= args.min_bp_coverage):
             # it does - print it out and flag this pair to be ignored in future
             print(key)
             n_selected_pairings += 1
