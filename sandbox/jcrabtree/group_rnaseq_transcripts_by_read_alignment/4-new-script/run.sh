@@ -9,10 +9,13 @@ setenv BTEST2 $WDIR/hits_partial_1M.bam
 # 10.3s, 10.2s, 9.9s (versus 2m16s for the original script, doing both parts of the analysis)
 samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > test2-pairs-r1-3-250bp.txt
 
+#wc test2-pairs-r1-3-250bp.txt 
+# 265  265 9507 test2-pairs-r1-3-250bp.txt
+
 # check that the pairings do not change from run to run
-samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > test2-pairs-r2-3-250bp.txt
-samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > test2-pairs-r3-3-250bp.txt
-samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > test2-pairs-r4-3-250bp.txt
+#samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > test2-pairs-r2-3-250bp.txt
+#samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > test2-pairs-r3-3-250bp.txt
+#samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > test2-pairs-r4-3-250bp.txt
 
 #md5sum *.txt
 #eff7ef966a5448f7d8aecb9236e6b12d  test2-pairs-r1-3-250bp.txt
@@ -21,7 +24,7 @@ samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py
 #eff7ef966a5448f7d8aecb9236e6b12d  test2-pairs-r4-3-250bp.txt
 
 # group pairs with a second script:
-
+exit
 
 # ---------------------------------------------------
 # FULL INPUT FILE - 1.17 billion alignments
