@@ -153,7 +153,11 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
 
         # In this format, the RNA is supposed to be provided as segmented coordinates
         exons_printed = 0
-        for exon in sorted(RNA.exons()):
+        exons = sorted(RNA.exons())
+        if RNA_loc.strand == -1:
+            exons.reverse()
+            
+        for exon in exons:
             exon_loc = exon.location_on(on)
             
             if exon_loc is None:
@@ -174,7 +178,10 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             fh.write("\t\t\tproduct\t{0}\n".format(annot.product_name))
 
         CDS_printed = 0
-        for CDS in sorted(RNA.CDSs()):
+        CDSs = sorted(RNA.CDSs())
+        if RNA_loc.strand == -1:
+            CDSs.reverse()
+        for CDS in CDSs:
             CDS_loc = CDS.location_on(on)
 
             if CDS_loc is None:
