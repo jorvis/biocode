@@ -185,7 +185,7 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             if CDS_printed == 0:
                 fh.write("{0}\t{1}\tCDS\n".format(CDS_coords[0], CDS_coords[1]))
             else:
-                fh.write("{0}\t{1}\n".format(exon_coords[0], exon_coords[1]))
+                fh.write("{0}\t{1}\n".format(CDS_coords[0], CDS_coords[1]))
 
             CDS_printed += 1
 
