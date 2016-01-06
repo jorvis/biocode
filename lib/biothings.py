@@ -972,7 +972,8 @@ class RNA( LocatableThing ):
         self.locus_tag = locus_tag
         self.children = children
 
-        ## this should be an instance of FunctionalAnnotation from bioannotation.py
+        ## This should be an instance of FunctionalAnnotation from bioannotation.py
+        #   It's considered best practice to put the annotation on the Polypeptide feature, when appropriate.
         self.annotation = annotation
 
         ## initialize any types needed
