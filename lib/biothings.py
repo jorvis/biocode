@@ -453,8 +453,6 @@ class MoleculeSet:
 
         fh.close()
         
-        
-
 class Organism:
     '''
     This is a pretty high-level representation of an organism, and (currently) mostly serves as a
@@ -1141,15 +1139,37 @@ class RNA( LocatableThing ):
     def UTRs(self):
         return self.children['UTR']
 
-
 class mRNA( RNA ):
     '''
     SO definition (2013-05-22): "Messenger RNA is the intermediate molecule between DNA and protein. It
     includes UTR and coding sequences. It does not contain introns."
     '''
-    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None, residues=None ):
         super().__init__(id, locations, parent, locus_tag, children)
+        self.residues = residues
 
+class mRNASet( MoleculeSet ):
+    '''
+    This is a convenience class for when operations need to be performed on a set of mRNAs
+    such as writing to a FASTA file.
+    '''
+    def __init__( self, mRNAs=None ):
+        super().__init__()
+        self.mRNAs = mRNAs
+
+        if self.mRNAs is None:
+            self.mRNAs = list()
+
+    def add( self, mRNA ):
+        self.mRNAs.append( mRNA )
+
+    def load_from_file(self, file):
+        seqs = biocodeutils.fasta_dict_from_file(file)
+        
+        for seq_id in seqs:
+            mRNA = mRNA(id=seq_id, residues=seqs[seq_id]['s'])
+            self.add(mRNA)
+        
 class rRNA( RNA ):
     '''
     SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both
@@ -1157,7 +1177,6 @@ class rRNA( RNA ):
     '''
     def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
         super().__init__(id, locations, parent, locus_tag, children)
-
 
 class tRNA( RNA ):
     '''
