@@ -21,8 +21,10 @@ def main():
     args = parser.parse_args()
 
     # inclusive
-    pipeline_min = 10927248802
-    pipeline_max = 11214274766
+    #pipeline_min = 10927248802
+    #pipeline_max = 11214274766
+    pipeline_min = 11305294429
+    pipeline_max = 11373273817
 
     # CONFIG
     project_area = '/usr/local/projects/dacc'
@@ -33,6 +35,8 @@ def main():
     attributor_path = '/home/hhuot/git/Attributor/assign_functional_annotation.py'
     # names are like either SRS045739.metagenemark.gff3 or SRS045763.metagenemark3.gff3
     gff_base_dir = '/local/hmp/dacc/t3/hhs/genome/microbiome/wgs/analysis/hmorf/gff3'
+    # names are like either SRS018791.metagenemark.faa or SRS018794.metagenemark3.faa
+    fasta_base_dir = '/local/hmp/dacc/t3/hhs/genome/microbiome/wgs/analysis/hmorf/faa'
 
     # key = pipeline ID, value = SRS ID
     pipelines = dict()
@@ -45,7 +49,7 @@ def main():
         m = re.match("^\d+$", pipeline_id)
         if m:
             pipeline_id = int(pipeline_id)
-            if pipeline_id > 11214274766 or pipeline_id < 10927248802:
+            if pipeline_id > pipeline_max or pipeline_id < pipeline_min:
                 continue
         else:
             continue
@@ -76,25 +80,21 @@ def main():
         tmp_config_path = "/tmp/{0}.config".format(pipeline_id)
 
         ## get the source FASTA path
-        split_fasta_config = "{0}/workflow/runtime/split_multifasta/{1}_default/split_multifasta.default.final.config".format(project_area, pipeline_id)
-        fasta_path = None
-        for line in open(split_fasta_config):
-            line = line.rstrip()
-            m = re.match("\$\;INPUT_FILE\$\;\s*=\s*(.+)", line)
-            if m:
-                fasta_path = m.group(1)
+        if os.path.exists("{0}/{1}.metagenemark.faa".format(fasta_base_dir, pipelines[pipeline_id])):
+            fasta_path = "{0}/{1}.metagenemark.faa".format(fasta_base_dir, pipelines[pipeline_id])
+        elif os.path.exists("{0}/{1}.metagenemark3.faa".format(fasta_base_dir, pipelines[pipeline_id])):
+            fasta_path = "{0}/{1}.metagenemark3.faa".format(fasta_base_dir, pipelines[pipeline_id])
+        else:
+            raise Exception("ERROR: failed to find FASTA file for {0}".format(pipelines[pipeline_id]))
 
         ## get the source GFF path
         if os.path.exists("{0}/{1}.metagenemark.gff3".format(gff_base_dir, pipelines[pipeline_id])):
             gff3_path = "{0}/{1}.metagenemark.gff3".format(gff_base_dir, pipelines[pipeline_id])
         elif os.path.exists("{0}/{1}.metagenemark3.gff3".format(gff_base_dir, pipelines[pipeline_id])):
-            gff3_path = "{0}/{1}.metagenemark.gff3".format(gff_base_dir, pipelines[pipeline_id])
+            gff3_path = "{0}/{1}.metagenemark3.gff3".format(gff_base_dir, pipelines[pipeline_id])
         else:
             raise Exception("ERROR: failed to find GFF3 file for {0}".format(pipelines[pipeline_id]))
 
-        if fasta_path is None:
-            raise Exception("ERROR: failed to find FASTA path for pipeline {0}".format(pipeline_id))
-        
         ## copy the config file
         shutil.copy(config_template, config_path)
         
