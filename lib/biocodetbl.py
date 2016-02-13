@@ -176,6 +176,8 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             fh.write("\t\t\tprotein_id\t{0}\n".format(official_protein_id))
             fh.write("\t\t\ttranscript_id\t{0}\n".format(official_transcript_id))
             fh.write("\t\t\tproduct\t{0}\n".format(annot.product_name))
+            if 'Note' in annot.other_attributes:
+                fh.write("\t\t\tnote\t{0}\n".format(annot.other_attributes['Note']))
 
         CDS_printed = 0
         CDSs = sorted(RNA.CDSs())
