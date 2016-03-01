@@ -41,13 +41,18 @@ def main():
     parser.add_argument('-t', '--type', type=str, required=False, default='protein', choices=['protein', 'cds'], help='Type of features to export')
     parser.add_argument('-f', '--fasta', type=str, required=False, help='If the FASTA entries for the underlying assemblies is absent from the GFF3 document passed, you will need to specify this option' )
     parser.add_argument('--check_ends', dest='check_ends', action='store_true')
-    parser.set_defaults(check_ends=False)
+    parser.add_argument('--check_internal_stops', dest='check_internal_stops', action='store_true')
+    parser.set_defaults(check_ends=False, check_internal_stops=False)
     args = parser.parse_args()
 
     ## output will either be a file or STDOUT
     fout = sys.stdout
     if args.output_file is not None:
         fout = open(args.output_file, 'wt')
+
+    # sanity option check
+    if args.check_internal_stops == True and args.type == 'cds':
+        raise Exception("Error:  Checking internal stops for CDS features not currently supported.")
 
     (assemblies, features) = biocodegff.get_gff3_features(args.input_file)
 
@@ -99,6 +104,12 @@ def main():
                     fout.write("{0}\n".format(biocodeutils.wrapped_fasta(coding_seq)))
                 else:
                     translated_seq = biocodeutils.translate(coding_seq)
+
+                    if args.check_internal_stops == True:
+                        internal_stop_count = translated_seq[:-1].count('*')
+                        if internal_stop_count > 0:
+                            sys.stderr.write("Found {0} internal stops in mRNA {1}\n".format(internal_stop_count, mRNA.id))
+                    
                     fout.write("{0}\n".format(biocodeutils.wrapped_fasta(translated_seq)))
 
 if __name__ == '__main__':
