@@ -142,7 +142,7 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
         if len(polypeptides) == 1:
             annot = polypeptides[0].annotation
         elif len(polypeptides) == 0:
-            annot = None
+            annot = RNA.annotation
         elif len(polypeptides) > 1:
             raise Exception("ERROR: RNAs with multiple polpeptides is currently unsupported: {0}".format(RNA.id))
 
@@ -173,11 +173,17 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             exons_printed += 1
 
         if annot is not None and exons_printed > 0:
-            fh.write("\t\t\tprotein_id\t{0}\n".format(official_protein_id))
+            if RNA.__class__.__name__ == 'mRNA':
+                fh.write("\t\t\tprotein_id\t{0}\n".format(official_protein_id))
+                
             fh.write("\t\t\ttranscript_id\t{0}\n".format(official_transcript_id))
             fh.write("\t\t\tproduct\t{0}\n".format(annot.product_name))
             if 'Note' in annot.other_attributes:
-                fh.write("\t\t\tnote\t{0}\n".format(annot.other_attributes['Note']))
+                # Sometimes this is a string, sometimes a list.  Only strings have the lower function:
+                if hasattr(annot.other_attributes['Note'], 'lower'):
+                    fh.write("\t\t\tnote\t{0}\n".format(annot.other_attributes['Note']))
+                else:
+                    fh.write("\t\t\tnote\t{0}\n".format(",".join(annot.other_attributes['Note'])))
 
         CDS_printed = 0
         CDSs = sorted(RNA.CDSs())
