@@ -77,8 +77,10 @@ def main():
     assign_by = args.assign_by
     if assign_by is None:
         assign_by = args.database
+
+    ofh = open(args.output_file, 'wt')
     
-    print("!gaf-version: 2.0")
+    ofh.write("!gaf-version: 2.0\n")
      
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
@@ -97,11 +99,13 @@ def main():
                         
                         
                         # Aspect is F, P or C, depending on which component/ontology the term comes from
-                        print("{0}\t{1}\t{1}\t\t{2}\t{3}\t{4}\t\t{5}\t{6}"
-                              "\t{7}\tprotein\ttaxon:{8}\t{9}\t{10}\t"
-                              "\t".format(args.database, polypeptide.id, go_id, args.db_reference,
-                                          args.evidence_code, go_lookup[go_id], product, gene_sym,
-                                          args.taxon_id, annot_date, assign_by))
+                        ofh.write("{0}\t{1}\t{1}\t\t{2}\t{3}\t{4}\t\t{5}\t{6}"
+                                  "\t{7}\tprotein\ttaxon:{8}\t{9}\t{10}\t"
+                                  "\t\n".format(args.database, polypeptide.id, go_id, args.db_reference,
+                                                args.evidence_code, go_lookup[go_id], product, gene_sym,
+                                                args.taxon_id, annot_date, assign_by))
+
+    print("INFO: Conversion complete.", file=sys.stderr)
 
 def parse_go_file(path):
     lookup = dict()
