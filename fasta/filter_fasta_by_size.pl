@@ -28,7 +28,7 @@ B<--input_file,-f>
 B<--min_size_cutoff,-s>
     Sequences smaller than this will not be reported to the output file(s).
 
-B<--max_size_cutoff,-s>
+B<--max_size_cutoff,-x>
     Optional. Sequences greater than this will not be reported to the output file(s).
 
 B<--output_directory,-o>
