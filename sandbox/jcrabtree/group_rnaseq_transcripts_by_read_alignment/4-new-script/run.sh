@@ -24,7 +24,7 @@ samtools view -h $BTEST2 | ./find_paired_rnaseq_transcripts_by_read_alignment.py
 #eff7ef966a5448f7d8aecb9236e6b12d  test2-pairs-r4-3-250bp.txt
 
 # group pairs with a second script:
-exit
+
 
 # ---------------------------------------------------
 # FULL INPUT FILE - 1.17 billion alignments
@@ -33,8 +33,9 @@ exit
 setenv BAM /local/scratch-hs/aplysia/A1_CNS_unsheared_vs_merged/tophat_out/accepted_hits.bam
 
 # compute pairs of linked transcripts
-samtools view -h $BAM | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > aplysia-pairs-3-250bp.txt
-gzip aplysia-pairs-3-250bp.txt
+samtools view -h $BAM | ./find_paired_rnaseq_transcripts_by_read_alignment.py -mmpc 3 > aplysia-pairs-r2-3-250bp.txt
+
+#gzip aplysia-pairs-3-250bp.txt
 
 #zcat aplysia-pairs-3-250.txt.gz | md5sum
 #fe5a1e54f724ef873ffffc5eb59590ea  -
@@ -43,4 +44,4 @@ gzip aplysia-pairs-3-250bp.txt
 # 251989  251989 8890403
 
 # run connected components analysis to group transcripts
-zcat aplysia-pairs-3-250bp.txt | ./group_paired_rnaseq_transcripts.py > aplysia-groups-3-250bp.txt
+#zcat aplysia-pairs-3-250bp.txt | ./group_paired_rnaseq_transcripts.py > aplysia-groups-3-250bp.txt
