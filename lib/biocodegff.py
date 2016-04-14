@@ -296,12 +296,14 @@ def get_gff3_features(gff3_file, assemblies=None):
             rRNA = biothings.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_rRNA(rRNA)
+            rRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = rRNA
 
         elif cols[2] == 'tRNA':
             tRNA = biothings.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_tRNA(tRNA)
+            tRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = tRNA
 
         elif cols[2] == 'exon':

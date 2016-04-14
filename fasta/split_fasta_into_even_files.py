@@ -30,6 +30,7 @@ def main():
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input FASTA file to be read' )
     parser.add_argument('-fc', '--file_count', type=int, required=True, help='Number of files to split the records into' )
+    parser.add_argument('-o', '--output_directory', type=str, required=False, help='Directory where output will be written.  Default: input file location' )
     args = parser.parse_args()
 
     # First, we need to know how many entries are in the file
@@ -43,17 +44,22 @@ def main():
         raise Exception("Error: You asked for {0} split files to be created but there were only {1} " \
                         "entries in the input file.".format(args.file_count, total_record_count))
 
+    if args.output_directory:
+        output_dir = args.output_directory
+    else:
+        output_dir = os.path.dirname(args.input_file)
+
+    basename = os.path.basename(args.input_file)
+                        
     print("INFO: There were {0} records found in the input file.".format(total_record_count))
     min_records_per_file = int(total_record_count / args.file_count)
     file_count_to_create = int(total_record_count / min_records_per_file)
     print("INFO: {0} files will be created.".format(file_count_to_create))
     print("INFO: Most files will have {0} records in each.".format(min_records_per_file))
 
-    #sys.exit(1)
-
     file_part_num = 1
     current_fragment_record_count = 0
-    current_fh = open("{0}.part{1}".format(args.input_file, file_part_num), 'w')
+    current_fh = open("{0}/{1}.part{2}".format(output_dir, basename, file_part_num), 'w')
 
     for line in open(args.input_file):
         if line.startswith(">"):
@@ -65,7 +71,7 @@ def main():
                     current_fh.close()
 
                 file_part_num += 1
-                current_fh = open("{0}.part{1}".format(args.input_file, file_part_num), 'w')
+                current_fh = open("{0}/{1}.part{2}".format(output_dir, basename, file_part_num), 'w')
                 current_fragment_record_count = 0
 
         current_fh.write(line)

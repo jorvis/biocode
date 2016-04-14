@@ -5,6 +5,9 @@ This script can be used to transform a GFF3 file into a TBL file suitable for su
 to NCBI.  Its encoding is meant to include prokaryotes and eukaryotes, though it was
 written/tested first for eukaryotes.
 
+Note, you'll need to modify the IDs if you're doing an update to an already existing
+submission, since this generates them automatically base on your prefix.
+
 The options:
 
 --input_file:  Must follow the GFF3 specification
@@ -77,9 +80,6 @@ def main():
 
     if reformat_IDs == True:
         assemblies = new_assemblies
-
-    # >gi|68352484|gb|AAGK01000001.1|
-    # AAGK01000001	NC_007344.1	tp.assembly.567468735.1
 
     ofh = open("{0}.tbl".format(args.output_base), 'wt')
     biocodetbl.print_tbl_from_assemblies(assemblies=assemblies, ofh=ofh, go_obo=args.go_obo, lab_name=args.lab_name)

@@ -237,7 +237,8 @@ def create_tables( cursor ):
     cursor.execute("""
               CREATE TABLE uniref_acc (
                  id         text not NULL,
-                 accession  text not NULL
+                 accession  text not NULL,
+                 res_length integer
               )
     """)
     

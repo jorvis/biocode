@@ -50,6 +50,14 @@ If replacing characters using the -r and -w options, a new file defined by -o is
 with the user-specified residues replaced.  All IDs and headers are retained and sequences
 residues are written 60-characters per line.
 
+If the --print_locations flag is passed, the locations of every non-standard residue is
+printed to STDERR:
+
+EXAMPLE: $ ./report_or_replace_nonstandard_residues.py -i test.fna -t n -pl
+Molecule gnl|WGS:AAGK|NW_876245.1|gb|AAGK01000005 contains residue K at position 36211
+Molecule gnl|WGS:AAGK|NW_876247.1|gb|AAGK01000003 contains residue R at position 4066
+Molecule gnl|WGS:AAGK|NW_876247.1|gb|AAGK01000003 contains residue W at position 4096
+
 '''
 
 def main():
@@ -58,10 +66,12 @@ def main():
     parser.add_argument('-i', '--input', type=str, required=True, help='Path to an input FASTA file' )
     parser.add_argument('-t', '--type', type=str, required=True, choices=('n', 'p'), help='Either n for nucleotide or p for protein')
     parser.add_argument('-o', '--output', type=str, required=False, help='Path to an output FASTA file to be created if doing replacement' )
+    parser.add_argument('-pl', '--print_locations', dest='print_locations', action='store_true', help='If passed, will report coordinate of each non-standard residue on STDERR' )
     parser.add_argument('-r', '--replace', type=str, required=False, help='Replace this character with the one defined by --with_' )
     parser.add_argument('-w', '--with_', type=str, required=False, help='This character or set replaces all instances of the one found in --replace' )
     parser.add_argument('-l', '--list', type=str, required=False, help='Optional file of IDs where non-standard residues were detected or replaced' )
     parser.add_argument('-g', '--ignore', type=str, required=False, default='N*X', help='List of characters to not report as non-standard.  Default = the universal ambiguity bases (N, X) or the end-of-translation stop for proteins (*)' )
+    parser.set_defaults(print_locations=False)
     args = parser.parse_args()
 
     if args.output is None:
@@ -98,16 +108,21 @@ def main():
     seqs_with_bad_chars = dict()
     
     for seq_id in seqs:
+        i = 0
         seq = seqs[seq_id]
         bad_chars = dict()
 
         for base in list(seq['s']):
+            i += 1
             ubase = base.upper()
             if ubase not in standard_residues and ubase not in ignore_residues:
                 if ubase in bad_chars:
                     bad_chars[ubase] += 1
                 else:
                     bad_chars[ubase] = 1
+
+                if args.print_locations == True:
+                    print("Molecule {0} contains residue {1} at position {2}".format(seq_id, ubase, i), file=sys.stderr)
         
         if args.list is not None and len(bad_chars) > 0:
             list_fh.write("{0}".format(seq_id))

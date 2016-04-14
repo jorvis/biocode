@@ -65,9 +65,6 @@ class FunctionalAnnotation:
 
         return representation
                          
-        
-        
-
     def add_dbxref(self, dbxref):
         """
         Stores a Dbxref object within an annotation. The thing passed can either be a

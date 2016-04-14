@@ -142,7 +142,7 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
         if len(polypeptides) == 1:
             annot = polypeptides[0].annotation
         elif len(polypeptides) == 0:
-            annot = None
+            annot = RNA.annotation
         elif len(polypeptides) > 1:
             raise Exception("ERROR: RNAs with multiple polpeptides is currently unsupported: {0}".format(RNA.id))
 
@@ -153,7 +153,11 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
 
         # In this format, the RNA is supposed to be provided as segmented coordinates
         exons_printed = 0
-        for exon in sorted(RNA.exons()):
+        exons = sorted(RNA.exons())
+        if RNA_loc.strand == -1:
+            exons.reverse()
+            
+        for exon in exons:
             exon_loc = exon.location_on(on)
             
             if exon_loc is None:
@@ -169,12 +173,23 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             exons_printed += 1
 
         if annot is not None and exons_printed > 0:
-            fh.write("\t\t\tprotein_id\t{0}\n".format(official_protein_id))
+            if RNA.__class__.__name__ == 'mRNA':
+                fh.write("\t\t\tprotein_id\t{0}\n".format(official_protein_id))
+                
             fh.write("\t\t\ttranscript_id\t{0}\n".format(official_transcript_id))
             fh.write("\t\t\tproduct\t{0}\n".format(annot.product_name))
+            if 'Note' in annot.other_attributes:
+                # Sometimes this is a string, sometimes a list.  Only strings have the lower function:
+                if hasattr(annot.other_attributes['Note'], 'lower'):
+                    fh.write("\t\t\tnote\t{0}\n".format(annot.other_attributes['Note']))
+                else:
+                    fh.write("\t\t\tnote\t{0}\n".format(",".join(annot.other_attributes['Note'])))
 
         CDS_printed = 0
-        for CDS in sorted(RNA.CDSs()):
+        CDSs = sorted(RNA.CDSs())
+        if RNA_loc.strand == -1:
+            CDSs.reverse()
+        for CDS in CDSs:
             CDS_loc = CDS.location_on(on)
 
             if CDS_loc is None:
@@ -185,7 +200,7 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             if CDS_printed == 0:
                 fh.write("{0}\t{1}\tCDS\n".format(CDS_coords[0], CDS_coords[1]))
             else:
-                fh.write("{0}\t{1}\n".format(exon_coords[0], exon_coords[1]))
+                fh.write("{0}\t{1}\n".format(CDS_coords[0], CDS_coords[1]))
 
             CDS_printed += 1
 
