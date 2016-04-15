@@ -27,7 +27,7 @@ def main():
 
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input FASTA file to be read' )
     parser.add_argument('-n', '--num_seqs', type=int, required=True, help='Number of sequences to extract.' )
-    parser.add_argument('-s', '--seed', type=int, required=False, help='Seed for random number generation.' )
+    parser.add_argument('-s', '--seed', type=int, required=False, help='Seed for random number generation (optional).' )
     args = parser.parse_args()
 
     # 1st pass: count sequences
