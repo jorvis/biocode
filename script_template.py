@@ -18,7 +18,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-
+    # Your code goes here
 
 
 if __name__ == '__main__':
