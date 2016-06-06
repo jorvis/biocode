@@ -40,6 +40,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output FASTA file to be created' )
     parser.add_argument('-t', '--type', type=str, required=False, default='protein', choices=['protein', 'cds'], help='Type of features to export')
     parser.add_argument('-f', '--fasta', type=str, required=False, help='If the FASTA entries for the underlying assemblies is absent from the GFF3 document passed, you will need to specify this option' )
+    parser.add_argument('-ft', '--feature_type', type=str, required=False, default='mRNA', choices=['mRNA', 'polypeptide'], help='IDs and coordinates will come from this feature type' )
     parser.add_argument('--check_ends', dest='check_ends', action='store_true')
     parser.add_argument('--check_internal_stops', dest='check_internal_stops', action='store_true')
     parser.set_defaults(check_ends=False, check_internal_stops=False)
@@ -66,39 +67,49 @@ def main():
     
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
-            for mRNA in gene.mRNAs():
-
+            if args.feature_type == 'mRNA':
+                feats = gene.mRNAs()
+            elif args.feature_type == 'polypeptide':
+                feats = gene.polypeptides()
+            
+            for feat in feats:
                 ## initial values of id and header to export (can be overridden by available annotation)
-                export_id = mRNA.id
+                export_id = feat.id
                 export_header = None
 
-                if mRNA.locus_tag is not None:
-                    export_id = mRNA.locus_tag
-
                 ## Add the gene product name if there is one
-                for polypeptide in mRNA.polypeptides():
-                    if polypeptide.annotation is not None:
-                        if polypeptide.annotation.product_name is not None:
-                            export_header = polypeptide.annotation.product_name
-                            break
+                if args.feature_type == 'mRNA':
+                    for polypeptide in feat.polypeptides():
+                        if polypeptide.annotation is not None:
+                            if polypeptide.annotation.product_name is not None:
+                                export_header = polypeptide.annotation.product_name
+                                break
+
+                    coding_seq = feat.get_CDS_residues(for_translation=True)
+                    if feat.locus_tag is not None:
+                        export_id = feat.locus_tag
+                        
+                elif args.feature_type == 'polypeptide':
+                    export_header = feat.annotation.product_name
+                    coding_seq = feat.parent.get_CDS_residues(for_translation=True)
+                    if feat.parent.locus_tag is not None:
+                        export_id = feat.parent.locus_tag
                 
                 fout.write(">{0}".format(export_id))
                 if export_header is not None:
                     fout.write(" {0}\n".format(export_header))
                 else:
                     fout.write("\n")
-                
-                coding_seq = mRNA.get_CDS_residues(for_translation=True)
 
                 if args.check_ends == True:
                     # check the starting codon
                     start_codon = coding_seq[0:3].upper()
                     if start_codon not in start_codons:
-                        sys.stderr.write("WARN: Non-canonical start codon ({0}) in mRNA {1}\n".format(start_codon, mRNA.id))
+                        sys.stderr.write("WARN: Non-canonical start codon ({0}) in mRNA {1}\n".format(start_codon, feat.id))
 
                     stop_codon = coding_seq[-3:].upper()
                     if stop_codon not in stop_codons:
-                        sys.stderr.write("WARN: Non-canonical stop codon ({0}) in mRNA {1}\n".format(stop_codon, mRNA.id))                        
+                        sys.stderr.write("WARN: Non-canonical stop codon ({0}) in mRNA {1}\n".format(stop_codon, feat.id))                        
 
                 if args.type == 'cds':
                     fout.write("{0}\n".format(biocodeutils.wrapped_fasta(coding_seq)))
@@ -108,7 +119,7 @@ def main():
                     if args.check_internal_stops == True:
                         internal_stop_count = translated_seq[:-1].count('*')
                         if internal_stop_count > 0:
-                            sys.stderr.write("Found {0} internal stops in mRNA {1}\n".format(internal_stop_count, mRNA.id))
+                            sys.stderr.write("Found {0} internal stops in mRNA {1}\n".format(internal_stop_count, feat.id))
                     
                     fout.write("{0}\n".format(biocodeutils.wrapped_fasta(translated_seq)))
 

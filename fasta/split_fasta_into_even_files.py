@@ -49,6 +49,11 @@ def main():
     else:
         output_dir = os.path.dirname(args.input_file)
 
+    if output_dir is None or len(output_dir) == 0:
+        output_dir = "./"
+
+    print("INFO: Output directory is: ({0})".format(output_dir))
+
     basename = os.path.basename(args.input_file)
                         
     print("INFO: There were {0} records found in the input file.".format(total_record_count))
