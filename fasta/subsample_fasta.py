@@ -5,7 +5,7 @@
 Randomly extract/subsample a specified number of sequences from an
 input multi-FASTA file.  If the number of sequences requested is
 greater than the number of sequences in the file then all of the input
-sequences will will be printed.  Otherwise, the exact number of
+sequences will be printed.  Otherwise, the exact number of
 requested sequences will be returned, in the same order that they
 appear in the original file. Note that the input multi-FASTA will be
 scanned twice: once to determine the total sequence count and once to
@@ -45,7 +45,10 @@ def main():
     if args.seed is not None:
         seed(args.seed)
 
-    for i in range(0, args.num_seqs):
+    num_seqs = args.num_seqs
+    if num_seqs > n_seqs:
+        num_seqs = n_seqs
+    for i in range(0, num_seqs):
         # choose one sequence from all_seqs and move it into selected_seqs
         chosen = randint(0, n_unselected-1)
         selected_seqs[all_seqs[chosen]] = 1
