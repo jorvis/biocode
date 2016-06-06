@@ -238,7 +238,8 @@ def create_tables( cursor ):
               CREATE TABLE uniref_acc (
                  id         text not NULL,
                  accession  text not NULL,
-                 res_length integer
+                 res_length integer,
+                 is_characterized integer DEFAULT 0
               )
     """)
     
