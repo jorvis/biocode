@@ -1,0 +1,24 @@
+
+Some timing experiments with the goal of speeding up group_rnaseq_transcripts_by_read_alignment.
+The initial tests used a couple of small prefixes of the full BAM alignment file, created by 
+running this script:
+
+make-test-inputs.sh
+
+The subdirectories are as follows:
+
+1-original-script/
+  Check the speed of the original script (with a minor mod to allow reading SAM from stdin):
+  NOTE: Running these tests also revealed that the original script is not grouping transcripts 
+  correctly and may return different results from run to run. 
+
+2-read-bam-only/
+  Baseline experiment to determine the amount of time it takes to read the entire SAM/BAM file.
+
+3-timing-tests/
+  A series of experiments to see which part(s) of the script are slowing things down.
+
+4-new-script/
+  A new version of the script that addresses the speed and correctness issues.
+
+
