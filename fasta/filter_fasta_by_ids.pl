@@ -28,6 +28,10 @@ B<--fasta_file, -f>
    
 B<--output_file, -o>
    An output file name for the multi-FASTA file
+
+B<--mode, -m>
+   Optional.  Specifies whether you want to include or exclude the IDs
+   submitted from the output file.  Default=include.
    
 B<--id, -i>
    An ID or comma separated list of IDs (no spaces!)
@@ -43,7 +47,11 @@ B<--help, -h>
 =head1  CONTACT
 
     Anu Ganapathy
-    alenas@gmail.com   
+    alenas at gmail
+
+    highly modified by:
+    Joshua Orvis
+    jorvis at gmail
    
 =cut
 
@@ -58,6 +66,7 @@ my $results = GetOptions (\%options,
                           'id|i=s',
                           'fasta_file|f=s',
                           'output_file|o=s',
+                          'mode|m=s',
                           'help|h') || pod2usage();
 
 ## display documentation
@@ -66,7 +75,7 @@ if( $options{'help'} ){
 }
 
 ## make sure everything passed was peachy
-my ($seq_id_ref, $fasta_file, $output_file) = &check_parameters(%options);
+my ($seq_id_ref, $fasta_file, $output_file, $mode) = &check_parameters(%options);
 
 ## store IDs
 my %sequence_id = %$seq_id_ref;
@@ -75,36 +84,30 @@ my %sequence_id = %$seq_id_ref;
 open(FILE, "$fasta_file");
 open(OUTFILE, ">$output_file") || die "Could not open file $output_file: $!";
 
-my $current_seq_id = "";
+my $keep_line = 0;
 
 while(<FILE>){
-
     if($_ =~ /^>/){ ## defline
 		my $id = $_;
 		$id =~ s/^>//;
 		($id) = split(/\s+/, $id);
-		
-		## if this ID is one we want ...
-		if(exists($sequence_id{$id})){
 
-	    	## reset loop variables for this ID
-		    $current_seq_id = $id;
-		    print OUTFILE $_;
-		    next;
-		}else{
-		    $current_seq_id = "";
-		}
-
-    }elsif($_ =~ /^\s+$/){ ## blank line
-		next;
-    }else{ ## sequence line
-
-        ## if we're currently watching an ID ...
-		if($current_seq_id){ 
-	    	## append its sequence
-	  	  print OUTFILE $_;
-		}
+        if ($mode eq 'include') {
+            if (exists $sequence_id{$id}) {
+                $keep_line = 1;
+            } else {
+                $keep_line = 0;
+            }
+        } else {
+            if (exists $sequence_id{$id}) {
+                $keep_line = 0;
+            } else {
+                $keep_line = 1;
+            }
+        }
     }
+
+    print OUTFILE $_ if $keep_line;
 }
 
 close FILE;
@@ -145,14 +148,21 @@ sub check_parameters {
 	}else{
 		die "Please enter an ID list via --id_list /path/to/file or --id someid1 \n";
 	}
-	
+
+    if (defined $options{mode}) {
+        if ($options{mode} ne 'include' && $options{mode} ne 'exclude') {
+            die "--mode option value must be either 'include' or 'exclude'";
+        }
+    } else {
+        $options{mode} = 'include';
+    }
+    
 	## check fasta file
 	die "Please enter a multi-FASTA file via --fasta_file " if(!defined $options{fasta_file} || !-e $options{fasta_file});
-	
 		
 	## check output file
 	die "Please enter an output file via --output_file " if(!defined $options{output_file});
 	
-	return (\%ids, $options{fasta_file}, $options{output_file});
+	return (\%ids, $options{fasta_file}, $options{output_file}, $options{mode});
 	
 }
