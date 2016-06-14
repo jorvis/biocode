@@ -35,6 +35,9 @@ genes and distance to each.
 This isn't directly followed by Brian's VCFannotator, but for my own notes these are the SNP types:
 
 - Non-coding region
+    - Intergenic
+    - 5' UTR
+    - 3' UTR
 - Coding region
     - Synonymous
     - Nonsynonymous
@@ -76,6 +79,8 @@ def main():
     cds_snp_c = 0
     intron_snp_c = 0
     intergenic_snp_c = 0
+    p3UTR_snp_c = 0
+    p5UTR_snp_c = 0
 
     ## these are each subcategories of SNPs within a CDS
     syn_c = 0
@@ -104,35 +109,42 @@ def main():
         annot_col = cols[10]
         snp_loc = None
         snp_type = None
-        total_snp_c += 1
+        alt = cols[4]
 
-        if annot_col.startswith("intergenic"):
-            intergenic_snp_c += 1
-        elif annot_col.startswith("intron"):
-            intron_snp_c += 1
-        elif annot_col.startswith("CDS"):
-            cds_snp_c += 1
-            cds_type = annot_col.split(",")[-1]
-
-            if cds_type == "(SYN)":
-                syn_c += 1
-            elif cds_type == "(NSY)":
-                nonsyn_c += 1
-            elif cds_type == "(RTH)":
-                readthru_c += 1
-            elif cds_type == "(STP)":
-                nonsense_c += 1
+        if alt != ".":
+            total_snp_c += 1
+            if annot_col.startswith("intergenic"):
+                intergenic_snp_c += 1
+            elif annot_col.startswith("intron"):
+                intron_snp_c += 1
+            elif annot_col.startswith("p5UTR"):
+                p5UTR_snp_c += 1
+            elif annot_col.startswith("p3UTR"):
+                p3UTR_snp_c += 1
+            elif annot_col.startswith("CDS"):
+                cds_snp_c += 1
+                cds_type = annot_col.split(",")[-1]
+                if cds_type == "(SYN)":
+                    syn_c += 1
+                elif cds_type == "(NSY)":
+                    nonsyn_c += 1
+                elif cds_type == "(RTH)":
+                    readthru_c += 1
+                elif cds_type == "(STP)":
+                    nonsense_c += 1
+                else:
+                    other_c += 1
+            
+            
             else:
-                other_c += 1
-            
-            
-        else:
-            raise Exception("ERROR: Unexpected SNP type at beginning of column: {0}".format(annot_col) )
+                raise Exception("ERROR: Unexpected SNP type at beginning of column: {0}".format(annot_col) )
         
             
     print("Total SNPs: {}".format(total_snp_c) )
     print("Intergenic: {}".format(intergenic_snp_c) )
     print("Intronic  : {}".format(intron_snp_c) )
+    print("p5UTR  : {}".format(p5UTR_snp_c) )
+    print("p3UTR  : {}".format(p3UTR_snp_c) )
     print("Within CDS: {}".format(cds_snp_c) )
     print("\tSynonymous    : {}".format(syn_c) )
     print("\tNon-synonymous: {}".format(nonsyn_c) )
