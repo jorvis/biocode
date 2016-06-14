@@ -96,6 +96,7 @@ def main():
                 gene = biothings.Gene( id=locus_tag )
                 gene.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 current_gene = gene
+                current_RNA = None
 
             elif feat.type == 'mRNA':
                 locus_tag = feat.qualifiers['locus_tag'][0]
@@ -144,6 +145,15 @@ def main():
             
             elif feat.type == 'CDS':
                 locus_tag = feat.qualifiers['locus_tag'][0]
+                # If processing a prokaryotic GBK, we'll encounter CDS before mRNA, so we have to
+                #  manually make one
+                if current_RNA is None:
+                    feat_id = "{0}.mRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
+                    mRNA = biothings.mRNA( id=feat_id, parent=current_gene )
+                    mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                    gene.add_mRNA(mRNA)
+                    current_RNA = mRNA
+                
                 exon_count_by_RNA[current_RNA.id] += 1
                 cds_id = "{0}.CDS.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
                 current_CDS_phase = 0
@@ -172,8 +182,6 @@ def main():
                     current_RNA.add_exon(exon)
                     exon_count_by_RNA[current_RNA.id] += 1
                 
-                product = feat.qualifiers['product'][0]
-
             else:
                 print("WARNING: The following feature was skipped:\n{0}".format(feat))
                 features_skipped_count += 1
