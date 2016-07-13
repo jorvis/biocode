@@ -20,7 +20,12 @@ def main():
     parser.add_argument('-od', '--output_directory', type=str, required=True, help='Directory where output files will be written' )
     args = parser.parse_args()
 
-    # inclusive
+    # Either set this variable to a path, or use the pipeline_min/pipeline_max below
+    #  If you dont' want to use this, set it to None
+    srs_id_list_file = '/path/to/some.id.list'
+    srs_ids_to_keep = list()
+
+    # inclusive.  These are NOT read if the srs_id_list_file is defined above
     #pipeline_min = 10927248802
     #pipeline_max = 11214274766
     pipeline_min = 11305294429
@@ -41,6 +46,12 @@ def main():
     # key = pipeline ID, value = SRS ID
     pipelines = dict()
 
+    # We're either getting our SRS ID list to keep from a file or a range of pipeline IDs
+    if srs_id_list_file is not None:
+        for line in open(srs_id_list_file):
+            line = line.rstrip()
+            srs_ids_to_keep.append(line)
+
     ## make sure the config template exists
     if not os.path.exists(config_template):
         raise Exception("ERROR: config template file not found: {0}".format(config_template))
@@ -49,8 +60,9 @@ def main():
         m = re.match("^\d+$", pipeline_id)
         if m:
             pipeline_id = int(pipeline_id)
-            if pipeline_id > pipeline_max or pipeline_id < pipeline_min:
-                continue
+            if srs_id_list_file is None:
+                if pipeline_id > pipeline_max or pipeline_id < pipeline_min:
+                    continue
         else:
             continue
 
@@ -59,7 +71,7 @@ def main():
         owner = find_owner(pipeline_path)
         if owner not in owners:
             continue
-        
+
         pipeline_comment_path = "{0}/workflow/runtime/pipeline/{1}/pipeline.xml.comment".format(project_area, pipeline_id)
         if os.path.exists(pipeline_comment_path):
             comment = open(pipeline_comment_path).read()
@@ -76,6 +88,11 @@ def main():
     batch_fh = open(args.output_file, 'wt')
 
     for pipeline_id in pipelines:
+        # do we have a limit on the SRS IDs?
+        if srs_id_list_file is not None:
+            if pipelines[pipeline_id] not in srs_ids_to_keep:
+                continue
+        
         config_path = "{0}/{1}.config".format(args.output_directory, pipelines[pipeline_id])
         tmp_config_path = "/tmp/{0}.config".format(pipeline_id)
 
@@ -97,7 +114,7 @@ def main():
 
         ## copy the config file
         shutil.copy(config_template, config_path)
-        
+
         ## modify it with these paths
         ofh = open(tmp_config_path, 'wt')
         last_label = None
@@ -140,12 +157,12 @@ def main():
                 continue
 
             ofh.write("{0}\n".format(line))
-        
+
         ofh.close()
         shutil.move(tmp_config_path, config_path)
         batch_fh.write("{0} -f gff3 -c {1} -o {2}/{3}\n".format(attributor_path, config_path, args.output_directory,
                                                         pipelines[pipeline_id]))
-        
+
 
 
 def find_owner(filename):
@@ -153,10 +170,3 @@ def find_owner(filename):
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
