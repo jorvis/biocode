@@ -11,6 +11,7 @@ import os
 from pwd import getpwuid
 import re
 import shutil
+import sys
 
 def main():
     parser = argparse.ArgumentParser( description='Generates a shell script of Attributor runs given a range of pipeline IDs')
@@ -32,9 +33,9 @@ def main():
     pipeline_max = 11373273817
 
     # CONFIG
-    project_area = '/usr/local/projects/dacc'
+    project_area = '/local/hmp/dacc/t3/'
     owners = ['hhuot', 'cmccracken']
-    config_template = '/usr/local/projects/jorvis/dacc_annotation/assign_functional_annotation.SRS017697.config'
+    config_template = '/home/hhuot/git/Attributor/assign_functional_annotation.example_hhc.config'
     # assumes all child names are like: SRS147134.rapsearch2.m8.gz
     rapsearch2_base = '/local/hmp/dacc/t3/hhs/genome/microbiome/wgs/analysis/hmgi/rapsearch'
     attributor_path = '/home/hhuot/git/Attributor/assign_functional_annotation.py'
@@ -81,7 +82,12 @@ def main():
                 srs_id = m.group(1)
                 pipelines[pipeline_id] = srs_id
             else:
-                raise Exception("Pipeline found without an SRS comment: {0}".format(pipeline_comment_path))
+                m = re.search("(\d+\..{2,4})", comment)
+                if m:
+                    srs_id = m.group(1)
+                    pipelines[pipeline_id] = srs_id
+                else:
+                    print("WARNING: Pipeline skipped without an SRS comment: {0}".format(pipeline_comment_path), file=sys.stderr)
 
     print("INFO: found {0} pipelines".format(len(pipelines)))
 
