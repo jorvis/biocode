@@ -136,13 +136,22 @@ def main():
                 if last_label == 'coding_hmm_lib__equivalog':
                     ofh.write("     path: {0}/output_repository/hmmpfam3/{1}_default/hmmpfam3.htab.list\n".format(project_area, pipeline_id))
                     continue
-                elif last_label == 'rapsearch2__uniref100__trusted_full_full':
+                elif last_label == 'rapsearch2__uniref100__all_full':
                     ofh.write("     path: {0}/{1}.rapsearch2.m8\n".format(rapsearch2_base, pipelines[pipeline_id]))
                     continue
-                elif last_label == 'rapsearch2__uniref100__trusted_partial_partial':
+                elif last_label == 'rapsearch2__uniref100__all_partial':
+                    ofh.write("     path: {0}/{1}.rapsearch2.m8\n".format(rapsearch2_base, pipelines[pipeline_id]))
+                    continue
+                elif last_label == 'rapsearch2__uniref100__trusted_full':
+                    ofh.write("     path: {0}/{1}.rapsearch2.m8\n".format(rapsearch2_base, pipelines[pipeline_id]))
+                    continue
+                elif last_label == 'rapsearch2__uniref100__trusted_partial':
                     ofh.write("     path: {0}/{1}.rapsearch2.m8\n".format(rapsearch2_base, pipelines[pipeline_id]))
                     continue
                 elif last_label == 'coding_hmm_lib__equivalog_domain':
+                    ofh.write("     path: {0}/output_repository/hmmpfam3/{1}_default/hmmpfam3.htab.list\n".format(project_area, pipeline_id))
+                    continue
+                elif last_label == 'coding_hmm_lib__all_trusted':
                     ofh.write("     path: {0}/output_repository/hmmpfam3/{1}_default/hmmpfam3.htab.list\n".format(project_area, pipeline_id))
                     continue
                 elif last_label == 'tmhmm':
