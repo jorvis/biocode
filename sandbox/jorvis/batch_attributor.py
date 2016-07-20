@@ -108,7 +108,9 @@ def main():
         elif os.path.exists("{0}/{1}.metagenemark3.faa".format(fasta_base_dir, pipelines[pipeline_id])):
             fasta_path = "{0}/{1}.metagenemark3.faa".format(fasta_base_dir, pipelines[pipeline_id])
         else:
-            raise Exception("ERROR: failed to find FASTA file for {0}".format(pipelines[pipeline_id]))
+            print("WARNING: failed to find FASTA file for {0}".format(pipelines[pipeline_id]), file=sys.stderr)
+            continue
+            #raise Exception("ERROR: failed to find FASTA file for {0}".format(pipelines[pipeline_id]))
 
         ## get the source GFF path
         if os.path.exists("{0}/{1}.metagenemark.gff3".format(gff_base_dir, pipelines[pipeline_id])):
@@ -116,7 +118,9 @@ def main():
         elif os.path.exists("{0}/{1}.metagenemark3.gff3".format(gff_base_dir, pipelines[pipeline_id])):
             gff3_path = "{0}/{1}.metagenemark3.gff3".format(gff_base_dir, pipelines[pipeline_id])
         else:
-            raise Exception("ERROR: failed to find GFF3 file for {0}".format(pipelines[pipeline_id]))
+            print("WARNING: failed to find GFF3 file for {0}".format(pipelines[pipeline_id]), file=sys.stderr)
+            continue
+            #raise Exception("ERROR: failed to find GFF3 file for {0}".format(pipelines[pipeline_id]))
 
         ## copy the config file
         shutil.copy(config_template, config_path)
