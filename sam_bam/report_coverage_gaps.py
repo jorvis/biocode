@@ -21,10 +21,12 @@ Example command before using this script:
 
 NOTE: This script accommodates for the fact that the samtools mpileup output does not contain
 coverage information for every base position.  If a position is omitted, it is assumed to
-be a zero-depth locus.
+be a zero-depth locus.  This is also why the reference fasta file (-f) is required, in order to
+be able to report 3' end sections.
 """
 
 import argparse
+import biocodeutils
 import os
 import sys
 
@@ -34,34 +36,53 @@ def main():
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
+    parser.add_argument('-f', '--fasta_file', type=str, required=True, help='Reference fasta file, against which reads were aligned.  Needed for low 3-prime end coverage' )
     parser.add_argument('-mcd', '--min_coverage_depth', type=int, required=True, help='Min coverage depth, below which is reported' )
     parser.add_argument('-mcs', '--min_coverage_span', type=int, required=False, default=0, help='Coverage window size, the avg of which is calculated for depth cutoff' )
     args = parser.parse_args()
+
+    # Check, this isn't ready yet:
+    if args.min_coverage_span is not None:
+        raise Exception("ERROR: Sorry, --min_coverage_span not yet implemented.")
 
     if args.output_file is None:
         out_fh = sys.stdout
     else:
         out_fh = open(args.output_file, 'wt')
 
+    lengths = biocodeutils.fasta_sizes_from_file(args.fasta_file)
+        
     current_seq_id = None
     next_seq_pos = 1
-    last_seq_coord = None
     low_cov_start = None
+    low_cov_end = None
+
+    stats_total_molecules = 0
+    stats_total_bases = 0
+    stats_depth_sum = 0
     
     for line in open(args.input_file):
+        stats_total_bases += 1
         contig, coord, base, depth = line.split("\t")[0:4]
+        stats_total_bases += 1
+        stats_depth_sum += int(depth)
         coord = int(coord)
-        #print("DEBUG: contig:{0} coord:{1} depth:{2} == current_seq_id:{3} last_seq_coord:{4} low_cov_start:{5}".format(
-        #    contig, coord, depth, current_seq_id, last_seq_coord, low_cov_start))
+        print("DEBUG: contig:{0} coord:{1} depth:{2} == current_seq_id:{3} low_cov_start:{5} low_cov_end:{4} next_seq_pos:{6}".format(
+            contig, coord, depth, current_seq_id, low_cov_end, low_cov_start, next_seq_pos))
 
         if contig != current_seq_id:
+            # if this isn't the end of the contig, report until the end
+            if current_seq_id is not None and next_seq_pos - 1 != lengths[current_seq_id]:
+                print("DEBUG: Found an extended end (last_coord:{2}) at the end of {0} which is actually {1} bp".format(current_seq_id, lengths[current_seq_id], next_seq_pos - 1))
+            
             # purge and reset
             if low_cov_start is not None:
-                print("Low coverage region: {2}: {0} - {1}".format(low_cov_start, last_seq_coord, current_seq_id))
+                out_fh.write("{2}\t{0}\t{1}\n".format(low_cov_start, low_cov_end, current_seq_id))
                 low_cov_start = None
                 
             current_seq_id = contig
             next_seq_pos = 1
+            stats_total_molecules += 1
 
         # The mpileup output has gaps, so we need to check each coordinate and compare with the current
         #  line to see if we've found one.
@@ -78,19 +99,23 @@ def main():
             if low_cov_start is None:
                 low_cov_start = coord
             else:
-                # We're just extending upon an open low-cov region
+                # We're just extending upon an open low-cov region.  Nothing to see here.
                 pass
 
-            last_seq_coord = int(coord)
+            low_cov_end = int(coord)
         else:
             # did we finish a low_cov_region?:
             if low_cov_start is not None:
-                print("Low coverage region: {2}: {0} - {1}".format(low_cov_start, last_seq_coord, contig))
+                out_fh.write("Low coverage region: {2}: {0} - {1}\n".format(low_cov_start, low_cov_end, contig))
                 low_cov_start = None
 
     # Handle possible spans at the end of the last contig
     if low_cov_start is not None:
-        print("Low coverage region: {2}: {0} - {1}".format(low_cov_start, last_seq_coord, current_seq_id))
+        print("{2}\t{0}\t{1}".format(low_cov_start, low_cov_end, current_seq_id))
+
+    print("INFO: Total molecules: {0}".format(stats_total_molecules), file=sys.stderr)
+    print("INFO: Total bases    : {0}".format(stats_total_bases), file=sys.stderr)
+    print("INFO: Avg cov depth  : {0}x".format(int(stats_depth_sum / stats_total_bases)), file=sys.stderr)
         
 
 if __name__ == '__main__':
