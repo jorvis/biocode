@@ -23,6 +23,10 @@ NOTE: This script accommodates for the fact that the samtools mpileup output doe
 coverage information for every base position.  If a position is omitted, it is assumed to
 be a zero-depth locus.  This is also why the reference fasta file (-f) is required, in order to
 be able to report 3' end sections.
+
+Test file:
+/local/projects-t3/aplysia/read_alignment/A1_to_TOI_matches/alignment.mapped.sorted.mpileup
+
 """
 
 import argparse
@@ -38,7 +42,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
     parser.add_argument('-f', '--fasta_file', type=str, required=True, help='Reference fasta file, against which reads were aligned.  Needed for low 3-prime end coverage' )
     parser.add_argument('-mcd', '--min_coverage_depth', type=int, required=True, help='Min coverage depth, below which is reported' )
-    parser.add_argument('-mcs', '--min_coverage_span', type=int, required=False, default=0, help='Coverage window size, the avg of which is calculated for depth cutoff' )
+    parser.add_argument('-mcs', '--min_coverage_span', type=int, required=False, help='Coverage window size, the avg of which is calculated for depth cutoff' )
     args = parser.parse_args()
 
     # Check, this isn't ready yet:
@@ -51,72 +55,57 @@ def main():
         out_fh = open(args.output_file, 'wt')
 
     lengths = biocodeutils.fasta_sizes_from_file(args.fasta_file)
-        
-    current_seq_id = None
-    next_seq_pos = 1
-    low_cov_start = None
-    low_cov_end = None
 
-    stats_total_molecules = 0
-    stats_total_bases = 0
-    stats_depth_sum = 0
+    stats = {'total_molecules': 0, 'total_bases': 0, 'depth_sum': 0}
     
+    # In mpileup gaps are reported either with positions of coverage 0 OR omitted rows.
+    depths = list()
+    current_seq_id = None
+
     for line in open(args.input_file):
-        stats_total_bases += 1
-        contig, coord, base, depth = line.split("\t")[0:4]
-        stats_total_bases += 1
-        stats_depth_sum += int(depth)
-        coord = int(coord)
-        print("DEBUG: contig:{0} coord:{1} depth:{2} == current_seq_id:{3} low_cov_start:{5} low_cov_end:{4} next_seq_pos:{6}".format(
-            contig, coord, depth, current_seq_id, low_cov_end, low_cov_start, next_seq_pos))
+        contig, this_coord, base, depth = line.split("\t")[0:4]
+        this_coord = int(this_coord)
 
+        # new molecule
         if contig != current_seq_id:
-            # if this isn't the end of the contig, report until the end
-            if current_seq_id is not None and next_seq_pos - 1 != lengths[current_seq_id]:
-                print("DEBUG: Found an extended end (last_coord:{2}) at the end of {0} which is actually {1} bp".format(current_seq_id, lengths[current_seq_id], next_seq_pos - 1))
+            stats['total_molecules'] += 1
             
-            # purge and reset
-            if low_cov_start is not None:
-                out_fh.write("{2}\t{0}\t{1}\n".format(low_cov_start, low_cov_end, current_seq_id))
-                low_cov_start = None
-                
+            # purge the last one
+            if current_seq_id != None:
+                print_spans(current_seq_id, depths, args.min_coverage_depth, out_fh, stats)
+
+            depths = [0] * lengths[contig]
             current_seq_id = contig
-            next_seq_pos = 1
-            stats_total_molecules += 1
 
-        # The mpileup output has gaps, so we need to check each coordinate and compare with the current
-        #  line to see if we've found one.
-        if coord < next_seq_pos:
-            if low_cov_start is None:
-                low_cov_start = next_seq_pos
+        depths[this_coord - 1] = depth
 
-            next_seq_pos = coord + 1
+    print_spans(current_seq_id, depths, args.min_coverage_depth, out_fh, stats)
+
+    print("INFO: Total molecules: {0}".format(stats['total_molecules']), file=sys.stderr)
+    print("INFO: Total bases    : {0}".format(stats['total_bases']), file=sys.stderr)
+    print("INFO: Avg cov depth  : {0}x".format(int(stats['depth_sum'] / stats['total_bases'])), file=sys.stderr)
+     
+def print_spans(id, depths, cutoff, fh, stats):
+    i = 0
+    span_start = None
+    in_span = False
+
+    for depth in depths:
+        stats['total_bases'] += 1
+        stats['depth_sum'] += int(depth)
+
+        if int(depth) < cutoff:
+            if in_span == False:
+                in_span = True
+                span_start = i
         else:
-            next_seq_pos += 1
+            if in_span == True:
+                fh.write("{0}\t{1}\t{2}\t{3}\n".format(id, span_start + 1, i + 1, i - span_start))
 
-        if int(depth) < args.min_coverage_depth:
-            # We're starting a new low-cov region
-            if low_cov_start is None:
-                low_cov_start = coord
-            else:
-                # We're just extending upon an open low-cov region.  Nothing to see here.
-                pass
+            in_span = False
+            span_start = None
 
-            low_cov_end = int(coord)
-        else:
-            # did we finish a low_cov_region?:
-            if low_cov_start is not None:
-                out_fh.write("Low coverage region: {2}: {0} - {1}\n".format(low_cov_start, low_cov_end, contig))
-                low_cov_start = None
-
-    # Handle possible spans at the end of the last contig
-    if low_cov_start is not None:
-        print("{2}\t{0}\t{1}".format(low_cov_start, low_cov_end, current_seq_id))
-
-    print("INFO: Total molecules: {0}".format(stats_total_molecules), file=sys.stderr)
-    print("INFO: Total bases    : {0}".format(stats_total_bases), file=sys.stderr)
-    print("INFO: Avg cov depth  : {0}x".format(int(stats_depth_sum / stats_total_bases)), file=sys.stderr)
-        
+        i += 1
 
 if __name__ == '__main__':
     main()
