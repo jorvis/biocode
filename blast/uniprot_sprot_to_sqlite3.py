@@ -34,7 +34,7 @@ OS   Homo sapiens (Human).
 
 GN   Name=AASDHPPT; ORFNames=CGI-80, HAH-P, HSPC223, x0005;
 
-DE            EC=6.3.4.3;
+DE              EC=6.3.4.3;
 DE              EC=1.5.1.5;
 DE              EC=3.5.4.9;
 DE              EC=6.3.4.3;
@@ -103,6 +103,7 @@ def main():
     conn.commit()
 
     id = None
+    aa_length = None
     accs = list()
     full_name = None
     organism = None
@@ -120,7 +121,7 @@ def main():
             curs.execute("INSERT INTO uniprot_sprot (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
 
             for acc in accs:
-                curs.execute("INSERT INTO uniprot_sprot_acc (id, accession) values (?,?)", (id, acc))
+                curs.execute("INSERT INTO uniprot_sprot_acc (id, accession, res_length) values (?,?, ?)", (id, acc, aa_length))
 
             for go_id in go_ids:
                 curs.execute("INSERT INTO uniprot_sprot_go (id, go_id) values (?,?)", (id, go_id))
@@ -130,6 +131,7 @@ def main():
             
             # reset
             id = None
+            aa_length = None
             accs = list()
             full_name = None
             organism = None
@@ -138,7 +140,11 @@ def main():
             ec_nums = list()
             
         elif line.startswith("ID"):
-            id = line.split()[1]
+            m = re.match("ID\s+(\S+).+\s(\d+) AA", line)
+            if m:
+                id, aa_length = m.groups()
+            else:
+                raise Exception("Error: Unrecognized ID line: {0}".format(line))
         elif line.startswith("AC"):
             ac_parts = line.split()
             for part in ac_parts:
@@ -211,7 +217,8 @@ def create_tables( cursor ):
     cursor.execute("""
               CREATE TABLE uniprot_sprot_acc (
                  id         text not NULL,
-                 accession  text not NULL
+                 accession  text not NULL,
+                 res_length INT
               )
     """)
     
