@@ -26,6 +26,10 @@ grep -v "#" assembly.longest.btab | awk '{print $1"\t"$7"\t"$8"\t"$2"\t0\t+"}' >
 bedtools sort -i assembly.longest.bed > assembly.longest.sorted.bed
 #/local/projects-t3/aplysia/priti_analysis/Scripts/comp_transcript.pl --i assembly.longest.sorted.bed --i1 transcript.lengths > assembly.longest.per_cov.txt
 /usr/local/projects/aplysia/priti_analysis/Scripts/comp_transcript.pl --i assembly.longest.sorted.bed --i1 transcript.lengths > assembly.longest.per_cov.txt
+
+# then to actually plot these:
+~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i assembly.all.per_cov.txt,assembly.longest.per_cov.txt -l All,Longest -t "Repeat filtered Oases + Trinity, post-TGICL"
+
 """
 
 import argparse
