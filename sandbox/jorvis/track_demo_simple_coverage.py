@@ -20,7 +20,7 @@ ctx.set_line_width(1)
 ctx.set_source_rgb (1, 1, 1) # Solid color
 ctx.paint()
 ctx.set_source_rgb (0.5, 0.5, 0.5) # Solid color
-a
+
 # We'll use this to smoothen out the variation to make it look
 #  more like a real coverage plot
 last_height = 0
