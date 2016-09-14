@@ -58,7 +58,7 @@ def main():
         fasta_fh.close()
 
         # Perform the blast using bl2seq
-        cmd = "bl2seq -i {0} -j {0} -p blastn -e 1e-10 -D 1 -o {1}".format(fasta_name, blast_name)
+        cmd = "bl2seq -i {0} -j {0} -p blastn -e 1e-10 -D 1 -o {1} -W {2}".format(fasta_name, blast_name, args.min_repeat_size)
         run_command(cmd)
 
         # Parse the result file to look for inverted repeats
@@ -83,6 +83,13 @@ def main():
 
             if s_orientation != q_orientation and match_len >= args.min_repeat_size:
                 ofh.write("INVERSION of {5} bp in {4}: {0}\t{1}\t{2}\t{3}\n".format(qstart, qend, sstart, send, cols[0], match_len))
+
+            if s_orientation == q_orientation and match_len >= args.min_repeat_size:
+                if (qstart >= sstart and qstart <= send) or (qend >= sstart and qend <= send):
+                    pass
+                else:
+                    ofh.write("DIRECT REPEAT of {5} bp in {4}: {0}\t{1}\t{2}\t{3}\n".format(qstart, qend, sstart, send, cols[0], match_len))
+                    #ofh.write("# ^^ {0}".format(line))
 
         seqs_processed += 1
 
