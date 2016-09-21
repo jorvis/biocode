@@ -713,6 +713,9 @@ class Gene( LocatableThing ):
         if rna in self.children['mRNA']:
             self.children['mRNA'].remove(rna)
         
+    def rRNAs(self):
+        return self.children['rRNA']
+
     def shares_exon_structure_with( self, thing=None, stop_tolerant=False ):
         """
         This checks if two genes have only one mRNA and, if so, compares their internal
@@ -766,6 +769,9 @@ class Gene( LocatableThing ):
             return True
         else:
             return False
+
+    def tRNAs(self):
+        return self.children['tRNA']
 
     def print_as(self, fh=None, source=None, format=None, lab=None):
         '''
