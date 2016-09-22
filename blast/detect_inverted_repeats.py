@@ -51,8 +51,8 @@ def main():
 
     for id in seqs:
         # Write a FASTA of just this sequence
-        fasta_name = "temp.input.fasta"
-        blast_name = "temp.blast.out"
+        fasta_name = "{0}.temp.input.fasta".format(os.getpid())
+        blast_name = "{0}.temp.blast.out".format(os.getpid())
         fasta_fh = open(fasta_name, 'wt')
         fasta_fh.write(">{0}\n{1}".format(id, seqs[id]['s']))
         fasta_fh.close()
