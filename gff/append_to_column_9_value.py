@@ -64,7 +64,7 @@ def main():
                     cols[8] = biocodegff.build_column_9_from_dict(col9)
                     replacement_count += 1
 
-                ofh.write("{0}\t{1}\n".format("\t".join(cols[0:7]), cols[8]))
+                ofh.write("{0}\t{1}\n".format("\t".join(cols[0:8]), cols[8]))
             else:
                 ofh.write("{0}\n".format(line))
         else:
