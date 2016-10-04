@@ -44,6 +44,7 @@ def main():
     parser.add_argument('-i', '--input_files', type=str, required=True, help='Comma-separated list of cov files to be plotted' )
     parser.add_argument('-l', '--labels', type=str, required=True, help='Labels for each cov file passed' )
     parser.add_argument('-t', '--title', type=str, required=False, default='Transcript coverage', help='Title for the plot' )
+    parser.add_argument('-o', '--output_image', type=str, required=False, help='Name for PNG file to be created. If not passed, will post to plotly site' )
     args = parser.parse_args()
 
     cov_files = args.input_files.split(",")
@@ -53,7 +54,10 @@ def main():
               'rgb(50, 171, 96)',   #green
               'rgb(222,45,38)',     #red
               'rgb(142, 124, 195)', #purple
-              'rgb(100,100,100)' ]
+              'rgb(100,100,100)',   #darker grey
+              'rgb(255,255,61)',    #yellow
+              'rgb(255,169,58)'     #orange
+             ]
 
     #print("Got {0} coverage files".format(len(cov_files)))
     #print("Got {0} labels".format(len(labels)))
@@ -116,10 +120,18 @@ def main():
         ),
         barmode='group',
         bargap=0.15,
-        bargroupgap=0.1
+        bargroupgap=0.1,
+        width=1500,
+        height=800
     )
     fig = go.Figure(data=traces, layout=layout)
-    plot_url = py.plot(fig, filename='angled-text-bar')
+
+    if args.output_image is None:
+        plot_url = py.plot(fig, filename='angled-text-bar')
+        print("Navigate to {0} for your image".format(plot_url))
+    else:
+        py.image.save_as(fig, filename=args.output_image)
+        print("Output written to file: {0}".format(args.output_image))
 
 
 if __name__ == '__main__':
