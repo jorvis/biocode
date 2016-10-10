@@ -26,7 +26,7 @@ import biocodeutils
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Checks the CDS features against a genome sequence to report/correct phase columns.')
+    parser = argparse.ArgumentParser( description='Checks the CDS features against a genome sequence report non-terminal internal stops.')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to the input GFF3' )
