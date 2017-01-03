@@ -4,8 +4,8 @@
 This script reads a GFF3 file and FASTA file (or FASTA embedded in the GFF) and
 checks the translation of all CDS for internal stops.  
 
-    Total mRNAs found:4091
-    mRNAs with embedded stops: 895
+Total mRNAs found:4079
+mRNAs with terminal stops: 3953
 
 
 
@@ -39,9 +39,12 @@ def main():
     mRNAs_with_terminal_stops = 0
     stop_codons = ['TAG', 'TAA', 'TGA']
 
-    for assembly_id in assemblies:
+    mRNA_extension_limit = 100
+    mRNAs_corrected = 0
+
+    for assembly_id in sorted(assemblies):
         print("Assembly {0} has length {1}".format(assembly_id, assemblies[assembly_id].length))
-        for gene in assemblies[assembly_id].genes():
+        for gene in sorted(assemblies[assembly_id].genes()):
             for mRNA in gene.mRNAs():
                 coding_seq = mRNA.get_CDS_residues()
                 total_mRNAs += 1
@@ -58,10 +61,10 @@ def main():
 
                     if mRNA_loc.strand == 1:
                         CDS_pos = CDSs[-1].location_on(assemblies[assembly_id]).fmax
-                        mRNA_limit = mRNA_loc.fmax
+                        mRNA_limit = mRNA_loc.fmax + mRNA_extension_limit
                     else:
                         CDS_pos = CDSs[0].location_on(assemblies[assembly_id]).fmin
-                        mRNA_limit = mRNA_loc.fmin
+                        mRNA_limit = mRNA_loc.fmin - mRNA_extension_limit
                         codon_step_size = -3
 
                     print("\tmRNA:{0}-{1}, CDS end: {2}\n\tExtending".format(mRNA_loc.fmin, mRNA_loc.fmax, CDS_pos), end='')
@@ -89,12 +92,14 @@ def main():
 
                     if new_stop_found == True:
                         print("\tCDS_pos: UPDATE: {0}".format(CDS_pos))
+                        mRNAs_corrected += 1
                     else:
                         print("\tCDS_pos:   SAME: {0}".format(CDS_pos))
 
 
     print("\nTotal mRNAs found:{0}".format(total_mRNAs))
-    print("mRNAs with terminal stops: {0}".format(mRNAs_with_terminal_stops))
+    print("mRNAs initially with terminal stops: {0}".format(mRNAs_with_terminal_stops))
+    print("mRNAs which can be corrected: {0}".format(mRNAs_corrected))
 
 
 if __name__ == '__main__':
