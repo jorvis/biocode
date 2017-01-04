@@ -1,6 +1,6 @@
 import re
 import bioannotation
-import biocodeutils
+import utils
 import biothings
 import math
 import sys
@@ -168,7 +168,7 @@ def print_biogene( gene=None, fh=None, on=None ):
                     fh.write("                     /db_xref=\"GO:{0}\"\n".format(go_annot.go_id))
 
         cds_residues = mRNA.get_CDS_residues()
-        polypeptide_residues = biocodeutils.translate(cds_residues)
+        polypeptide_residues = utils.translate(cds_residues)
 
         if len(polypeptide_residues) > 0:
             # This is the easiest case first, where no wrapping is needed.

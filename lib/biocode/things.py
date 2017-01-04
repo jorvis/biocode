@@ -1,8 +1,7 @@
 import uuid
-import biocodegff
+
 import biocodetbl
-import biocodeutils
-import sys
+from biocode import utils, gff
 
 '''
 Warning: this module requires Python 3.2 or higher
@@ -454,7 +453,7 @@ class MoleculeSet:
                 header = molecule.id
                 
             fh.write(">{0}\n".format(header))
-            fh.write("{0}\n".format(biocodeutils.wrapped_fasta(molecule.residues)))
+            fh.write("{0}\n".format(utils.wrapped_fasta(molecule.residues)))
 
         fh.close()
         
@@ -532,7 +531,7 @@ class AssemblySet( MoleculeSet ):
         self.assemblies.append(assembly)
 
     def load_from_file(self, file):
-        seqs = biocodeutils.fasta_dict_from_file(file)
+        seqs = utils.fasta_dict_from_file(file)
         
         for seq_id in seqs:
             assembly = Assembly(id=seq_id, residues=seqs[seq_id]['s'])
@@ -588,7 +587,7 @@ class CDS( LocatableThing ):
         self.residues = residues
         self.phase = 0 if phase is None else phase
 
-        ## this should be an instance of FunctionalAnnotation from bioannotation.py
+        ## this should be an instance of FunctionalAnnotation from annotation.py
         self.annotation = annotation
 
     def get_residues(self):
@@ -608,7 +607,7 @@ class CDS( LocatableThing ):
         self.length = len(self.residues)
 
         if loc.strand == -1:
-            self.residues = biocodeutils.reverse_complement(self.residues)
+            self.residues = utils.reverse_complement(self.residues)
 
         return self.residues
 
@@ -684,7 +683,7 @@ class Gene( LocatableThing ):
         self.length = len(self.residues)
 
         if loc.strand == -1:
-            self.residues = biocodeutils.reverse_complement(self.residues)
+            self.residues = utils.reverse_complement(self.residues)
 
         return self.residues
 
@@ -789,7 +788,7 @@ class Gene( LocatableThing ):
         if format == 'text':
             _print_thing(self, fh=fh)
         elif format == 'gff3':
-            biocodegff.print_biogene( gene=self, fh=fh, source=source )
+            gff.print_biogene(gene=self, fh=fh, source=source)
         elif format == 'tbl':
             biocodetbl.print_biogene( gene=self, fh=fh, lab=lab )
         else:
@@ -871,7 +870,7 @@ class Match( LocatableThing ):
             _print_thing(self, fh=fh)
         elif format == 'gff3':
             # mode could be passed here to print both GFF3-supported representations (already implemented)
-            biocodegff.print_biomatch( match=self, fh=fh, source=source )
+            gff.print_biomatch(match=self, fh=fh, source=source)
         else:
             raise Exception("ERROR: You attempted to print a Match with unrecognized format:{0}".format(format))
 
@@ -908,7 +907,7 @@ class Polypeptide( LocatableThing ):
         self.length = length
         self.residues = residues
 
-        ## this should be an instance of FunctionalAnnotation from bioannotation.py
+        ## this should be an instance of FunctionalAnnotation from annotation.py
         self.annotation = annotation
 
     def annotation_string(self):
@@ -963,7 +962,7 @@ class PolypeptideSet( MoleculeSet ):
         self.polypeptides.append( polypeptide )
 
     def load_from_file(self, file):
-        seqs = biocodeutils.fasta_dict_from_file(file)
+        seqs = utils.fasta_dict_from_file(file)
         
         for seq_id in seqs:
             polypeptide = Polypeptide(id=seq_id, residues=seqs[seq_id]['s'])
@@ -981,7 +980,7 @@ class RNA( LocatableThing ):
         self.locus_tag = locus_tag
         self.children = children
 
-        ## This should be an instance of FunctionalAnnotation from bioannotation.py
+        ## This should be an instance of FunctionalAnnotation from annotation.py
         #   It's considered best practice to put the annotation on the Polypeptide feature, when appropriate.
         self.annotation = annotation
 
@@ -1175,7 +1174,7 @@ class mRNASet( MoleculeSet ):
         self.mRNAs.append( mRNA )
 
     def load_from_file(self, file):
-        seqs = biocodeutils.fasta_dict_from_file(file)
+        seqs = utils.fasta_dict_from_file(file)
         
         for seq_id in seqs:
             mRNA = mRNA(id=seq_id, residues=seqs[seq_id]['s'])

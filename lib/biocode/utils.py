@@ -3,7 +3,7 @@ import re
 import sys
 import string
 
-import biocodeutils
+import utils
 
 ## used for nt reverse complements
 _nt_comp_table = bytes.maketrans(b'ACBDGHKMNSRUTWVYacbdghkmnsrutwvy', \
@@ -219,7 +219,7 @@ def add_assembly_fasta(mols, fasta_file):
     Takes a collection of molecules (Assembly) objects and adds sequence residues based on
     their IDs being found in the passed FASTA file.
     """
-    fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
+    fasta_seqs = utils.fasta_dict_from_file(fasta_file)
 
     for mol_id in mols:
         # check if the FASTA file provides sequence for this
