@@ -26,10 +26,9 @@ Author:  Joshua Orvis (jorvis AT gmail)
 """
 
 import argparse
-import biocodegff
-import biocodeutils
-import os
 import sys
+
+from biocode import utils, gff
 
 
 def main():
@@ -55,7 +54,7 @@ def main():
     if args.check_internal_stops == True and args.type == 'cds':
         raise Exception("Error:  Checking internal stops for CDS features not currently supported.")
 
-    (assemblies, features) = biocodegff.get_gff3_features(args.input_file)
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     # only doing the standard codon table for now
     start_codons = ['ATG', 'GTG', 'TTG']
@@ -63,7 +62,7 @@ def main():
 
     ## add sequence residues from external FASTA file if the user passed one
     if args.fasta is not None:
-        biocodeutils.add_assembly_fasta(assemblies, args.fasta)
+        utils.add_assembly_fasta(assemblies, args.fasta)
     
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
@@ -112,16 +111,16 @@ def main():
                         sys.stderr.write("WARN: Non-canonical stop codon ({0}) in mRNA {1}\n".format(stop_codon, feat.id))                        
 
                 if args.type == 'cds':
-                    fout.write("{0}\n".format(biocodeutils.wrapped_fasta(coding_seq)))
+                    fout.write("{0}\n".format(utils.wrapped_fasta(coding_seq)))
                 else:
-                    translated_seq = biocodeutils.translate(coding_seq)
+                    translated_seq = utils.translate(coding_seq)
 
                     if args.check_internal_stops == True:
                         internal_stop_count = translated_seq[:-1].count('*')
                         if internal_stop_count > 0:
                             sys.stderr.write("Found {0} internal stops in mRNA {1}\n".format(internal_stop_count, feat.id))
                     
-                    fout.write("{0}\n".format(biocodeutils.wrapped_fasta(translated_seq)))
+                    fout.write("{0}\n".format(utils.wrapped_fasta(translated_seq)))
 
 if __name__ == '__main__':
     main()

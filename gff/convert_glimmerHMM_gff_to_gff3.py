@@ -26,9 +26,10 @@ Contact: jorvis AT gmail
 """
 
 import argparse
-import os
-import biocodegff
 from collections import defaultdict
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Converts glimmerHMM GFF output to GFF3')
@@ -62,16 +63,16 @@ def main():
         feat_fmin = int(cols[3]) - 1
         feat_fmax = int(cols[4])
 
-        id = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        id = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
 
         if feat_type == 'mRNA':
             gene_cols = list(cols)
             gene_cols[2] = 'gene'
 
-            cols[8] = biocodegff.set_column_9_value( cols[8], 'ID', "{0}.mRNA".format(id) )
-            cols[8] = biocodegff.set_column_9_value( cols[8], 'Name', "{0}.mRNA".format(id) )
-            cols[8] = biocodegff.order_column_9(cols[8])
+            cols[8] = gff.set_column_9_value(cols[8], 'ID', "{0}.mRNA".format(id))
+            cols[8] = gff.set_column_9_value(cols[8], 'Name', "{0}.mRNA".format(id))
+            cols[8] = gff.order_column_9(cols[8])
             
             # print the gene and mRNA
             fout.write( "{0}\n".format("\t".join(gene_cols)) )
@@ -80,20 +81,20 @@ def main():
         elif feat_type == 'CDS':
             exon_cols = list(cols)
 
-            cols[8] = biocodegff.set_column_9_value( cols[8], 'ID', "{0}.cds".format(parent) )
-            cols[8] = biocodegff.set_column_9_value( cols[8], 'Name', "{0}.cds".format(parent) )
-            cols[8] = biocodegff.set_column_9_value( cols[8], 'Parent', "{0}.mRNA".format(parent) )
-            cols[8] = biocodegff.order_column_9(cols[8])
+            cols[8] = gff.set_column_9_value(cols[8], 'ID', "{0}.cds".format(parent))
+            cols[8] = gff.set_column_9_value(cols[8], 'Name', "{0}.cds".format(parent))
+            cols[8] = gff.set_column_9_value(cols[8], 'Parent', "{0}.mRNA".format(parent))
+            cols[8] = gff.order_column_9(cols[8])
 
             exon_id = "{0}.exon.{1}".format(parent, next_exon_num[parent] )
             next_exon_num[parent] += 1
             
             exon_cols[2] = 'exon'
             exon_cols[7] = '.'
-            exon_cols[8] = biocodegff.set_column_9_value( exon_cols[8], 'ID', exon_id )
-            exon_cols[8] = biocodegff.set_column_9_value( exon_cols[8], 'Name', exon_id )
-            exon_cols[8] = biocodegff.set_column_9_value( exon_cols[8], 'Parent', "{0}.mRNA".format(parent) )
-            exon_cols[8] = biocodegff.order_column_9(exon_cols[8])
+            exon_cols[8] = gff.set_column_9_value(exon_cols[8], 'ID', exon_id)
+            exon_cols[8] = gff.set_column_9_value(exon_cols[8], 'Name', exon_id)
+            exon_cols[8] = gff.set_column_9_value(exon_cols[8], 'Parent', "{0}.mRNA".format(parent))
+            exon_cols[8] = gff.order_column_9(exon_cols[8])
 
             fout.write( "{0}\n".format("\t".join(exon_cols)) )
             fout.write( "{0}\n".format("\t".join(cols)) )

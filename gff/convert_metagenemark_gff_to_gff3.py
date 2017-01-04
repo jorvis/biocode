@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
 import re
-import biothings
-import biocodegff
+
+from biocode import things
 
 '''
 This script converts the GFF-ish output of Metagenemark into legal GFF3 with full,
@@ -136,27 +135,27 @@ def main():
 
             ## initialize this assembly if we haven't seen it yet
             if mol_id not in assemblies:
-                assemblies[mol_id] = biothings.Assembly( id=mol_id )
+                assemblies[mol_id] = things.Assembly(id=mol_id)
 
             current_assembly = assemblies[mol_id]
 
-            gene = biothings.Gene( id="{0}.gene.{1}".format(args.prefix, gene_num) )
+            gene = things.Gene(id="{0}.gene.{1}".format(args.prefix, gene_num))
             gene.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
 
-            mRNA = biothings.mRNA( id="{0}.mRNA.{1}".format(args.prefix, gene_num), parent=gene.id )
+            mRNA = things.mRNA(id="{0}.mRNA.{1}".format(args.prefix, gene_num), parent=gene.id)
             mRNA.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
             gene.add_mRNA(mRNA)
 
-            CDS = biothings.CDS( id="{0}.CDS.{1}".format(args.prefix, gene_num), parent=mRNA.id )
+            CDS = things.CDS(id="{0}.CDS.{1}".format(args.prefix, gene_num), parent=mRNA.id)
             CDS.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6], phase=int(cols[7]) )
             mRNA.add_CDS(CDS)
 
-            exon = biothings.Exon( id="{0}.exon.{1}".format(args.prefix, gene_num), parent=mRNA.id )
+            exon = things.Exon(id="{0}.exon.{1}".format(args.prefix, gene_num), parent=mRNA.id)
             exon.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
             mRNA.add_exon(exon)
 
             polypeptide_id = "{0}.polypeptide.{1}".format(args.prefix, gene_num)
-            polypeptide = biothings.Polypeptide( id=polypeptide_id, parent=mRNA.id )
+            polypeptide = things.Polypeptide(id=polypeptide_id, parent=mRNA.id)
             polypeptide.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
             mRNA.add_polypeptide(polypeptide)
             polypeptide_lookup[gene_num] = polypeptide_id

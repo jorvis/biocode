@@ -18,8 +18,8 @@ http://blog.nextgenetics.net/?e=18
 """
 
 import argparse
-import biocodeutils
-import os
+
+from biocode import utils
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
     seqs = dict()
 
     if args.fasta_in is not None:
-        seqs = biocodeutils.fasta_dict_from_file( args.fasta_in )
+        seqs = utils.fasta_dict_from_file(args.fasta_in)
 
         if args.fasta_out is not None:
             out_fh = open(args.fasta_out, 'w')
@@ -93,9 +93,9 @@ def main():
         seq = seqs[seq_id]
 
         if seq_id in transcripts_to_correct:
-            seq['s'] = biocodeutils.reverse_complement(seq['s'])
+            seq['s'] = utils.reverse_complement(seq['s'])
 
-        out_fh.write(">{0} {2}\n{1}\n".format(seq_id, biocodeutils.wrapped_fasta(seq['s']), seq['h']))
+        out_fh.write(">{0} {2}\n{1}\n".format(seq_id, utils.wrapped_fasta(seq['s']), seq['h']))
 
     print("Total transcripts: {0}".format(transcript_count))
     print("Total reads mapped: {0}".format(total_read_mappings))

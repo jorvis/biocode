@@ -17,10 +17,11 @@ Author: Joshua Orvis
 """
 
 import argparse
-import os
 import random
 from collections import defaultdict
-import biocodegff
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Split an annotation GFF3 into training and evaluation sets')
@@ -40,7 +41,7 @@ def main():
     if args.retain_composition is True:
         raise Exception("ERROR: --retain_composition option not yet implemented")
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     # key: exon count, value = list of mRNA objects with that count
     # which of these gets used depends on whether --retain_composition is passed

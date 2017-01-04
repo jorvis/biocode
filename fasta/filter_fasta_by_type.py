@@ -33,9 +33,8 @@ or both.
 '''
 
 import argparse
-import os
-import sys
-import biocodeutils
+
+from biocode import utils
 
 
 def main():
@@ -60,7 +59,7 @@ def main():
     if pout is None and nout is None:
         raise Exception("ERROR: you must specify either -p or -n options (else why are you running this script?")
     
-    seqs = biocodeutils.fasta_dict_from_file( args.input )
+    seqs = utils.fasta_dict_from_file(args.input)
 
     for seq_id in seqs:
         seq = seqs[seq_id]

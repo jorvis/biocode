@@ -21,10 +21,10 @@ per line.
 '''
 
 import argparse
-import os
-import sys
-import biocodeutils
 import hashlib
+import sys
+
+from biocode import utils
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
     if args.output_file is not None:
         fout = open(args.output_file, 'wt')
     
-    seqs = biocodeutils.fasta_dict_from_file( args.fasta_file )
+    seqs = utils.fasta_dict_from_file(args.fasta_file)
     found = dict()
 
     m = hashlib.md5()

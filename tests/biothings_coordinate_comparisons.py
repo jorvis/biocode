@@ -7,16 +7,16 @@ functions within the biothings API.
 Author:  Joshua Orvis
 '''
 
-import argparse
 import os
-import biocodegff
-import biothings
+
+from biocode import gff
+
 
 def main():
     bin_dir = os.path.abspath(os.path.dirname(__file__))
     test_gff_file = bin_dir + '/biothings_coordinate_comparisons.data'
     
-    (assemblies, features) = biocodegff.get_gff3_features( test_gff_file )
+    (assemblies, features) = gff.get_gff3_features(test_gff_file)
 
 
 ###########################################################################################

@@ -59,12 +59,11 @@ Author: Joshua Orvis (jorvis AT gmail)
 """
 
 import argparse
-from collections import defaultdict
-import os
 import sys
-import biothings
-import biocodegff
-import biocodeutils
+from collections import defaultdict
+
+from biocode import gff, things
+
 
 def main():
     parser = argparse.ArgumentParser( description='A GTF -> GFF3 conversion script for Cufflinks output')
@@ -106,7 +105,7 @@ def main():
         mol_id = cols[0]
 
         if mol_id not in assemblies:
-            assemblies[mol_id] = biothings.Assembly( id=mol_id )
+            assemblies[mol_id] = things.Assembly(id=mol_id)
 
         current_assembly = assemblies[mol_id]
         ftype  = cols[2]
@@ -117,8 +116,8 @@ def main():
 
         # this makes it look like GFF column 9 so I can use biocodeutils.column_9_value(str, key)
         col9 = col9.replace(' "', '="')
-        gene_id       = biocodegff.column_9_value(col9, 'gene_id').replace('"', '')
-        transcript_id = biocodegff.column_9_value(col9, 'transcript_id').replace('"', '')
+        gene_id       = gff.column_9_value(col9, 'gene_id').replace('"', '')
+        transcript_id = gff.column_9_value(col9, 'transcript_id').replace('"', '')
         
         if ftype == 'transcript':
             if args.export_mode == 'model':
@@ -126,11 +125,11 @@ def main():
                     gene.print_as(fh=ofh, source='Cufflinks', format='gff3')
 
                 if current_gene is None or current_gene.id != gene_id:
-                    gene = biothings.Gene( id=gene_id )
+                    gene = things.Gene(id=gene_id)
                     gene.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                     current_gene = gene
 
-                mRNA = biothings.mRNA( id=transcript_id, parent=current_gene )
+                mRNA = things.mRNA(id=transcript_id, parent=current_gene)
                 mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 gene.add_mRNA(mRNA)
                 current_RNA = mRNA
@@ -141,18 +140,18 @@ def main():
                 if current_match is not None and current_match.id != transcript_id:
                     match.print_as( fh=ofh, source='Cufflinks', format='gff3' )
                 
-                match = biothings.Match( id=transcript_id, subclass='cDNA_match', length=fmax - fmin )
+                match = things.Match(id=transcript_id, subclass='cDNA_match', length=fmax - fmin)
                 match.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 current_match = match
             
         elif ftype == 'exon':
-            exon_number = biocodegff.column_9_value(col9, 'exon_number').replace('"', '')
+            exon_number = gff.column_9_value(col9, 'exon_number').replace('"', '')
             
             if args.export_mode == 'model':
                 exon_count_by_RNA[transcript_id] += 1
 
                 cds_id = "{0}.CDS.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-                CDS = biothings.CDS( id=cds_id, parent=current_RNA )
+                CDS = things.CDS(id=cds_id, parent=current_RNA)
                 CDS.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand, phase=current_CDS_phase )
                 current_RNA.add_CDS(CDS)
 
@@ -162,13 +161,13 @@ def main():
                     current_CDS_phase = 0
 
                 exon_id = "{0}.exon.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-                exon = biothings.Exon( id=exon_id, parent=current_RNA )
+                exon = things.Exon(id=exon_id, parent=current_RNA)
                 exon.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 current_RNA.add_exon(exon)
                 
             elif args.export_mode == 'cDNA_match':
                 mp_id = "{0}.match_part.{1}".format(transcript_id, exon_number)
-                mp = biothings.MatchPart( id=mp_id, parent=current_match, length=fmax - fmin )
+                mp = things.MatchPart(id=mp_id, parent=current_match, length=fmax - fmin)
                 mp.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 current_match.add_part(mp)
 

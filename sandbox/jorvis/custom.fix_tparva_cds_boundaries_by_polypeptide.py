@@ -38,11 +38,8 @@ tp.assembly.567497685.1 GenBank exon    253075  253104  .       -       .       
 Author:  Joshua Orvis
 '''
 
-import argparse
-import os
-import biocodegff
-import biocodeutils
-import biothings
+from biocode import gff, things
+
 
 def main():
     flawed_gff_file = 'canonical.flawed.gff3'
@@ -53,7 +50,7 @@ def main():
     fout = open(out_gff, mode='wt', encoding='utf-8')
     fout.write("##gff-version 3\n")
 
-    (assemblies, features) = biocodegff.get_gff3_features( flawed_gff_file )
+    (assemblies, features) = gff.get_gff3_features(flawed_gff_file)
 
     print("INFO: loaded {0} assemblies and {1} features".format(len(assemblies), len(features)))
 
@@ -65,9 +62,9 @@ def main():
         if len(cols) != 9 or cols[2] != 'polypeptide':
             continue
 
-        id = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
-        polypeptides[parent] = biothings.Polypeptide( id=id, parent=parent )
+        id = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
+        polypeptides[parent] = things.Polypeptide(id=id, parent=parent)
         polypeptides[parent].locate_on(target=assemblies[cols[0]], fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6])
 
     print("DEBUG: loaded {0} polypeptides from ILRI file".format(len(polypeptides)) )

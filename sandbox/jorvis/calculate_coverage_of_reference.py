@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-import math
-import os
 import re
-import biocodeutils
-
 from operator import itemgetter
+
+from biocode import utils
 
 """
 ========
@@ -454,7 +452,7 @@ def main():
     ## like: [ {id=?,qfmin=?,qfmax=?,rfmin=?,rfmax=?} ]
     query_fragments = []
 
-    ref_molecules = biocodeutils.fasta_dict_from_file( args.reference_fasta )
+    ref_molecules = utils.fasta_dict_from_file(args.reference_fasta)
     ref_n_total = 0
 
     for ref_id in ref_molecules:

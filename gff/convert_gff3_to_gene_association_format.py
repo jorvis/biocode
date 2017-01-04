@@ -41,12 +41,12 @@ LIMITATIONS:
 """
 
 import argparse
-import biocodegff
-import biocodeutils
 import os
 import re
 import sys
 import time
+
+from biocode import gff
 
 
 def main():
@@ -65,7 +65,7 @@ def main():
     args = parser.parse_args()
 
     print("INFO: Parsing GFF3 objects", file=sys.stderr)
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     print("INFO: Parsing GO file", file=sys.stderr)
     go_lookup = parse_go_file(args.go_file)

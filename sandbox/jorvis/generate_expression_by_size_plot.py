@@ -17,9 +17,9 @@ OUTPUT
 """
 
 import argparse
-import biocodeutils
-import os
+
 import matplotlib.pyplot as plt
+
 
 def main():
     parser = argparse.ArgumentParser( description='Generates a figure showing coverage/abundance vs. molecule size.')

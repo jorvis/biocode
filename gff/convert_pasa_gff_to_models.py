@@ -38,10 +38,8 @@ The 2nd column will be made 'PASA' unless you pass a different value with the -s
 '''
 
 import argparse
-import os
-import re
-import biothings
-import biocodegff
+
+from biocode import gff, things
 
 
 def main():
@@ -76,7 +74,7 @@ def main():
 
         mol_id = cols[0]
         feat_type = cols[2]
-        feat_id = biocodegff.column_9_value(cols[8], 'ID')
+        feat_id = gff.column_9_value(cols[8], 'ID')
 
         # we expect all columns to be cDNA_match
         if feat_type != 'cDNA_match':
@@ -84,7 +82,7 @@ def main():
 
         ## initialize this assembly if we haven't seen it yet
         if mol_id not in assemblies:
-            assemblies[mol_id] = biothings.Assembly( id=mol_id )
+            assemblies[mol_id] = things.Assembly(id=mol_id)
 
         if gene is None or feat_id != gene.id:
             if gene is not None:
@@ -96,8 +94,8 @@ def main():
                 gene.print_as(fh=fout, source=args.source, format='gff3')
 
             # now start a new one
-            gene = biothings.Gene( id=feat_id )
-            mRNA = biothings.mRNA( id="{0}.mRNA".format(feat_id), parent=gene )
+            gene = things.Gene(id=feat_id)
+            mRNA = things.mRNA(id="{0}.mRNA".format(feat_id), parent=gene)
             exon_count_by_mRNA[mRNA.id] = 0
             
             gene_fmin = int(cols[3]) - 1
@@ -107,14 +105,14 @@ def main():
         current_assembly = assemblies[mol_id]
             
         # each row is a new CDS/exon for the current mRNA
-        CDS = biothings.CDS( id="{0}.CDS".format(feat_id), parent=mRNA.id )
+        CDS = things.CDS(id="{0}.CDS".format(feat_id), parent=mRNA.id)
         # FIX THIS PHASE
         CDS.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6], phase='.' )
         mRNA.add_CDS(CDS)
         
         exon_count_by_mRNA[mRNA.id] += 1
         exon_id = "{0}.exon{1}".format(mRNA.id, exon_count_by_mRNA[mRNA.id])
-        exon = biothings.Exon( id=exon_id, parent=mRNA.id )
+        exon = things.Exon(id=exon_id, parent=mRNA.id)
         exon.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
         mRNA.add_exon(exon)
 

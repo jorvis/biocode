@@ -31,8 +31,9 @@ script instead.
 """
 
 import argparse
-import os
-import biocodegff
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
@@ -58,10 +59,10 @@ def main():
 
         if len(cols) == 9:
             if args.feature_type is None or args.feature_type == cols[2]:
-                col9 = biocodegff.column_9_dict(cols[8])
+                col9 = gff.column_9_dict(cols[8])
                 if args.key in col9:
                     col9[args.key] = "{0}{1}".format(col9[args.key], args.appended_text)
-                    cols[8] = biocodegff.build_column_9_from_dict(col9)
+                    cols[8] = gff.build_column_9_from_dict(col9)
                     replacement_count += 1
 
                 ofh.write("{0}\t{1}\n".format("\t".join(cols[0:8]), cols[8]))

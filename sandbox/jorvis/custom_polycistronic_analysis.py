@@ -1,11 +1,9 @@
 #!/usr/bin/env python3.2
 
 import argparse
-import os
-import biothings
-import biocodegff
-import sys
-import re
+
+from biocode import things
+
 
 ## tracked in JIRA-247 - Initially written for a specific purpose but will abstract out if useful.
 # currently only cares about gene and mRNA features
@@ -51,7 +49,7 @@ def parse_gff3(gff3_file):
         
         ## initialize this assembly if we haven't seen it yet
         if mol_id not in assemblies:
-            assemblies[mol_id] = biothings.Assembly( id=mol_id )
+            assemblies[mol_id] = things.Assembly(id=mol_id)
 
         current_assembly = assemblies[mol_id]
         rfmin = int(cols[3]) - 1
@@ -68,12 +66,12 @@ def parse_gff3(gff3_file):
             strand = 0
 
         if cols[2] == 'gene':
-            gene = biothings.Gene(id=feat_id)
+            gene = things.Gene(id=feat_id)
             gene.locate_on(assembly=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             genes[feat_id] = gene
         
         elif cols[2] == 'mRNA':
-            mRNA = biothings.mRNA(id=feat_id)
+            mRNA = things.mRNA(id=feat_id)
             mRNA.locate_on(assembly=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_id = column_9_value(cols[8], 'Parent')
             genes[parent_id].add_mRNA( mRNA )

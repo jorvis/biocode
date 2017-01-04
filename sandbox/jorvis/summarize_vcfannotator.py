@@ -51,11 +51,7 @@ This isn't directly followed by Brian's VCFannotator, but for my own notes these
 
 
 import argparse
-import biocodeutils
 import gzip
-import matplotlib.pyplot as plt
-import os
-import re
 
 
 def main():

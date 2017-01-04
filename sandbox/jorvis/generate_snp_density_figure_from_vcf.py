@@ -26,13 +26,12 @@ http://matplotlib.org/api/artist_api.html#matplotlib.lines.Line2D
 http://jira.igs.umaryland.edu/browse/EUK-279
 '''
 
-
 import argparse
-import biocodeutils
 import gzip
-import matplotlib.pyplot as plt
-import os
 import re
+
+import matplotlib.pyplot as plt
+from biocode import utils
 
 
 def main():
@@ -43,7 +42,7 @@ def main():
     parser.add_argument('-o', '--output', type=str, required=True, help='Base output path to be created.' )
     args = parser.parse_args()
 
-    vcf_files = biocodeutils.read_list_file(args.vcf_list)
+    vcf_files = utils.read_list_file(args.vcf_list)
 
     for vcf_file in vcf_files:
         plot_vcf_file( vcf_file )

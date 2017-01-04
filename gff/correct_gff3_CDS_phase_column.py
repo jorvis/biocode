@@ -35,9 +35,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
+
+from biocode import utils, gff
 
 
 def main():
@@ -50,7 +49,7 @@ def main():
     parser.add_argument('-s', '--source', type=str, required=False, default='.', help='Optional.  Sets the value for column 2 in all rows.  Default = .' )
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     fout = open(args.output_file, mode='wt', encoding='utf-8')
     fout.write("##gff-version 3\n")
@@ -76,7 +75,7 @@ def main():
                 fasta_header_written = True
 
             fout.write(">{0}\n".format(assemblies[assembly_id].id) )
-            fout.write("{0}\n".format(biocodeutils.wrapped_fasta(assemblies[assembly_id].residues)))
+            fout.write("{0}\n".format(utils.wrapped_fasta(assemblies[assembly_id].residues)))
 
 def check_and_update_phase(CDS):
     loc = CDS.location()
@@ -87,7 +86,7 @@ def check_and_update_phase(CDS):
     best_phase_stop_count = None
 
     for phase in [ 0, 1, 2 ]:
-        protein_seq = biocodeutils.translate(CDS.residues[phase:]).rstrip('*')
+        protein_seq = utils.translate(CDS.residues[phase:]).rstrip('*')
         stop_count = protein_seq.count('*')
 
         if phase == loc.phase:
@@ -108,7 +107,7 @@ def check_and_update_phase(CDS):
 
 
 def process_assembly_fasta(mols, fasta_file):
-    fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
+    fasta_seqs = utils.fasta_dict_from_file(fasta_file)
 
     for mol_id in mols:
         # check if the FASTA file provides sequence for this

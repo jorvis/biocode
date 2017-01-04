@@ -26,11 +26,12 @@ Ranges wanted:
 """
 
 import argparse
-import os
 import re
-import biocodeutils
+
 import matplotlib
 import matplotlib.pyplot as plt
+from biocode import utils
+
 matplotlib.use('Agg')
 import sys
 
@@ -66,7 +67,7 @@ def main():
     ratio_bet_count = 0
     ratio_max_count = 0
 
-    fasta = biocodeutils.fasta_dict_from_file( args.fasta_file )
+    fasta = utils.fasta_dict_from_file(args.fasta_file)
 
     for line in open(args.input_file):
         # lines are like: comp0_c0_seq1   1-T:6   1-F:0   2-T:0   2-F:5

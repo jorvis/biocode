@@ -11,8 +11,7 @@ Author: Joshua Orvis
 """
 
 import argparse
-import os
-import biocodegff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Adds gene features for RNAs which lack them')

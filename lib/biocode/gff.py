@@ -1,8 +1,10 @@
 import re
-import biothings
-import bioannotation
 import sys
+
+import things
+from biocode import annotation
 from urllib.parse import unquote, quote
+
 
 def build_column_9( id=None, parent=None, other=None ):
     ## either the id or parent must be defined
@@ -241,7 +243,7 @@ def get_gff3_features(gff3_file, assemblies=None):
 
         # initialize this assembly if we haven't seen it yet
         if mol_id not in assemblies:
-            assemblies[mol_id] = biothings.Assembly( id=mol_id, residues='' )
+            assemblies[mol_id] = things.Assembly(id=mol_id, residues='')
 
         current_assembly = assemblies[mol_id]
         rfmin = int(cols[3]) - 1
@@ -281,33 +283,33 @@ def get_gff3_features(gff3_file, assemblies=None):
         phase = cols[7]
 
         if cols[2] == 'gene':
-            gene = biothings.Gene(id=feat_id, locus_tag=locus_tag)
+            gene = things.Gene(id=feat_id, locus_tag=locus_tag)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             features[feat_id] = gene
             current_assembly.add_gene(gene)
 
         elif cols[2] == 'mRNA':
-            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            mRNA = things.mRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_mRNA(mRNA)
             features[feat_id] = mRNA
 
         elif cols[2] == 'rRNA':
-            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            rRNA = things.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_rRNA(rRNA)
             rRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = rRNA
 
         elif cols[2] == 'tRNA':
-            tRNA = biothings.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            tRNA = things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_tRNA(tRNA)
             tRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = tRNA
 
         elif cols[2] == 'exon':
-            exon = biothings.Exon(id=feat_id, parent=parent_feat)
+            exon = things.Exon(id=feat_id, parent=parent_feat)
             exon.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_exon(exon)
             features[feat_id] = exon
@@ -318,26 +320,26 @@ def get_gff3_features(gff3_file, assemblies=None):
             else:
                 phase = int(phase)
 
-            CDS = biothings.CDS(id=feat_id, parent=parent_feat, phase=phase)
+            CDS = things.CDS(id=feat_id, parent=parent_feat, phase=phase)
             CDS.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand, phase=phase)
             parent_feat.add_CDS(CDS)
             features[feat_id] = CDS
 
         elif cols[2] == 'polypeptide':
-            polypeptide = biothings.Polypeptide(id=feat_id, parent=parent_feat)
+            polypeptide = things.Polypeptide(id=feat_id, parent=parent_feat)
             polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_polypeptide(polypeptide)
             polypeptide.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = polypeptide
 
         elif cols[2] == 'five_prime_UTR':
-            utr = biothings.FivePrimeUTR(id=feat_id, parent=parent_feat)
+            utr = things.FivePrimeUTR(id=feat_id, parent=parent_feat)
             utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_five_prime_UTR(utr)
             features[feat_id] = utr
 
         elif cols[2] == 'three_prime_UTR':
-            utr = biothings.ThreePrimeUTR(id=feat_id, parent=parent_feat)
+            utr = things.ThreePrimeUTR(id=feat_id, parent=parent_feat)
             utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_three_prime_UTR(utr)
             features[feat_id] = utr
@@ -352,7 +354,7 @@ def get_gff3_features(gff3_file, assemblies=None):
 
 
 def parse_annotation_from_column_9(col9):
-    annot = bioannotation.FunctionalAnnotation()
+    annot = annotation.FunctionalAnnotation()
     atts = column_9_dict(col9)
 
     ## List of attributes which may be in column 9 that we want to skip as
@@ -379,7 +381,7 @@ def parse_annotation_from_column_9(col9):
                         annot.add_dbxref(dbxref)
 
             for ec_num in ec_nums:
-                ec_annot = bioannotation.ECAnnotation(number=ec_num)
+                ec_annot = annotation.ECAnnotation(number=ec_num)
                 annot.add_ec_number(ec_annot)
         elif att == 'Ontology_term':
             ont_terms = list()
@@ -392,7 +394,7 @@ def parse_annotation_from_column_9(col9):
                         ont_terms.append(term)
 
             for go_id in ont_terms:
-                go_annot = bioannotation.GOAnnotation(go_id=go_id)
+                go_annot = annotation.GOAnnotation(go_id=go_id)
                 annot.add_go_annotation(go_annot)
         elif att == 'gene_symbol':
             annot.gene_symbol = atts[att]
@@ -515,7 +517,7 @@ def print_gff3_from_assemblies(assemblies=None, ofh=None):
                     gene.remove_mRNA(mRNA)
                     
                     print("INFO: splitting mRNA off gene {0}".format(gene.id))
-                    new_gene = biothings.Gene( id="{0}_{1}".format(gene.id, rnas_found) )
+                    new_gene = things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
                     new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
                     new_gene.add_RNA(mRNA)
                     new_gene.print_as(fh=ofh, format='gff3')
@@ -534,7 +536,7 @@ def print_gff3_from_assemblies(assemblies=None, ofh=None):
 
 def print_biogene( gene=None, fh=None, source=None, on=None ):
     '''
-    This method accepts a Gene object located on an Assembly object (from biothings.py) and prints
+    This method accepts a Gene object located on an Assembly object (from things.py) and prints
     the feature graph for that gene in GFF3 format, including the gene, mRNA, CDS and exon features.
     '''
     ## handle defaults
@@ -683,7 +685,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
 
 def print_biomatch( match=None, fh=None, source=None, on=None, mode=None ):
     '''
-    This method accepts a Match object located on an Assembly object (from biothings.py) and prints
+    This method accepts a Match object located on an Assembly object (from things.py) and prints
     the feature graph for that gene in GFF3 format.  How this is printed depends on the mode passed,
     but both modes suggested by the GFF3 specification are supported.
 

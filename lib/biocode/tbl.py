@@ -1,7 +1,6 @@
 import sys
 
-import biothings
-from biocode import utils
+from biocode import utils, things
 
 
 def go_namespace_index(obo_path):
@@ -79,7 +78,7 @@ def print_tbl_from_assemblies(assemblies=None, ofh=None, go_obo=None, lab_name=N
                     gene.remove_mRNA(mRNA)
                     
                     print("INFO: splitting mRNA off gene {0}".format(gene.id))
-                    new_gene = biothings.Gene( id="{0}_{1}".format(gene.id, rnas_found) )
+                    new_gene = things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
                     new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
                     new_gene.add_RNA(mRNA)
                     print_biogene(gene=new_gene, fh=ofh, obo_dict=go_idx, lab_name=lab_name)
@@ -98,7 +97,7 @@ def print_tbl_from_assemblies(assemblies=None, ofh=None, go_obo=None, lab_name=N
 
 def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
     '''
-    This method accepts a Gene object located on an Assembly object (from biothings.py) and prints
+    This method accepts a Gene object located on an Assembly object (from things.py) and prints
     the feature graph for that gene in TBL format, including the gene, mRNA, CDS and exon features.
 
     The obo_dict option is required for export of GO terms.  Keys are GO IDs, like 'GO:0005654' and

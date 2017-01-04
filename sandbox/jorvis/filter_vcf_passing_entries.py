@@ -13,9 +13,7 @@ Will NOT currently work with merged sample files.
 
 
 import argparse
-import biocodeutils
 import gzip
-import os
 import re
 
 

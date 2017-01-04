@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-import biocodeutils
 import sys
+
+from biocode import utils
 
 '''
 Description:
@@ -46,7 +46,7 @@ def main():
 
     sys.stderr.write("INFO: Parsing input FASTA\n")
     sys.stderr.flush()
-    seqs = biocodeutils.fasta_dict_from_file( args.input )
+    seqs = utils.fasta_dict_from_file(args.input)
 
     sys.stderr.write("INFO: Looking for homopolymeric runs > {0} bp\n".format(args.homopolymer_length_limit))
     sys.stderr.flush()
@@ -89,7 +89,7 @@ def main():
 
         seqs[seq_id]['s'] = current_seq
         out_fh.write(">{0} {1}\n".format(seq_id, seqs[seq_id]['h']))
-        out_fh.write(biocodeutils.wrapped_fasta(seqs[seq_id]['s']))
+        out_fh.write(utils.wrapped_fasta(seqs[seq_id]['s']))
         out_fh.write("\n")
             
 

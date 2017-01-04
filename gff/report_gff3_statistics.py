@@ -17,10 +17,11 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
 import sys
 from collections import defaultdict
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Checks the CDS features against a genome sequence to report/correct phase columns.')
@@ -30,7 +31,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     ## output will either be a file or STDOUT
     ofh = sys.stdout

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
 import re
-import biothings
-import biocodegff
+
+from biocode import gff, things
 
 '''
 This script converts native (GTF) or GFF output (via the --gff3 option) of Augustus
@@ -143,20 +142,20 @@ def main():
                     else:
                         raise Exception("ERROR: GTF detected but CDS row has bad 9th column format: {0}".format(cols[8]))
 
-            feat_id = biocodegff.column_9_value(cols[8], 'ID')
+            feat_id = gff.column_9_value(cols[8], 'ID')
 
             ## initialize this assembly if we haven't seen it yet
             if mol_id not in assemblies:
-                assemblies[mol_id] = biothings.Assembly( id=mol_id )
+                assemblies[mol_id] = things.Assembly(id=mol_id)
 
             current_assembly = assemblies[mol_id]
 
             if feat_type == "gene":
-                gene = biothings.Gene( id=feat_id )
+                gene = things.Gene(id=feat_id)
                 gene.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
 
             elif feat_type == "transcript":
-                mRNA = biothings.mRNA( id=feat_id, parent=gene )
+                mRNA = things.mRNA(id=feat_id, parent=gene)
                 mRNA.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
                 gene.add_mRNA(mRNA)
                 mRNAs[mRNA.id] = mRNA
@@ -167,13 +166,13 @@ def main():
                     exon_count_by_mRNA[feat_id] = 0
                     
             elif feat_type == "CDS":
-                parent_id = biocodegff.column_9_value( cols[8], 'Parent' )
+                parent_id = gff.column_9_value(cols[8], 'Parent')
 
                 ## sanity check that we've seen this parent
                 if parent_id not in mRNAs:
                     raise Exception("ERROR: Found CDS column with parent ({0}) mRNA not yet in the file".format(parent_id))
 
-                CDS = biothings.CDS( id=feat_id, parent=mRNAs[parent_id] )
+                CDS = things.CDS(id=feat_id, parent=mRNAs[parent_id])
                 CDS.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6], phase=int(cols[7]) )
                 mRNA.add_CDS(CDS)
                 
@@ -181,7 +180,7 @@ def main():
                 exon_count_by_mRNA[parent_id] += 1
                 exon_id = "{0}.exon{1}".format(parent_id, exon_count_by_mRNA[parent_id])
                 
-                exon = biothings.Exon( id=exon_id, parent=mRNAs[parent_id] )
+                exon = things.Exon(id=exon_id, parent=mRNAs[parent_id])
                 exon.locate_on( target=current_assembly, fmin=int(cols[3]) - 1, fmax=int(cols[4]), strand=cols[6] )
                 mRNA.add_exon(exon)
         

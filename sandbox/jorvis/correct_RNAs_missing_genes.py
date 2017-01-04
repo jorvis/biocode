@@ -20,8 +20,9 @@ Author: Joshua Orvis
 """
 
 import argparse
-import os
-import biocodegff
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Adds gene features for RNAs which lack them')
@@ -47,16 +48,16 @@ def main():
             ofh.write("{0}\n".format(line) )
             continue
 
-        id     = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        id     = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
 
         if cols[2].endswith('RNA') and parent is None:
             gene_cols = list(cols)
             gene_cols[2] = 'gene'
-            gene_cols[8] = biocodegff.set_column_9_value(gene_cols[8], 'ID', "{0}.gene".format(id))
+            gene_cols[8] = gff.set_column_9_value(gene_cols[8], 'ID', "{0}.gene".format(id))
             ofh.write("{0}\n".format("\t".join(gene_cols)) )
 
-            cols[8] = biocodegff.set_column_9_value(cols[8], 'Parent', "{0}.gene".format(id))
+            cols[8] = gff.set_column_9_value(cols[8], 'Parent', "{0}.gene".format(id))
             ofh.write("{0}\n".format("\t".join(cols)) )
         else:
             ofh.write("{0}\n".format(line) )

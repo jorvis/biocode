@@ -19,8 +19,8 @@ NOTE: For visualization, you can use the biocode script
 """
 
 import argparse
-import biocodeutils
-import os
+
+from biocode import utils
 
 
 def main():
@@ -35,10 +35,10 @@ def main():
     parser.add_argument('-o', '--output_base', type=str, required=True, help='base name/path for output.  Two files starting with this will be created' )
     args = parser.parse_args()
 
-    qsizes = biocodeutils.fasta_sizes_from_file(args.fasta_file)
+    qsizes = utils.fasta_sizes_from_file(args.fasta_file)
     
     if args.subject_fasta is not None:
-        ssizes = biocodeutils.fasta_sizes_from_file(args.subject_fasta)
+        ssizes = utils.fasta_sizes_from_file(args.subject_fasta)
 
     all_fh = open("{0}.cov.all.perc.txt".format(args.output_base), 'wt')
     longest_fh = open("{0}.cov.longest.perc.txt".format(args.output_base), 'wt')

@@ -53,10 +53,10 @@ a locus tag of Tparva_01g00005
 """
 
 import argparse
-import os
 import re
 import sys
-import biocodegff
+
+from biocode import gff
 
 
 def main():
@@ -134,8 +134,8 @@ def main():
             last_molecule = cols[0]
 
         # grab the ID column if any
-        id = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        id = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
         type = cols[2]
 
 # issue
@@ -170,7 +170,7 @@ def main():
 
                     next_id += args.interval
 
-                cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', locus_id )
+                cols[8] = gff.set_column_9_value(cols[8], 'locus_tag', locus_id)
 
                 ## make sure this wasn't generated already (possibly conflict between --id_file and an
                 #   auto-generated ID?
@@ -188,7 +188,7 @@ def main():
             
         elif type.endswith('RNA'):
             if parent in gene_loci:
-                cols[8] = biocodegff.set_column_9_value(cols[8], 'locus_tag', gene_loci[parent] )
+                cols[8] = gff.set_column_9_value(cols[8], 'locus_tag', gene_loci[parent])
             else:
                 raise Exception("ERROR: found RNA {0} whose parent {1} wasn't found yet".format(id, parent))
         

@@ -31,12 +31,12 @@ OUTPUT
 """
 
 import argparse
-import biocodeutils
-import os
+import numpy as np
 from collections import defaultdict
 
-import numpy as np
 import matplotlib.pyplot as plt
+from biocode import utils
+
 
 def main():
     parser = argparse.ArgumentParser( description='Generates a figure showing coverage/abundance vs. molecule size.')
@@ -50,7 +50,7 @@ def main():
     args = parser.parse_args()
 
     ## first, we need a collection of the FASTA data and the molecule lengths
-    molecules = biocodeutils.fasta_dict_from_file(args.fasta_file)
+    molecules = utils.fasta_dict_from_file(args.fasta_file)
 
     ## data points for plotting
     #  structure like this:

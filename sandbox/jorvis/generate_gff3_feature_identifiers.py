@@ -30,10 +30,11 @@ The only values that are replaced are in the ID and Parent attributes in the 9th
 import argparse
 import os
 import sys
-import biocodegff
-from collections import defaultdict
 from binascii import hexlify
+from collections import defaultdict
 from uuid import uuid4
+
+from biocode import gff
 
 ## constants
 next_ids_sequential = defaultdict(lambda: 1)
@@ -67,8 +68,8 @@ def main():
             continue
 
         # grab the ID column if any
-        id = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        id = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
         new_id = None
         new_parent = None
         type = cols[2]

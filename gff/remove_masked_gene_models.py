@@ -29,9 +29,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
+
+from biocode import utils, gff
 
 
 def main():
@@ -45,8 +44,8 @@ def main():
     parser.add_argument('-r', '--removed_gff3', type=str, required=False, help='If passed, writes the deleted genes to this file')
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_gff3 )
-    biocodeutils.add_assembly_fasta(assemblies, args.masked_fasta)
+    (assemblies, features) = gff.get_gff3_features(args.input_gff3)
+    utils.add_assembly_fasta(assemblies, args.masked_fasta)
 
     gff_out = open(args.output_gff3, 'wt')
     gff_out.write("##gff-version 3\n")

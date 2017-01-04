@@ -14,9 +14,10 @@ Input:
 '''
 
 import argparse
-import os
 import sys
-import biocodeutils
+
+from biocode import utils
+
 
 def main():
     parser = argparse.ArgumentParser( description='Reformats a FASTA file such that there are no more than -w characters of sequence residues per line.')
@@ -33,13 +34,13 @@ def main():
     if args.output is not None:
         fout = open(args.output, 'wt')
 
-    seqs = biocodeutils.fasta_dict_from_file( args.input )
+    seqs = utils.fasta_dict_from_file(args.input)
 
     for seq_id in seqs:
         if args.upper_case == True:
             seqs[seq_id]['s'] = seqs[seq_id]['s'].upper()
             
-        seq_wrapped = biocodeutils.wrapped_fasta(seqs[seq_id]['s'], every=args.width)
+        seq_wrapped = utils.wrapped_fasta(seqs[seq_id]['s'], every=args.width)
         fout.write(">{0} {1}\n{2}\n".format(seq_id, seqs[seq_id]['h'], seq_wrapped))
 
 

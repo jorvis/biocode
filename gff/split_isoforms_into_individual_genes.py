@@ -15,10 +15,10 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-import biothings
 import sys
+
+from biocode import gff, things
+
 
 def main():
     parser = argparse.ArgumentParser( description='Checks for genes with multiple mRNA children and creates new genes for each.')
@@ -28,7 +28,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     ## output will either be a file or STDOUT
     ofh = sys.stdout
@@ -52,7 +52,7 @@ def main():
                     gene.remove_mRNA(mRNA)
                     
                     print("INFO: splitting mRNA off gene {0}".format(gene.id))
-                    new_gene = biothings.Gene( id="{0}_{1}".format(gene.id, rnas_found) )
+                    new_gene = things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
                     new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
                     new_gene.add_RNA(mRNA)
                     new_gene.print_as(fh=ofh, format='gff3')

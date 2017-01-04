@@ -9,12 +9,11 @@ Your input is a GFF3 file containing gene models.
 """
 
 import argparse
-import os
 import math
 import random
-import biothings
-import biocodegff
-import biocodeutils
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Generates a set of transcripts based on a user-defined exon-complexity profile')
@@ -27,7 +26,7 @@ def main():
     parser.add_argument('-e', '--exclude', type=str, required=False, help='List of IDs to exclude' )
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
     exclude = list()
 
     if args.exclude is not None:

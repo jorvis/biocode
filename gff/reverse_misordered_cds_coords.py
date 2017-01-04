@@ -17,8 +17,9 @@ Author: Kyle Tretina
 """
 
 import argparse
-import os
-import biocodegff
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Reverses CDS coodinates where stop < start')
@@ -48,7 +49,7 @@ def main():
             temp = cols[3]
             cols[3] = cols[4]
             cols[4] = temp
-            id = biocodegff.column_9_value(cols[8], 'ID')
+            id = gff.column_9_value(cols[8], 'ID')
             print("CDS reversed: {0}".format(id))
             ofh.write("{0}\n".format("\t".join(cols)) )
         else:

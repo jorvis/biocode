@@ -1,10 +1,10 @@
 #!/usr/bin/env python3.2
 
 import argparse
-import os
 import re
 
-from biocodeutils import read_list_file
+from biocode.utils import read_list_file
+
 
 def process_blast_file( file, ids, args ):
     ''' Parses through a tab-delimited BLAST file and saves all IDs matching 

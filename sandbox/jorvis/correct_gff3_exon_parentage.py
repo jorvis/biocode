@@ -14,8 +14,9 @@ Author: Joshua Orvis
 """
 
 import argparse
-import os
-import biocodegff
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Updates exon Parent attributes to point at the correct RNA feature')
@@ -43,8 +44,8 @@ def main():
             ofh.write("{0}\n".format(line) )
             continue
 
-        id     = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        id     = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
 
         if cols[2].endswith('RNA'):
             last_rna_id = id
@@ -53,7 +54,7 @@ def main():
         elif cols[2] == 'exon':
             if parent != last_rna_id:
                 print("INFO: correcting unexpected parentage for feature ({0}) type {2}.  Expected ({1})".format(id, last_rna_id, cols[2]) )
-                cols[8] = biocodegff.set_column_9_value(cols[8], 'Parent', last_rna_id)
+                cols[8] = gff.set_column_9_value(cols[8], 'Parent', last_rna_id)
                 ofh.write("{0}\n".format("\t".join(cols)) )
             else:
                 ofh.write("{0}\n".format(line) )

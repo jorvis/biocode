@@ -34,9 +34,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
+
+from biocode import gff
 
 
 def main():
@@ -53,24 +52,24 @@ def main():
     args = parser.parse_args()
 
     print("INFO: parsing Genemark-ES data")
-    (assemblies, gm_es_features) = biocodegff.get_gff3_features( args.genemark )
+    (assemblies, gm_es_features) = gff.get_gff3_features(args.genemark)
     gm_es_genes = get_genes_from_dict(gm_es_features)
     print("\tINFO: Got {0} Genemark-ES genes".format(len(gm_es_genes)))
 
     print("INFO: parsing CEGMA data")
-    (assemblies, cegma_features) = biocodegff.get_gff3_features( args.cegma, assemblies=assemblies )
+    (assemblies, cegma_features) = gff.get_gff3_features(args.cegma, assemblies=assemblies)
     cegma_genes = get_genes_from_dict(cegma_features)
     print("\tINFO: Got {0} CEGMA genes".format(len(cegma_genes)))
 
     print("INFO: parsing AAT results")
-    (assemblies, aat_features) = biocodegff.get_gff3_features( args.aat, assemblies=assemblies)
+    (assemblies, aat_features) = gff.get_gff3_features(args.aat, assemblies=assemblies)
     aat_genes = get_genes_from_dict(aat_features)
     print("\tINFO: Got {0} AAT 'genes'".format(len(aat_genes)))
 
     expression_genes = list()
     if args.expression is not None:
         print("INFO: parsing expression results")
-        (assemblies, expression_features) = biocodegff.get_gff3_features( args.expression, assemblies=assemblies)
+        (assemblies, expression_features) = gff.get_gff3_features(args.expression, assemblies=assemblies)
         expression_genes = get_genes_from_dict(expression_features)
         print("\tINFO: Got {0} expression 'genes'".format(len(expression_genes)))
 

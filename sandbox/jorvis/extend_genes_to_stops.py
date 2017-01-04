@@ -15,9 +15,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
+
+from biocode import utils, gff
 
 
 def main():
@@ -29,11 +28,11 @@ def main():
     parser.add_argument('-o', '--output_gff', type=str, required=False, help='Optional.  Writes an output GFF3 file with CDS (and containing features) extended to nearest stop')
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     # deal with the FASTA file if the user passed one
     if args.genome_fasta is not None:
-        biocodeutils.add_assembly_fasta(assemblies, args.genome_fasta)
+        utils.add_assembly_fasta(assemblies, args.genome_fasta)
 
     total_mRNAs = 0
     mRNAs_with_terminal_stops = 0
@@ -48,7 +47,7 @@ def main():
             for mRNA in gene.mRNAs():
                 coding_seq = mRNA.get_CDS_residues()
                 total_mRNAs += 1
-                translation = biocodeutils.translate(coding_seq)
+                translation = utils.translate(coding_seq)
 
                 if translation.endswith('*'):
                     mRNAs_with_terminal_stops += 1

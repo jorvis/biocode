@@ -19,10 +19,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-from operator import itemgetter
 
+from biocode import gff
 
 
 def main():
@@ -34,7 +32,7 @@ def main():
     parser.add_argument('-l', '--list_file', type=str, required=True, help='A file with one identifier per line')
     args = parser.parse_args()
 
-    molgraph = biocodegff.parse_gff3_by_relationship( args.input_file )
+    molgraph = gff.parse_gff3_by_relationship(args.input_file)
     id_list  = parse_id_list( args.list_file )
 
     fout = open(args.output_file, mode='wt', encoding='utf-8')

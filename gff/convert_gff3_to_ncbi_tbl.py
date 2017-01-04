@@ -32,11 +32,8 @@ The options:
 """
 
 import argparse
-import biocodegff
-import biocodetbl
-import biothings
-import biocodeutils
-import os
+
+from biocode import utils, gff, things, tbl
 
 
 def main():
@@ -52,10 +49,10 @@ def main():
     
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
     
     if args.genomic_fasta is not None:
-        biocodeutils.add_assembly_fasta(assemblies, args.genomic_fasta)
+        utils.add_assembly_fasta(assemblies, args.genomic_fasta)
         
     new_assemblies = dict() 
 
@@ -82,9 +79,9 @@ def main():
         assemblies = new_assemblies
 
     ofh = open("{0}.tbl".format(args.output_base), 'wt')
-    biocodetbl.print_tbl_from_assemblies(assemblies=assemblies, ofh=ofh, go_obo=args.go_obo, lab_name=args.lab_name)
+    tbl.print_tbl_from_assemblies(assemblies=assemblies, ofh=ofh, go_obo=args.go_obo, lab_name=args.lab_name)
 
-    mset = biothings.AssemblySet()
+    mset = things.AssemblySet()
     mset.load_from_dict(assemblies)
     mset.write_fasta(path="{0}.fna".format(args.output_base))
 

@@ -27,9 +27,9 @@ Author: Joshua Orvis
 """
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Basic comparison of two GFF3 files')
@@ -40,10 +40,10 @@ def main():
     parser.add_argument('-o', '--output_base', type=str, required=True, help='Base name/path of the output files to be created' )
     args = parser.parse_args()
 
-    (assemblies, ref_features) = biocodegff.get_gff3_features( args.ref )
+    (assemblies, ref_features) = gff.get_gff3_features(args.ref)
     ref_genes = get_genes_from_dict(ref_features)
     
-    (assemblies, qry_features) = biocodegff.get_gff3_features( args.qry, assemblies=assemblies )
+    (assemblies, qry_features) = gff.get_gff3_features(args.qry, assemblies=assemblies)
     qry_genes = get_genes_from_dict(qry_features)
 
     ref_matches_found = dict()

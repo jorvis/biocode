@@ -35,10 +35,10 @@ This will all be printed to STDOUT or a file if you pass the -o option.
 '''
 
 import argparse
-import os
 import re
 import sys
-import biocodeutils
+
+from biocode import utils
 
 
 def main():
@@ -65,7 +65,7 @@ def main():
     input_files = args.fasta_files
 
     if args.input_list is not None:
-        input_files.extend( biocodeutils.read_list_file(args.input_list) )
+        input_files.extend(utils.read_list_file(args.input_list))
 
     if len(input_files) == 0:
         raise Exception("ERROR: No input files defined")

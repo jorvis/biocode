@@ -29,11 +29,11 @@ Contact: jorvis@gmail.com
 """
 
 import argparse
-import biocodegff
-import biocodeutils
 import codecs
-import os
 import sys
+
+from biocode import utils, gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Provides coverage information for features in a GFF3 file')
@@ -46,7 +46,7 @@ def main():
     args = parser.parse_args()
 
     ## parse the fasta
-    fasta = biocodeutils.fasta_dict_from_file(args.fasta)
+    fasta = utils.fasta_dict_from_file(args.fasta)
 
     ## open the output file
     fout = None
@@ -77,7 +77,7 @@ def main():
     print("DEBUG: part count: {0}".format(len(ref_file_parts)))
         
     if ref_file_parts[0].endswith('.gff3'):
-        (ref_assemblies, ref_features) = biocodegff.get_gff3_features( ref_file_parts[0] )
+        (ref_assemblies, ref_features) = gff.get_gff3_features(ref_file_parts[0])
     else:
         raise Exception("ERROR: Expected input file (-i) to have a gff3 extension, got {0}".format(ref_file_parts[0]))
 

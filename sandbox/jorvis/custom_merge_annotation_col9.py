@@ -17,11 +17,8 @@ overlaps_old_locusTagID= <old-locus-tag-id> in strand=<strand>; <same info for a
 """
 
 import argparse
-import os
-import biothings
-import biocodegff
-import sys
-import re
+
+from biocode import gff
 
 
 def main():
@@ -33,8 +30,8 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-    (ref_assemblies, ref_feats) = biocodegff.get_gff3_features(args.reference_file)
-    (qry_assemblies, qry_genes) = biocodegff.get_gff3_features(args.query_file)
+    (ref_assemblies, ref_feats) = gff.get_gff3_features(args.reference_file)
+    (qry_assemblies, qry_genes) = gff.get_gff3_features(args.query_file)
 
     for assembly_id in ref_assemblies:
         # we expect to find this assembly ID in the qry set too
@@ -64,7 +61,7 @@ def main():
             if len(overlaps) > 0:
                 print("INFO: ref_gene {0} had {1} overlaps".format(ref_gene.id, len(overlaps)))
     
-    biocodegff.print_gff3_from_assemblies(assemblies=ref_assemblies, ofh=open(args.output_file, 'w'))
+    gff.print_gff3_from_assemblies(assemblies=ref_assemblies, ofh=open(args.output_file, 'w'))
 
     
 

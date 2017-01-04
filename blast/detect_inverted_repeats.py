@@ -26,10 +26,11 @@ are processed.
 """
 
 import argparse
-import biocodeutils
 import datetime
 import os
 import subprocess
+
+from biocode import utils
 
 
 def main():
@@ -42,7 +43,7 @@ def main():
     args = parser.parse_args()
 
     # parse FASTA input, storing into a dict keyed by ID
-    seqs = biocodeutils.fasta_dict_from_file( args.input_file )
+    seqs = utils.fasta_dict_from_file(args.input_file)
 
     ofh = open(args.output_file, 'wt')
 

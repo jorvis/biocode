@@ -42,7 +42,7 @@ import argparse
 import os
 import re
 import sys
-import biocodeutils
+import utils
 
 def main():
     parser = argparse.ArgumentParser( description='Filters trinity output for longest subcomponents based on naming convention')
@@ -57,7 +57,7 @@ def main():
     if args.output is not None:
         fout = open(args.output, 'wt')
 
-    seqs = biocodeutils.fasta_dict_from_file( args.input )
+    seqs = utils.fasta_dict_from_file(args.input)
 
     components = dict()
 
@@ -73,7 +73,7 @@ def main():
             raise Exception("ERROR: This ID wasn't in the expected format of compN_cN_seqN: {0}".format(seq_id))
 
     for c_id in components:
-        seq_wrapped = biocodeutils.wrapped_fasta(components[c_id]['s'], every=60)
+        seq_wrapped = utils.wrapped_fasta(components[c_id]['s'], every=60)
         fout.write(">{0} {1}\n{2}\n".format(components[c_id]['longest_id'], components[c_id]['h'], seq_wrapped))
 
 

@@ -30,9 +30,10 @@ Test file:
 """
 
 import argparse
-import biocodeutils
-import os
 import sys
+
+from biocode import utils
+
 
 def main():
     parser = argparse.ArgumentParser( description='Report coverage gaps/dips from a samtools mpileup file')
@@ -55,7 +56,7 @@ def main():
     else:
         out_fh = open(args.output_file, 'wt')
 
-    lengths = biocodeutils.fasta_sizes_from_file(args.fasta_file)
+    lengths = utils.fasta_sizes_from_file(args.fasta_file)
 
     stats = {'total_molecules': 0, 'total_bases': 0, 'depth_sum': 0}
     

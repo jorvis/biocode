@@ -18,15 +18,13 @@ Once parsed, the graphs can be saved with Graph.write_pickle() : http://igraph.o
 """
 
 import argparse
-
-# documentation: http://igraph.org/python/
-#                http://igraph.org/python/doc/tutorial/tutorial.html
-import igraph
 import os
 import pickle
 import re
-import sys
-import biocodegff
+
+import igraph
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
@@ -42,7 +40,7 @@ def main():
 
     # parse list of source GO terms
     source_go_terms = dict()
-    assemblies, features = biocodegff.get_gff3_features(args.input_file)
+    assemblies, features = gff.get_gff3_features(args.input_file)
     for assembly_id in assemblies:
         for gene in assemblies[assembly_id].genes():
             for mRNA in gene.mRNAs():

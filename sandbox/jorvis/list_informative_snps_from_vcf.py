@@ -30,10 +30,7 @@ be considered different and flagged as 'informative'
 
 
 import argparse
-import biocodeutils
 import gzip
-import os
-import re
 
 
 def main():

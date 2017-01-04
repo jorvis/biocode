@@ -21,12 +21,10 @@ MAJOR assumptions:
 """
 
 import argparse
-import biocodegenbank
-import biocodegff
-import biocodeutils
 import os
 import sys
 
+from biocode import utils, genbank, gff
 from jinja2 import Environment, FileSystemLoader
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -63,9 +61,9 @@ def main():
             exit(1)
 
     # line-wrap lineage to stay below 79 character GenBank flat file width
-    lineage = biocodegenbank.line_wrap_lineage_string( args.lineage )
+    lineage = genbank.line_wrap_lineage_string(args.lineage)
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
     ofh = sys.stdout
     if args.output_file is not None:
         if args.output_dir is None:
@@ -104,11 +102,11 @@ def main():
             ofh.write("                     /db_xref=\"taxon:{0}\"\n".format(args.taxon_id))
         
         for gene in assemblies[assembly_id].genes():
-            biocodegenbank.print_biogene( gene=gene, fh=ofh, on=assembly )
+            genbank.print_biogene(gene=gene, fh=ofh, on=assembly)
 
         if args.include_sequence:
             ofh.write("ORIGIN\n")
-            biocodegenbank.print_sequence( seq=assembly.residues, fh=ofh )
+            genbank.print_sequence(seq=assembly.residues, fh=ofh)
 
         ofh.write("//\n")
         # there may be multiple output files
@@ -120,7 +118,7 @@ def main():
         ofh.close()
 
 def process_assembly_fasta(mols, fasta_file):
-    fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
+    fasta_seqs = utils.fasta_dict_from_file(fasta_file)
 
     for mol_id in mols:
         # check if the FASTA file provides sequence for this

@@ -49,8 +49,8 @@ Here's the full example:
 """
 
 import argparse
-import biocodegff
-import os
+
+from biocode import gff
 
 
 def main():
@@ -87,11 +87,11 @@ def main():
 
         if len(cols) == 9:
             if args.type is None or args.type == cols[2]:
-                atts = biocodegff.column_9_dict(cols[8])
+                atts = gff.column_9_dict(cols[8])
             
                 if args.key in atts and atts[args.key] in changes:
                     atts[args.attribute] = changes[atts[args.key]]
-                    cols[8] = biocodegff.build_column_9_from_dict(atts)
+                    cols[8] = gff.build_column_9_from_dict(atts)
 
         outfh.write("\t".join(cols) + "\n")
 

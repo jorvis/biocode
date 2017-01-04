@@ -26,9 +26,9 @@ will just be printed back out.
 '''
 
 import argparse
-import os
 import sys
-import biocodeutils
+
+from biocode import utils
 
 
 def main():
@@ -46,7 +46,7 @@ def main():
     if args.output_file is not None:
         fout = open(args.output_file, 'wt')
     
-    seqs = biocodeutils.fasta_dict_from_file( args.fasta_file )
+    seqs = utils.fasta_dict_from_file(args.fasta_file)
 
     ids = list()
 
@@ -61,7 +61,7 @@ def main():
             if args.action == 'reverse':
                 seq['s'] = seq['s'][::-1]
             elif args.action == 'revcomp':
-                seq['s'] = biocodeutils.reverse_complement(seq['s'])
+                seq['s'] = utils.reverse_complement(seq['s'])
         
         ## write this sequence, 60bp per line
         fout.write(">{0}\n".format(seq_id))

@@ -32,10 +32,11 @@ This will all be printed to STDOUT or a file if you pass the -o option.
 '''
 
 import argparse
-import os
 import sys
-import biocodeutils
 from collections import Counter
+
+from biocode import utils
+
 
 def main():
     parser = argparse.ArgumentParser( description='Reports base/residue composition of a FASTA file')
@@ -50,7 +51,7 @@ def main():
     if args.output_file is not None:
         fout = open(args.output_file, 'wt')
     
-    seqs = biocodeutils.fasta_dict_from_file( args.fasta_file )
+    seqs = utils.fasta_dict_from_file(args.fasta_file)
     
     total_residues = 0
     total_residue_counts = Counter()

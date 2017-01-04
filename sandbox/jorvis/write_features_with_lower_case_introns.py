@@ -12,10 +12,10 @@ pass --type=CDS it will instead do the CDS range.
 '''
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
 import sys
+
+from biocode import utils, gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='')
@@ -27,14 +27,14 @@ def main():
     parser.add_argument('-t', '--type', type=str, required=False, default='mRNA', choices=['mRNA', 'CDS'], help='Feature type to export (mRNA or CDS)')
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     # set this to None if you don't want the debug print statements
     #debugging_gene = 'D9AE6116893A0D5711D56C0F1E6CF58C'
     debugging_gene = None
 
     if args.fasta is not None:
-        seqs = biocodeutils.fasta_dict_from_file( args.fasta )
+        seqs = utils.fasta_dict_from_file(args.fasta)
         for seq_id in seqs:
             if seq_id in assemblies:
                 assemblies[seq_id].residues = seqs[seq_id]['s']
@@ -128,7 +128,7 @@ def main():
                 gene_seq = "".join(reversed(gene_seq))
                     
             #print("INFO: Got gene with length {0} after modification".format(len(gene_seq)))
-            ofh.write(">{0}\n{1}\n".format(gene_label, biocodeutils.wrapped_fasta(gene_seq)))
+            ofh.write(">{0}\n{1}\n".format(gene_label, utils.wrapped_fasta(gene_seq)))
 
 
 

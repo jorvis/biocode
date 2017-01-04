@@ -18,8 +18,9 @@ Author: Joshua Orvis
 """
 
 import argparse
-import os
-import biocodegff
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Removes duplicate features in a GFF3 file')
@@ -47,7 +48,7 @@ def main():
         if len(cols) != 9:
             continue
 
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        parent = gff.column_9_value(cols[8], 'Parent')
         type   = cols[2]
         mol_id = cols[0]
 

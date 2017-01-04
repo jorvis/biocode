@@ -27,11 +27,8 @@ Author: Joshua Orvis (jorvis AT gmail)
 """
 
 import argparse
-import os
 import sys
-import biothings
-import biocodegff
-import biocodeutils
+
 
 def main():
     parser = argparse.ArgumentParser( description='Uniquifies IDs within a GTF file by prepending molecule identifiers')

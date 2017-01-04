@@ -23,9 +23,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
+
+import gff
 
 
 def main():
@@ -36,7 +35,7 @@ def main():
     parser.add_argument('-o', '--output_gff3', type=str, required=True, help='Path to GFF3 output file to be created')
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_gff3 )
+    (assemblies, features) = gff.get_gff3_features(args.input_gff3)
     gff_out = open(args.output_gff3, 'wt')
 
     gff_out.write("##gff-version 3\n")

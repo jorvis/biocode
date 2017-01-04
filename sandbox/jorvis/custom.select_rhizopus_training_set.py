@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
 import re
-import biothings
-import biocodegff
-import biocodeutils
+
+from biocode import utils, gff, things
 
 """
 Example with a match extending far past a gene
@@ -45,10 +43,10 @@ def main():
         args.output_id_list = "training_ids.be_{0}.bpi_{1}.ppc_{2}.list".format(args.blast_eval_cutoff, args.blast_percent_identity_cutoff, args.aat_percent_coverage_cutoff)
 
     print("INFO: Parsing organism1 annotation")
-    (assemblies, features) = biocodegff.get_gff3_features( args.organism1_annotation )
+    (assemblies, features) = gff.get_gff3_features(args.organism1_annotation)
 
     print("INFO: Parsing AAT FASTA database")
-    aat_seqs = biocodeutils.fasta_dict_from_file( args.aat_fasta_db )
+    aat_seqs = utils.fasta_dict_from_file(args.aat_fasta_db)
     
     # keys are assembly IDs, value for each is a list of matches on them
     aat_matches = dict()
@@ -78,8 +76,8 @@ def main():
         fmin = int(cols[3]) - 1
         fmax = int(cols[4])
         strand = cols[6]
-        feature_id = biocodegff.column_9_value(cols[8], 'ID').replace('"', '')
-        target = biocodegff.column_9_value(cols[8], 'Target')
+        feature_id = gff.column_9_value(cols[8], 'ID').replace('"', '')
+        target = gff.column_9_value(cols[8], 'Target')
         m = re.search("^(\S+)", target)
         if m:
             target = m.group(1)
@@ -89,12 +87,12 @@ def main():
                 aat_matches[assembly_id].append(current_match)
                 aat_match_count += 1
             
-            current_match = biothings.Match( id=feature_id, target_id=target, subclass='nucleotide_to_protein_match', length=fmax - fmin )
+            current_match = things.Match(id=feature_id, target_id=target, subclass='nucleotide_to_protein_match', length=fmax - fmin)
             current_match.locate_on( target=assemblies[assembly_id], fmin=fmin, fmax=fmax, strand=strand )
 
         elif cols[2] == 'match_part':
-            parent_id = biocodegff.column_9_value(cols[8], 'Parent').replace('"', '')
-            match_part = biothings.MatchPart( id=feature_id, parent=parent_id, length=fmax - fmin )
+            parent_id = gff.column_9_value(cols[8], 'Parent').replace('"', '')
+            match_part = things.MatchPart(id=feature_id, parent=parent_id, length=fmax - fmin)
             match_part.locate_on( target=assemblies[assembly_id], fmin=fmin, fmax=fmax, strand=strand )
             current_match.add_part(match_part)
 

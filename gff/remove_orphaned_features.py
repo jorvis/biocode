@@ -15,8 +15,9 @@ Author: Joshua Orvis
 """
 
 import argparse
-import os
-import biocodegff
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Removes orphaned features in a GFF3 file')
@@ -50,8 +51,8 @@ def main():
             lines.append(True)
             continue
 
-        id     = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        id     = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
 
         if parent is None:
             # this might be overwritten later
@@ -79,7 +80,7 @@ def main():
             cols = line.split("\t")
 
             if len(cols) == 9:
-                id     = biocodegff.column_9_value(cols[8], 'ID')
+                id     = gff.column_9_value(cols[8], 'ID')
 
                 if id is not None and id in parents and parents[id] == True:
                     outfh.write("{0}\n".format(line))

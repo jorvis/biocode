@@ -40,9 +40,9 @@ Examples:
 '''
 
 import argparse
-import os
 import sys
-import biocodeutils
+
+from biocode import utils
 
 
 def main():
@@ -63,7 +63,7 @@ def main():
     if args.output_file is not None:
         fout = open(args.output_file, 'wt')
     
-    seqs = biocodeutils.fasta_dict_from_file( args.fasta_file )
+    seqs = utils.fasta_dict_from_file(args.fasta_file)
 
     start_col = args.start_coord_col - 1
     stop_col  = args.stop_coord_col - 1
@@ -76,7 +76,7 @@ def main():
         if len(cols) < 3:
             continue
 
-        (fmin, fmax, strand) = biocodeutils.humancoords_to_0interbase( int(cols[start_col]), int(cols[stop_col]) )
+        (fmin, fmax, strand) = utils.humancoords_to_0interbase(int(cols[start_col]), int(cols[stop_col]))
         mol_id = cols[mol_col]
 
         if mol_id not in seqs:
@@ -91,7 +91,7 @@ def main():
             seq_id = cols[int(args.name_col) - 1]
 
         if strand == -1:
-            seq = biocodeutils.reverse_complement(seq)
+            seq = utils.reverse_complement(seq)
         
         ## write this sequence, 60bp per line
         fout.write(">{0}\n".format(seq_id))

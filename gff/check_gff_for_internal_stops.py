@@ -20,9 +20,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodegff
-import biocodeutils
+
+from biocode import utils, gff
 
 
 def main():
@@ -35,11 +34,11 @@ def main():
     parser.add_argument('-o', '--output_fasta', type=str, required=False, help='Optional.  Writes an output (translated) FASTA file for all those features which had internal stops')
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, features) = gff.get_gff3_features(args.input_file)
 
     # deal with the FASTA file if the user passed one
     if args.genome_fasta is not None:
-        biocodeutils.add_assembly_fasta(assemblies, args.genome_fasta)
+        utils.add_assembly_fasta(assemblies, args.genome_fasta)
 
     total_mRNAs = 0
     mRNAs_with_stops = 0
@@ -61,14 +60,14 @@ def main():
                 if debug_mRNA is not None and mRNA.id == debug_mRNA:
                     print("CDS:{0}".format(coding_seq))
 
-                if biocodeutils.translate(coding_seq).rstrip('*').count('*') > 0:
+                if utils.translate(coding_seq).rstrip('*').count('*') > 0:
                     mRNAs_with_stops += 1
-                    translated_seq = biocodeutils.translate(coding_seq)
+                    translated_seq = utils.translate(coding_seq)
 
                     if fasta_out_fh is not None:
                         loc = mRNA.location_on(assemblies[assembly_id])
                         fasta_out_fh.write(">{0} {1} {2}-{3} ({4})\n".format(mRNA.id, assembly_id, loc.fmin + 1, loc.fmax, loc.strand) )
-                        fasta_out_fh.write("{0}\n".format(biocodeutils.wrapped_fasta(translated_seq)))
+                        fasta_out_fh.write("{0}\n".format(utils.wrapped_fasta(translated_seq)))
                     
                     if debug_mRNA is not None and mRNA.id == debug_mRNA:
                         print("TRANSLATION WITH STOP ({1}): {0}".format(translated_seq, mRNA.id) )

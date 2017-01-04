@@ -12,9 +12,9 @@ first, then mRNA, then any child features of that.
 """
 
 import argparse
-import os
 import sys
-import biocodegff
+
+from biocode import gff
 
 
 def main():
@@ -52,8 +52,8 @@ def main():
             continue
 
         # grab the ID and Parent columns if any
-        id = biocodegff.column_9_value(cols[8], 'ID')
-        parent = biocodegff.column_9_value(cols[8], 'Parent')
+        id = gff.column_9_value(cols[8], 'ID')
+        parent = gff.column_9_value(cols[8], 'Parent')
 
         type = cols[2]
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-import biocodeutils
 import sys
+
+from biocode import utils
 
 '''
 Description:
@@ -85,7 +85,7 @@ def main():
     if args.with_ is not None and args.replace is None:
         raise Exception("ERROR: You must pass --replace when passing --with_")
 
-    seqs = biocodeutils.fasta_dict_from_file( args.input )
+    seqs = utils.fasta_dict_from_file(args.input)
 
     ## standard characters (depends on the type of sequence)
     standard_residues = dict()

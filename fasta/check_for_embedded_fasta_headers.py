@@ -40,11 +40,10 @@ INFO: processing file: /tmp/test.faa
 """
 
 import argparse
-import os
-import re
 import sys
 
-from biocodeutils import read_list_file
+from biocode.utils import read_list_file
+
 
 def main():
     parser = argparse.ArgumentParser( description='Looks for FASTA entries which seem to have been embedded within another')

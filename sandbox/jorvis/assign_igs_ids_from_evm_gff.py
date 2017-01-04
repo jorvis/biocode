@@ -29,8 +29,8 @@ gene: evm.TU.{asm}.1
 """
 
 import argparse
-import os
-import biocodegff
+
+from biocode import gff
 
 next_id = { 'gene':1, 'mRNA':1, 'exon':1, 'CDS':1 }
 
@@ -61,8 +61,8 @@ def main():
             ofh.write(line + "\n")
             continue
 
-        feat_id   = biocodegff.column_9_value( cols[8], 'ID' )
-        parent_id = biocodegff.column_9_value( cols[8], 'Parent' )
+        feat_id   = gff.column_9_value(cols[8], 'ID')
+        parent_id = gff.column_9_value(cols[8], 'Parent')
         
         if feat_id in idmap:
             new_feat_id = idmap[feat_id]

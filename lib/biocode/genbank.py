@@ -1,9 +1,7 @@
-import re
-import bioannotation
-import utils
-import biothings
 import math
 import sys
+
+from biocode import utils
 
 """
 NOTE: This currently only works for coding features
@@ -71,7 +69,7 @@ SEQ_BP_PER_LINE = SEQ_GROUP_BP * SEQ_GROUPS_PER_LINE
 
 def print_biogene( gene=None, fh=None, on=None ):
     '''
-    This method accepts a Gene object located on an Assembly object (from biothings.py) and prints
+    This method accepts a Gene object located on an Assembly object (from things.py) and prints
     the feature graph for that gene in Genbank flat file format, including the gene, RNA and CDS
     '''
     if gene is None:

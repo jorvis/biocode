@@ -12,9 +12,9 @@ Assumptions:
 """
 
 import argparse
-import os
-import biocodegff
-import pprint
+
+from biocode import gff
+
 
 def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here')
@@ -25,10 +25,10 @@ def main():
     args = parser.parse_args()
 
     print("INFO: parsing reference features\n")
-    (assemblies, ref_features) = biocodegff.get_gff3_features( args.reference )
+    (assemblies, ref_features) = gff.get_gff3_features(args.reference)
 
     print("INFO: parsing query features\n")
-    (assemblies, qry_features) = biocodegff.get_gff3_features( args.query, assemblies=assemblies )
+    (assemblies, qry_features) = gff.get_gff3_features(args.query, assemblies=assemblies)
 
     ref_genes = get_genes_from_dict( ref_features )
     qry_genes = get_genes_from_dict( qry_features )

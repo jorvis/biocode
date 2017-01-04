@@ -1,14 +1,10 @@
 #!/usr/bin/env python3.2
 
 import argparse
-import os
-import biothings
-import biocodegff
-import sys
-import re
-
-## for debugging
 from pprint import pprint
+
+from biocode import gff, things
+
 
 ## tracked in SILLAB-unk, this script was written to answer a specific set of questions, namely:
 
@@ -34,8 +30,8 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-    (ref_assemblies, ref_features) = biocodegff.get_gff3_features( args.reference_file )
-    (qry_assemblies, qry_features) = biocodegff.get_gff3_features( args.alignment_file )
+    (ref_assemblies, ref_features) = gff.get_gff3_features(args.reference_file)
+    (qry_assemblies, qry_features) = gff.get_gff3_features(args.alignment_file)
 
 <<<<<<< .mine
     print("Found {0} reference assemblies with {1} features".format(len(ref_assemblies), len(ref_features) ) )
@@ -145,8 +141,8 @@ def reduce_overlaps( things ):
         rfmin = int(cols[3]) - 1
         rfmax = int(cols[4])
         rstrand = None
-        feat_id = biocodegff.column_9_value(cols[8], 'ID')
-        parent_id = biocodegff.column_9_value(cols[8], 'Parent')
+        feat_id = gff.column_9_value(cols[8], 'ID')
+        parent_id = gff.column_9_value(cols[8], 'Parent')
         parent_feat = None
         
         if parent_id is not None:
@@ -169,7 +165,7 @@ def reduce_overlaps( things ):
                 print("\n")
                 pprint ("DEBUG: last gene was ({0}): {1}".format(last_gene.id, vars(last_gene)))
             
-            gene = biothings.Gene(id=feat_id)
+            gene = things.Gene(id=feat_id)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             print("DEBUG: locating gene {0} on {1} at coordinates fmin:{2}-fmax:{3} strand:{4}".format(feat_id, mol_id, rfmin, rfmax, rstrand) )
             features[feat_id] = gene
@@ -178,14 +174,14 @@ def reduce_overlaps( things ):
             last_gene = gene
         
         elif cols[2] == 'mRNA':
-            mRNA = biothings.mRNA(id=feat_id, parent=parent_feat)
+            mRNA = things.mRNA(id=feat_id, parent=parent_feat)
             mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             print("DEBUG: attaching mRNA:{0} to parent gene:{1}".format(feat_id, parent_feat.id) )
             parent_feat.add_mRNA(mRNA)
             features[feat_id] = mRNA
 
         elif cols[2] == 'rRNA':
-            rRNA = biothings.rRNA(id=feat_id, parent=parent_feat)
+            rRNA = things.rRNA(id=feat_id, parent=parent_feat)
             rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_rRNA(rRNA)
             features[feat_id] = rRNA

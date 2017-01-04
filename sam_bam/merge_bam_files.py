@@ -26,11 +26,11 @@ It's probably best to redo a sort operation after running this, such as:
 """
 
 import argparse
-import biocodeutils
 import datetime
-import os
 import re
 import subprocess
+
+import utils
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
     parser.add_argument('-o', '--output_base', type=str, required=True, help='Base name/path of output file to be created' )
     args = parser.parse_args()
 
-    bam_files = biocodeutils.read_list_file(args.input_list)
+    bam_files = utils.read_list_file(args.input_list)
 
     ## take the header from the first file, change the sorting definition
     first_file = bam_files[0]

@@ -8,9 +8,9 @@ found in the --fasta_file.
 """
 
 import argparse
-import biocodeutils
-import os
-import sys
+
+from biocode import utils
+
 
 def main():
     parser = argparse.ArgumentParser( description='Splits FASTA file based on reported coverage gaps')
@@ -23,7 +23,7 @@ def main():
     parser.add_argument('-mgl', '--min_gap_length', type=int, required=False, help='Ignore gaps reported under this min length' )
     args = parser.parse_args()
 
-    fasta = biocodeutils.fasta_dict_from_file(args.fasta_file)
+    fasta = utils.fasta_dict_from_file(args.fasta_file)
 
     # this is just to keep track of which we've exported
     molecules_split = dict()
@@ -67,7 +67,7 @@ def main():
     # Now export the full sequences of any which weren't split
     for id in fasta:
         if id not in molecules_split:
-            ofh.write(">{0}\n{1}\n".format(id, biocodeutils.wrapped_fasta(fasta[id]['s'])))
+            ofh.write(">{0}\n{1}\n".format(id, utils.wrapped_fasta(fasta[id]['s'])))
 
 def export_fragment(fh, fasta, id, start, stop, min_length, exported):
     # human, 1-based coordinates expected.
@@ -75,7 +75,7 @@ def export_fragment(fh, fasta, id, start, stop, min_length, exported):
     fragment = fasta[id]['s'][adjusted_start:stop]
     if min_length is None or len(fragment) >= min_length:
         #print("DEBUG: exporting {0} : {1}-{2}".format(id, start, stop))
-        fh.write(">{0}__{1}-{2}\n{3}\n".format(id, start, stop, biocodeutils.wrapped_fasta(fragment)))
+        fh.write(">{0}__{1}-{2}\n{3}\n".format(id, start, stop, utils.wrapped_fasta(fragment)))
         exported[id] = 1
         
 

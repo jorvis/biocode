@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-import sys
-import bioannotation
-import biocodeutils
-import biothings
-import biocodegff
 import math
-import sqlite3
+import os
 import re
+import sqlite3
+import sys
 from collections import defaultdict
+
+import utils
+from biocode import annotation, gff, things
 
 ## constants
 DEFAULT_PRODUCT_NAME = "hypothetical protein"
@@ -69,7 +68,7 @@ def main():
     # get source structural annotation, if necessary:
     if args.source_gff is not None:
         print("INFO: parsing source GFF")
-        (assemblies, features) = biocodegff.get_gff3_features( args.source_gff )
+        (assemblies, features) = gff.get_gff3_features(args.source_gff)
 
     if args.hmm_htab_list is not None:
         # connection to the HMM-associated SQLite3 database
@@ -170,10 +169,10 @@ def append_organism_names_to_gff(file_path, poly_orgs):
         cols = line.split("\t")
 
         if len(cols) == 9 and cols[2].endswith('RNA'):
-            last_RNA_id = biocodegff.column_9_value(cols[8], 'ID')
+            last_RNA_id = gff.column_9_value(cols[8], 'ID')
         if len(cols) == 9 and cols[2] == 'polypeptide':
             if last_RNA_id in poly_orgs:
-                cols[8] += ";top_organism_from_blast={0}".format(poly_orgs[last_RNA_id], biocodegff.escape(poly_orgs[last_RNA_id]))
+                cols[8] += ";top_organism_from_blast={0}".format(poly_orgs[last_RNA_id], gff.escape(poly_orgs[last_RNA_id]))
                 orgs_found += 1
 
             fout.write("{0}\n".format("\t".join(cols)) )
@@ -270,7 +269,7 @@ def write_fasta_results( f, polypeptides ):
             header = "{0} go::{1}".format(header, go_string)
             
         f.write( ">{0}\n".format( header ) )
-        f.write( "{0}\n".format( biocodeutils.wrapped_fasta(polypeptide.residues) ) )
+        f.write( "{0}\n".format(utils.wrapped_fasta(polypeptide.residues)))
         
 
 def write_tab_results( f, polypeptides ):
@@ -301,13 +300,13 @@ def initialize_polypeptides( log_fh, fasta_file ):
     Reads a FASTA file of (presumably) polypeptide sequences and creates a dict of Polypeptide
     objects, keyed by ID, with bioannotation.FunctionalAnnotation objects attached.
     '''
-    seqs = biocodeutils.fasta_dict_from_file( fasta_file )
+    seqs = utils.fasta_dict_from_file(fasta_file)
 
     polypeptides = dict()
 
     for seq_id in seqs:
-        polypeptide = biothings.Polypeptide( id=seq_id, length=len(seqs[seq_id]['s']), residues=seqs[seq_id]['s'] )
-        annotation = bioannotation.FunctionalAnnotation(product_name=DEFAULT_PRODUCT_NAME)
+        polypeptide = things.Polypeptide(id=seq_id, length=len(seqs[seq_id]['s']), residues=seqs[seq_id]['s'])
+        annotation = annotation.FunctionalAnnotation(product_name=DEFAULT_PRODUCT_NAME)
         log_fh.write("INFO: {0}: Set initial product name to '{1}'\n".format(seq_id, DEFAULT_PRODUCT_NAME))
         polypeptide.annotation = annotation
         
@@ -324,7 +323,7 @@ def parse_kegg_blast_evidence(log_fh, polypeptides, blast_list, eval_cutoff):
     Currently only considers the top BLAST hit for each query which doesn't have
     'uncharacterized' or hypothetical in the product name.
     '''
-    for file in biocodeutils.read_list_file(blast_list):
+    for file in utils.read_list_file(blast_list):
         last_qry_id = None
         
         for line in open(file):
@@ -374,10 +373,10 @@ def parse_kegg_blast_evidence(log_fh, polypeptides, blast_list, eval_cutoff):
                         log_fh.write("INFO: {0}: Updated product name to '{1}' based on BLAST hit to KEGG accession '{2}'\n".format(this_qry_id, annot.product_name, accession))
 
                         if ec_num is not None and ec_num is not '':
-                            ec = bioannotation.ECAnnotation(number=ec_num)
+                            ec = annotation.ECAnnotation(number=ec_num)
                             annot.add_ec_number(ec)
 
-                        kegg_dbxref = bioannotation.Dbxref(db='KEGG', identifier=kegg_id)
+                        kegg_dbxref = annotation.Dbxref(db='KEGG', identifier=kegg_id)
                         annot.add_dbxref(kegg_dbxref)
                         
                 # remember the ID we just saw
@@ -392,7 +391,7 @@ def parse_trembl_blast_evidence(polypeptides, blast_list, eval_cutoff):
     Currently only considers the top BLAST hit for each query which doesn't have
     'uncharacterized' in the product name.
     '''
-    for file in biocodeutils.read_list_file(blast_list):
+    for file in utils.read_list_file(blast_list):
         last_qry_id = None
         
         for line in open(file):
@@ -445,7 +444,7 @@ def parse_sprot_blast_evidence( log_fh, polypeptides, blast_org, blast_list, cur
     if algorithm not in ['blast', 'rapsearch2']:
         raise Exception("algorithm argument must be either blast or rapsearch2")
     
-    for file in biocodeutils.read_list_file(blast_list):
+    for file in utils.read_list_file(blast_list):
         last_qry_id = None
         
         for line in open(file):
@@ -571,7 +570,7 @@ def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
     # For successful matches, this is the product name which gets applied
     GENE_PRODUCT_NAME = 'Putative integral membrane protein'
     
-    for file in biocodeutils.read_list_file(htab_list):
+    for file in utils.read_list_file(htab_list):
         last_qry_id = None
         current_helix_count = 0
         
@@ -593,7 +592,7 @@ def parse_tmhmm_evidence( log_fh, polypeptides, htab_list ):
                         log_fh.write("INFO: {0}: TMHMM predicted {1} TMHelix domains but gene product name unchanged because of previous assignment\n".format(last_qry_id, current_helix_count))
 
                     ## we add the GO terms no matter what
-                    annot.add_go_annotation( bioannotation.GOAnnotation(go_id='0016021') )
+                    annot.add_go_annotation(annotation.GOAnnotation(go_id='0016021'))
 
                 # reset
                 last_qry_id = current_id
@@ -626,7 +625,7 @@ def parse_uniref100_blast_evidence( log_fh, polypeptides, blast_list, cursor, ev
                 if m:
                     uniref2acc[m.group(1)] = {'acc': m.group(3), 'prod': m.group(2)}
     
-    for file in biocodeutils.read_list_file(blast_list):
+    for file in utils.read_list_file(blast_list):
         last_qry_id = None
         
         for line in open(file):
@@ -725,7 +724,7 @@ def parse_hmm_evidence( log_fh, polypeptides, htab_list, cursor ):
 
     Currently only the top hit for any given query polypeptide is used.
     '''
-    for file in biocodeutils.read_list_file(htab_list):
+    for file in utils.read_list_file(htab_list):
         last_qry_id = None
         
         for line in open(file):
@@ -834,7 +833,7 @@ def get_uniref_ec_nums( acc, c ):
     ec_annots = list()
 
     for row in c:
-        ec = bioannotation.ECAnnotation(number=row[0])
+        ec = annotation.ECAnnotation(number=row[0])
         ec_annots.append(ec)
 
     return ec_annots
@@ -855,7 +854,7 @@ def get_uspdb_ec_nums( acc, c ):
     ec_annots = list()
 
     for row in c:
-        ec = bioannotation.ECAnnotation(number=row[0])
+        ec = annotation.ECAnnotation(number=row[0])
         ec_annots.append(ec)
 
     return ec_annots
@@ -874,7 +873,7 @@ def get_uniref_go_terms( acc, c ):
     go_annots = list()
     
     for row in c:
-        go = bioannotation.GOAnnotation(go_id=row[0], ev_code='ISA', with_from=acc)
+        go = annotation.GOAnnotation(go_id=row[0], ev_code='ISA', with_from=acc)
         go_annots.append(go)
     
     return go_annots
@@ -894,7 +893,7 @@ def get_uspdb_go_terms( acc, c ):
     go_annots = list()
     
     for row in c:
-        go = bioannotation.GOAnnotation(go_id=row[0], ev_code='ISA', with_from=acc)
+        go = annotation.GOAnnotation(go_id=row[0], ev_code='ISA', with_from=acc)
         go_annots.append(go)
     
     return go_annots
@@ -910,7 +909,7 @@ def get_hmmdb_ec_nums( acc, c ):
     ec_annots = list()
 
     for row in c:
-        ec = bioannotation.ECAnnotation(number=row[0])
+        ec = annotation.ECAnnotation(number=row[0])
         ec_annots.append(ec)
     
     return ec_annots
@@ -940,7 +939,7 @@ def get_hmmdb_go_terms( acc, c ):
     go_annots = list()
     
     for row in c:
-        go = bioannotation.GOAnnotation(go_id=row[0], ev_code='ISM', with_from=acc)
+        go = annotation.GOAnnotation(go_id=row[0], ev_code='ISM', with_from=acc)
         go_annots.append(go)
     
     return go_annots

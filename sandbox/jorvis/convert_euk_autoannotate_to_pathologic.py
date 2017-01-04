@@ -70,12 +70,12 @@ http://bioinformatics.ai.sri.com/ptools/tpal.pf
 
 """
 import argparse
+import hashlib
 import os
 import re
-import biocodeutils
-import biothings
-import bioannotation
-import hashlib
+
+from biocode import utils, things
+
 
 def main():
     parser = argparse.ArgumentParser( description='Transforms a tab-delimited annotation file to PathoLogic format')
@@ -87,7 +87,7 @@ def main():
     parser.add_argument('-o', '--output_dir', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
 
-    molecules = biocodeutils.fasta_dict_from_file( args.genomic_fasta )
+    molecules = utils.fasta_dict_from_file(args.genomic_fasta)
     protein_coords = get_protein_coordinates_from_FASTA(args.protein_fasta)
 
     if not os.path.exists(args.output_dir):
@@ -145,7 +145,7 @@ def get_protein_coordinates_from_FASTA(protein_fasta):
     '''
     protein_locs = dict()
 
-    fasta_dict = biocodeutils.fasta_dict_from_file( protein_fasta )
+    fasta_dict = utils.fasta_dict_from_file(protein_fasta)
 
     pattern = re.compile('(comp\d+_c\d+_seq\d+)\:(\d+)\-(\d+)\(\+\)')
 
@@ -235,13 +235,13 @@ def parse_annotation_line(line, genes, molecules):
     if gene_id in genes:
         gene = genes[gene_id]
     else:
-        gene = biothings.Gene( id=gene_id )
+        gene = things.Gene(id=gene_id)
         genes[gene_id] = gene
 
-    mRNA = biothings.mRNA( id=transcript_id )
+    mRNA = things.mRNA(id=transcript_id)
     gene.add_mRNA( mRNA )
 
-    annotation = bioannotation.FunctionalAnnotation( product_name=gene_product_name )
+    annotation = annotation.FunctionalAnnotation(product_name=gene_product_name)
 
     ec_num_pattern = re.compile('\d+.')
 
@@ -252,7 +252,7 @@ def parse_annotation_line(line, genes, molecules):
             m = ec_num_pattern.search(ec_num)
 
             if m:
-                ec = bioannotation.ECAnnotation( number=ec_num )
+                ec = annotation.ECAnnotation(number=ec_num)
                 annotation.add_ec_number( ec )
 
     go_pattern = re.compile('(\d+)')
@@ -263,10 +263,10 @@ def parse_annotation_line(line, genes, molecules):
             m = go_pattern.search(go_term)
 
             if m:
-                go = bioannotation.GOAnnotation( go_id=go_term )
+                go = annotation.GOAnnotation(go_id=go_term)
                 annotation.add_go_annotation( go )
                 
-    CDS = biothings.CDS( id=CDS_id, annotation=annotation )
+    CDS = things.CDS(id=CDS_id, annotation=annotation)
     mRNA.add_CDS( CDS )
 
     

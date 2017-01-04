@@ -50,9 +50,7 @@ TYPE 3 - STILL BETTER. Has all of the following characteristics:
 Author:  Joshua Orvis
 '''
 
-import os
-import biocodegff
-import biocodeutils
+from biocode import gff
 
 
 def main():
@@ -75,27 +73,27 @@ def main():
     type3_still_better = list()
 
     print("INFO: parsing Genemark-ES data")
-    (assemblies, gm_es_features) = biocodegff.get_gff3_features( gm_es_file )
+    (assemblies, gm_es_features) = gff.get_gff3_features(gm_es_file)
     gm_es_genes = get_genes_from_dict(gm_es_features)
     print("\tINFO: Got {0} Genemark-ES genes".format(len(gm_es_genes)))
 
     print("INFO: parsing CEGMA data")
-    (assemblies, cegma_features) = biocodegff.get_gff3_features( cegma_file, assemblies=assemblies )
+    (assemblies, cegma_features) = gff.get_gff3_features(cegma_file, assemblies=assemblies)
     cegma_genes = get_genes_from_dict(cegma_features)
     print("\tINFO: Got {0} CEGMA genes".format(len(cegma_genes)))
 
     print("INFO: parsing expression data (Trinity, Cufflinks, GMAP cDNAs)")
-    (assemblies, transcript_features) = biocodegff.get_gff3_features( transcript_file, assemblies=assemblies)
+    (assemblies, transcript_features) = gff.get_gff3_features(transcript_file, assemblies=assemblies)
     transcript_genes = get_genes_from_dict(transcript_features)
     print("\tINFO: Got {0} expression 'genes'".format(len(transcript_genes)))
 
     print("INFO: parsing AAT results (C. muris)")
-    (assemblies, aat_muris_features) = biocodegff.get_gff3_features( aat_muris_file, assemblies=assemblies)
+    (assemblies, aat_muris_features) = gff.get_gff3_features(aat_muris_file, assemblies=assemblies)
     aat_muris_genes = get_genes_from_dict(aat_muris_features)
     print("\tINFO: Got {0} AAT (C. muris) 'genes'".format(len(aat_muris_genes)))
 
     print("INFO: parsing AAT results (C. parvum)")
-    (assemblies, aat_parvum_features) = biocodegff.get_gff3_features( aat_parvum_file, assemblies=assemblies)
+    (assemblies, aat_parvum_features) = gff.get_gff3_features(aat_parvum_file, assemblies=assemblies)
     aat_parvum_genes = get_genes_from_dict(aat_parvum_features)
     print("\tINFO: Got {0} AAT (C. parvum) 'genes'".format(len(aat_parvum_genes)))
     

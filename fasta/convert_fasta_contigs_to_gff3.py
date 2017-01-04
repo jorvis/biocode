@@ -25,8 +25,9 @@ The value of the 2nd column is up to you and defined using the --source paramete
 """
 
 import argparse
-import os
-import biocodeutils
+
+from biocode import utils
+
 
 def main():
     parser = argparse.ArgumentParser( description='Creates a GFF3 file from a genomic FASTA')
@@ -39,7 +40,7 @@ def main():
     args = parser.parse_args()
 
     ofh = open(args.output_gff3, 'wt')
-    seqs = biocodeutils.fasta_dict_from_file( args.input_fasta )
+    seqs = utils.fasta_dict_from_file(args.input_fasta)
 
     # header
     ofh.write("##gff-version 3\n")

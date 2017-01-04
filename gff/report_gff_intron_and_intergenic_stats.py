@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import biothings
-import biocodegff
-import biocodeutils
+
+from biocode import utils, gff
+
 
 def main():
     '''
@@ -60,10 +60,10 @@ def main():
     parser.add_argument('-f', '--fasta', type=str, required=False, help='Required if you don\'t have GFF3 with embedded FASTA')
     args = parser.parse_args()
 
-    (assemblies, features) = biocodegff.get_gff3_features( args.input_gff3 )
+    (assemblies, features) = gff.get_gff3_features(args.input_gff3)
 
     if args.fasta is not None:
-        seqs = biocodeutils.fasta_dict_from_file( args.fasta )
+        seqs = utils.fasta_dict_from_file(args.fasta)
         for seq_id in seqs:
             if seq_id in assemblies:
                 assemblies[seq_id].residues = seqs[seq_id]['s']

@@ -18,13 +18,13 @@ Author: Joshua Orvis (jorvis AT gmail)
 """
 
 import argparse
-from collections import defaultdict
-import os
 import sys
+from collections import defaultdict
+
+import utils
 from Bio import SeqIO
-import biothings
-import biocodegff
-import biocodeutils
+from biocode import things
+
 
 def main():
     parser = argparse.ArgumentParser( description='Convert GenBank flat files to GFF3 format')
@@ -61,7 +61,7 @@ def main():
         mol_id = gb_record.name
 
         if mol_id not in assemblies:
-            assemblies[mol_id] = biothings.Assembly( id=mol_id )
+            assemblies[mol_id] = things.Assembly(id=mol_id)
 
         if len(str(gb_record.seq)) > 0:
             seqs_pending_writes = True
@@ -93,7 +93,7 @@ def main():
                     gene.print_as(fh=ofh, source='GenBank', format='gff3')
                 
                 locus_tag = feat.qualifiers['locus_tag'][0]
-                gene = biothings.Gene( id=locus_tag )
+                gene = things.Gene(id=locus_tag)
                 gene.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 current_gene = gene
                 current_RNA = None
@@ -103,7 +103,7 @@ def main():
                 rna_count_by_gene[locus_tag] += 1
                 feat_id = "{0}.mRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
                 
-                mRNA = biothings.mRNA( id=feat_id, parent=current_gene )
+                mRNA = things.mRNA(id=feat_id, parent=current_gene)
                 mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 gene.add_mRNA(mRNA)
                 current_RNA = mRNA
@@ -118,7 +118,7 @@ def main():
                 rna_count_by_gene[locus_tag] += 1
                 feat_id = "{0}.tRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
                 
-                tRNA = biothings.tRNA( id=feat_id, parent=current_gene )
+                tRNA = things.tRNA(id=feat_id, parent=current_gene)
                 tRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 gene.add_tRNA(tRNA)
                 current_RNA = tRNA
@@ -133,7 +133,7 @@ def main():
                 rna_count_by_gene[locus_tag] += 1
                 feat_id = "{0}.rRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
                 
-                rRNA = biothings.rRNA( id=feat_id, parent=current_gene )
+                rRNA = things.rRNA(id=feat_id, parent=current_gene)
                 rRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 gene.add_rRNA(rRNA)
                 current_RNA = rRNA
@@ -149,7 +149,7 @@ def main():
                 #  manually make one
                 if current_RNA is None:
                     feat_id = "{0}.mRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
-                    mRNA = biothings.mRNA( id=feat_id, parent=current_gene )
+                    mRNA = things.mRNA(id=feat_id, parent=current_gene)
                     mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                     gene.add_mRNA(mRNA)
                     current_RNA = mRNA
@@ -162,7 +162,7 @@ def main():
                     subfmin = int(loc.start)
                     subfmax = int(loc.end)
                     
-                    CDS = biothings.CDS( id=cds_id, parent=current_RNA )
+                    CDS = things.CDS(id=cds_id, parent=current_RNA)
                     CDS.locate_on( target=current_assembly, fmin=subfmin, fmax=subfmax, strand=strand, phase=current_CDS_phase )
                     current_RNA.add_CDS(CDS)
 
@@ -177,7 +177,7 @@ def main():
                         current_CDS_phase = 0
 
                     exon_id = "{0}.exon.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
-                    exon = biothings.Exon( id=exon_id, parent=current_RNA )
+                    exon = things.Exon(id=exon_id, parent=current_RNA)
                     exon.locate_on( target=current_assembly, fmin=subfmin, fmax=subfmax, strand=strand )
                     current_RNA.add_exon(exon)
                     exon_count_by_RNA[current_RNA.id] += 1
@@ -195,7 +195,7 @@ def main():
             ofh.write("##FASTA\n")
             for assembly_id in assemblies:
                 ofh.write(">{0}\n".format(assembly_id))
-                ofh.write("{0}\n".format(biocodeutils.wrapped_fasta(assemblies[assembly_id].residues)))
+                ofh.write("{0}\n".format(utils.wrapped_fasta(assemblies[assembly_id].residues)))
 
     if features_skipped_count > 0:
         print("Warning: {0} unsupported feature types were skipped".format(features_skipped_count))

@@ -93,13 +93,11 @@ Baltimore, Maryland 21201
 
 """
 
-
 import argparse
 import os
-import fileinput
-import biothings
-import biocodegff
 import sys
+
+from biocode import gff
 
 
 def interface():
@@ -261,8 +259,8 @@ def cordinate(id,loc) :
     
 
 def process_files(args):
-    (assemblies_1, features_1) = biocodegff.get_gff3_features(args.annotation_1)
-    (assemblies_2, features_2) = biocodegff.get_gff3_features(args.annotation_2)
+    (assemblies_1, features_1) = gff.get_gff3_features(args.annotation_1)
+    (assemblies_2, features_2) = gff.get_gff3_features(args.annotation_2)
 
 
     a_exons = []                                    ## Set contains only uniq exons from known annotation, since multiple same exons can appear in a gff file.  

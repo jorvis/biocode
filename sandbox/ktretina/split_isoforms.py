@@ -7,10 +7,9 @@ split_isoforms.py - splits all GFF3 mRNA isoforms into their own gene models (ad
 """
 
 import argparse
-import os
-import biocodegff
-import biothings
-import biocodeutils
+
+from biocode import gff, things
+
 
 def main():
     parser = argparse.ArgumentParser( description='Splits all GFF3 mRNA isoforms into their own gene models')
@@ -22,7 +21,7 @@ def main():
     ofh = open(args.output_file, 'wt')
 
     print("INFO: Parsing GFF3 features\n")
-    (assemblies, ref_features) = biocodegff.get_gff3_features( args.input_file )
+    (assemblies, ref_features) = gff.get_gff3_features(args.input_file)
 
     print("INFO: Finding genes with isoforms and splitting them\n")
     ofh.write("##gff-version 3\n")
@@ -37,7 +36,7 @@ def main():
                     mRNA_loc = mRNA.location() 
                     print("Splitting " + gene.id)
                     # create a new gene model, correcting the gene coords to the mRNA coords
-                    new_gene = biothings.Gene( id = new_gene_id)
+                    new_gene = things.Gene(id = new_gene_id)
                     new_gene.locate_on( target=assemblies[assembly_id], fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand )
                     mRNA.parent.id = new_gene_id
                     #Now add the mRNA to the gene model

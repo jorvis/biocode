@@ -14,8 +14,8 @@ Author:  Joshua Orvis
 '''
 
 import argparse
-import os
-import biocodeutils
+
+from biocode import utils
 
 
 def main():
@@ -82,7 +82,7 @@ def main():
         
             
 def process_fasta(mols, fasta_file):
-    fasta_seqs = biocodeutils.fasta_dict_from_file( fasta_file )
+    fasta_seqs = utils.fasta_dict_from_file(fasta_file)
 
     for mol_id in mols:
         # check if the FASTA file provides sequence for this

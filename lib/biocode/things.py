@@ -1,6 +1,6 @@
 import uuid
 
-import biocodetbl
+import tbl
 from biocode import utils, gff
 
 '''
@@ -790,7 +790,7 @@ class Gene( LocatableThing ):
         elif format == 'gff3':
             gff.print_biogene(gene=self, fh=fh, source=source)
         elif format == 'tbl':
-            biocodetbl.print_biogene( gene=self, fh=fh, lab=lab )
+            tbl.print_biogene(gene=self, fh=fh, lab=lab)
         else:
             raise Exception("ERROR: the print_as method only accepts values of 'text' or 'gff3'")
 

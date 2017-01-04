@@ -58,8 +58,8 @@ Contact: jorvis AT gmail
 """
 
 import argparse
-import os
-import biothings
+
+from biocode import things
 
 
 def main():
@@ -111,13 +111,13 @@ def main():
 
             # initialize this assembly if we haven't seen it yet
             if mol_id not in assemblies:
-                assemblies[mol_id] = biothings.Assembly( id=mol_id )
+                assemblies[mol_id] = things.Assembly(id=mol_id)
 
             current_assembly = assemblies[mol_id]
                 
             feat_id = "cegma.gene.{0}".format(next_id_nums['gene'])
             next_id_nums['gene'] += 1
-            gene = biothings.Gene( id=feat_id )
+            gene = things.Gene(id=feat_id)
             current_gene = gene
             current_gene_strand = cols[6]
             current_gene_fmin = feat_fmin
@@ -126,7 +126,7 @@ def main():
             mRNA_id = "cegma.mRNA.{0}".format(next_id_nums['mRNA'])
             next_id_nums['mRNA'] += 1
             
-            mRNA = biothings.mRNA( id=mRNA_id, parent=gene )
+            mRNA = things.mRNA(id=mRNA_id, parent=gene)
             gene.add_mRNA(mRNA)
             current_mRNA = mRNA
 
@@ -135,13 +135,13 @@ def main():
         if feat_type in exon_column_types:
             CDS_id = "cegma.CDS.{0}".format(next_id_nums['CDS'])
             next_id_nums['CDS'] += 1
-            CDS = biothings.CDS( id=CDS_id, parent=current_mRNA )
+            CDS = things.CDS(id=CDS_id, parent=current_mRNA)
             CDS.locate_on( target=current_assembly, fmin=feat_fmin, fmax=feat_fmax, strand=cols[6], phase=cols[7] )
             current_mRNA.add_CDS(CDS)
 
             exon_id = "cegma.exon.{0}".format(next_id_nums['exon'])
             next_id_nums['exon'] += 1
-            exon = biothings.Exon( id=exon_id, parent=current_mRNA )
+            exon = things.Exon(id=exon_id, parent=current_mRNA)
             exon.locate_on( target=current_assembly, fmin=feat_fmin, fmax=feat_fmax, strand=cols[6] )
             mRNA.add_exon(exon)
 
