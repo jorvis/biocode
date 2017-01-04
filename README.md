@@ -92,9 +92,16 @@ Much of biocode was written while working with genomic data and annotation, and 
 That's it.  You can then iterate over the assemblies and their children, or access the 'features' dict, which is keyed on each feature's ID.
 
 
-# Getting the code
+# Getting the code (pip, latest release)
 
-The best way to get the code for now is to just clone it:
+You can install biocode using pip (requires Python3) like this:
+```
+pip3 install biocode
+```
+
+# Getting the code (github, current trunk)
+
+If you want the latest developer version:
 ```
 git clone https://github.com/jorvis/biocode.git
 ```
