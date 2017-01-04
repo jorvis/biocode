@@ -1,7 +1,6 @@
 import uuid
 
-import tbl
-from biocode import utils, gff
+from biocode import utils, gff, tbl
 
 '''
 Warning: this module requires Python 3.2 or higher

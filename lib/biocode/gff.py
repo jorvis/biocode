@@ -1,8 +1,7 @@
 import re
 import sys
 
-import things
-from biocode import annotation
+from biocode import things, annotation
 from urllib.parse import unquote, quote
 
 
