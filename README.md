@@ -46,7 +46,7 @@ If you're a developer these modules can save a lot of time.  Yes, there is some 
 
 Three of the primary Python modules:
 
-### [biothings](https://github.com/jorvis/biocode/blob/master/lib/biothings.py)
+### [biocode.things](https://github.com/jorvis/biocode/blob/master/lib/biocode/things.py)
 
 Classes here represent biological things (as defined by the [Sequence Ontology](http://sequenceontology.org/)) in a way that makes more sense biologically and hiding some of the CS abstraction.  What does this mean?  This is a simple example, but compare these syntax approaches:
 
@@ -75,18 +75,18 @@ In the background, biocode checks if the two gene objects are located on the sam
 - thing1.overlaps( thing2 )
 - thing1.overlap_size_with( thing2 )
 
-This module also contains readable and detailed documention within the [source code](https://github.com/jorvis/biocode/blob/master/lib/biothings.py).
+This module also contains readable and detailed documention within the [source code](https://github.com/jorvis/biocode/blob/master/lib/biocode/things.py).
 
-### [bioannotation](https://github.com/jorvis/biocode/blob/master/lib/bioannotation.py)
+### [biocode.annotation](https://github.com/jorvis/biocode/blob/master/lib/biocode/annotation.py)
 
 This set of classes allows formal definition of functional annotation which can be attached to various biothings.  These include gene product names, gene symbols, EC numbers, GO terms, etc.  Once annotated, the biothings can be written out in common formats such as GFF3, GenBank, NCBI tbl, etc.
 
-### [biocodegff](https://github.com/jorvis/biocode/blob/master/lib/codegff.py)
+### [biocode.gff](https://github.com/jorvis/biocode/blob/master/lib/biocode/gff.py)
 
 Much of biocode was written while working with genomic data and annotation, and one of the more common formats for storing these is [GFF3](http://sequenceontology.org/resources/gff3.html).   Using this module, you can parse a GFF3 file of annotations into a set of biothings with a single line of code.  For example:
 
 ```
-(assemblies, features) = biocodegff.get_gff3_features( input_file_path )
+(assemblies, features) = gff.get_gff3_features( input_file_path )
 ```
 
 That's it.  You can then iterate over the assemblies and their children, or access the 'features' dict, which is keyed on each feature's ID.
