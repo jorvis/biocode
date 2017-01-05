@@ -30,7 +30,7 @@ import datetime
 import re
 import subprocess
 
-import utils
+from biocode import utils
 
 
 def main():

@@ -21,9 +21,8 @@ import argparse
 import sys
 from collections import defaultdict
 
-import utils
 from Bio import SeqIO
-from biocode import things
+from biocode import things, utils
 
 
 def main():
