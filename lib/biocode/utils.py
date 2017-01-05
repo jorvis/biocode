@@ -2,8 +2,6 @@ import os
 import re
 import sys
 
-from biocode import utils
-
 ## used for nt reverse complements
 _nt_comp_table = bytes.maketrans(b'ACBDGHKMNSRUTWVYacbdghkmnsrutwvy', \
                                  b'TGVHCDMKNSYAAWBRtgvhcdmknsyaawbr')
