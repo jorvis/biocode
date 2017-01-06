@@ -83,6 +83,8 @@ def main():
     manifest_fh.close()
 
     print("Please be sure the version ({0}) matches a tag on GitHub for the project".format(args.version))
+    print("\nNext do:\n\t$ python3 setup.py sdist")
+    print("\t$ python3 sdist upload")
 
 def get_biocode_package_names(base):
     packages = list()
