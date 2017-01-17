@@ -80,7 +80,7 @@ def print_tbl_from_assemblies(assemblies=None, ofh=None, go_obo=None, lab_name=N
                     gene.remove_mRNA(mRNA)
                     
                     print("INFO: splitting mRNA off gene {0}".format(gene.id))
-                    new_gene = things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
+                    new_gene = biocode.things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
                     new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
                     new_gene.add_RNA(mRNA)
                     print_biogene(gene=new_gene, fh=ofh, obo_dict=go_idx, lab_name=lab_name)
