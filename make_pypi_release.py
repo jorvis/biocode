@@ -84,7 +84,7 @@ def main():
 
     print("Please be sure the version ({0}) matches a tag on GitHub for the project".format(args.version))
     print("\nNext do:\n\t$ python3 setup.py sdist")
-    print("\t$ python3 sdist upload")
+    print("\t$ python3 setup.py sdist upload")
 
 def get_biocode_package_names(base):
     packages = list()
@@ -144,7 +144,7 @@ def populate_setup_file(fh, version, script_paths):
         'email': 'jorvis@gmail.com',
         'version': version,
         'packages': ['biocode'],
-        'dependencies': ['igraph', 'matplotlib'],
+        'dependencies': ['pypandoc', 'igraph', 'matplotlib'],
         'scripts': script_paths
     }
 
@@ -153,9 +153,9 @@ from setuptools import setup
 
 try:
     from pypandoc import convert
-    read_md = lambda f: convert(f, 'rst')
+    read_md = lambda f: convert(f, 'rst', 'md')
 except ImportError:
-    print("warning: pypandoc module not found, could not convert Markdown to RST")
+    raise Exception("warning: pypandoc module not found, could not convert Markdown to RST")
     read_md = lambda f: open(f, 'r').read()
 
 setup(name='biocode',
