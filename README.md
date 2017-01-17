@@ -86,7 +86,9 @@ This set of classes allows formal definition of functional annotation which can 
 Much of biocode was written while working with genomic data and annotation, and one of the more common formats for storing these is [GFF3](http://sequenceontology.org/resources/gff3.html).   Using this module, you can parse a GFF3 file of annotations into a set of biothings with a single line of code.  For example:
 
 ```
-(assemblies, features) = gff.get_gff3_features( input_file_path )
+import biocode.gff
+
+(assemblies, features) = biocode.gff.get_gff3_features( input_file_path )
 ```
 
 That's it.  You can then iterate over the assemblies and their children, or access the 'features' dict, which is keyed on each feature's ID.
