@@ -1,7 +1,7 @@
 import math
 import sys
 
-from biocode import utils
+import biocode.utils
 
 """
 NOTE: This currently only works for coding features
@@ -166,7 +166,7 @@ def print_biogene( gene=None, fh=None, on=None ):
                     fh.write("                     /db_xref=\"GO:{0}\"\n".format(go_annot.go_id))
 
         cds_residues = mRNA.get_CDS_residues()
-        polypeptide_residues = utils.translate(cds_residues)
+        polypeptide_residues = biocode.utils.translate(cds_residues)
 
         if len(polypeptide_residues) > 0:
             # This is the easiest case first, where no wrapping is needed.

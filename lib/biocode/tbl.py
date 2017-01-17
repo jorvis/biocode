@@ -1,6 +1,8 @@
 import sys
 
-from biocode import utils, things
+#from biocode import utils, things
+import biocode.utils
+import biocode.things
 
 
 def go_namespace_index(obo_path):

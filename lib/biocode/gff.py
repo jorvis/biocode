@@ -1,7 +1,9 @@
 import re
 import sys
 
-from biocode import things, annotation
+#from biocode import things, annotation
+import biocode.things
+import biocode.annotation
 from urllib.parse import unquote, quote
 
 
@@ -242,7 +244,7 @@ def get_gff3_features(gff3_file, assemblies=None):
 
         # initialize this assembly if we haven't seen it yet
         if mol_id not in assemblies:
-            assemblies[mol_id] = things.Assembly(id=mol_id, residues='')
+            assemblies[mol_id] = biocode.things.Assembly(id=mol_id, residues='')
 
         current_assembly = assemblies[mol_id]
         rfmin = int(cols[3]) - 1
@@ -282,33 +284,33 @@ def get_gff3_features(gff3_file, assemblies=None):
         phase = cols[7]
 
         if cols[2] == 'gene':
-            gene = things.Gene(id=feat_id, locus_tag=locus_tag)
+            gene = biocode.things.Gene(id=feat_id, locus_tag=locus_tag)
             gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             features[feat_id] = gene
             current_assembly.add_gene(gene)
 
         elif cols[2] == 'mRNA':
-            mRNA = things.mRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            mRNA = biocode.things.mRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_mRNA(mRNA)
             features[feat_id] = mRNA
 
         elif cols[2] == 'rRNA':
-            rRNA = things.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            rRNA = biocode.things.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_rRNA(rRNA)
             rRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = rRNA
 
         elif cols[2] == 'tRNA':
-            tRNA = things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            tRNA = biocode.things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_tRNA(tRNA)
             tRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = tRNA
 
         elif cols[2] == 'exon':
-            exon = things.Exon(id=feat_id, parent=parent_feat)
+            exon = biocode.things.Exon(id=feat_id, parent=parent_feat)
             exon.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_exon(exon)
             features[feat_id] = exon
@@ -319,26 +321,26 @@ def get_gff3_features(gff3_file, assemblies=None):
             else:
                 phase = int(phase)
 
-            CDS = things.CDS(id=feat_id, parent=parent_feat, phase=phase)
+            CDS = biocode.things.CDS(id=feat_id, parent=parent_feat, phase=phase)
             CDS.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand, phase=phase)
             parent_feat.add_CDS(CDS)
             features[feat_id] = CDS
 
         elif cols[2] == 'polypeptide':
-            polypeptide = things.Polypeptide(id=feat_id, parent=parent_feat)
+            polypeptide = biocode.things.Polypeptide(id=feat_id, parent=parent_feat)
             polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_polypeptide(polypeptide)
             polypeptide.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = polypeptide
 
         elif cols[2] == 'five_prime_UTR':
-            utr = things.FivePrimeUTR(id=feat_id, parent=parent_feat)
+            utr = biocode.things.FivePrimeUTR(id=feat_id, parent=parent_feat)
             utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_five_prime_UTR(utr)
             features[feat_id] = utr
 
         elif cols[2] == 'three_prime_UTR':
-            utr = things.ThreePrimeUTR(id=feat_id, parent=parent_feat)
+            utr = biocode.things.ThreePrimeUTR(id=feat_id, parent=parent_feat)
             utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
             parent_feat.add_three_prime_UTR(utr)
             features[feat_id] = utr
@@ -353,7 +355,7 @@ def get_gff3_features(gff3_file, assemblies=None):
 
 
 def parse_annotation_from_column_9(col9):
-    annot = annotation.FunctionalAnnotation()
+    annot = biocode.annotation.FunctionalAnnotation()
     atts = column_9_dict(col9)
 
     ## List of attributes which may be in column 9 that we want to skip as
@@ -380,7 +382,7 @@ def parse_annotation_from_column_9(col9):
                         annot.add_dbxref(dbxref)
 
             for ec_num in ec_nums:
-                ec_annot = annotation.ECAnnotation(number=ec_num)
+                ec_annot = biocode.annotation.ECAnnotation(number=ec_num)
                 annot.add_ec_number(ec_annot)
         elif att == 'Ontology_term':
             ont_terms = list()
@@ -393,7 +395,7 @@ def parse_annotation_from_column_9(col9):
                         ont_terms.append(term)
 
             for go_id in ont_terms:
-                go_annot = annotation.GOAnnotation(go_id=go_id)
+                go_annot = biocode.annotation.GOAnnotation(go_id=go_id)
                 annot.add_go_annotation(go_annot)
         elif att == 'gene_symbol':
             annot.gene_symbol = atts[att]

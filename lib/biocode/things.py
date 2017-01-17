@@ -1,6 +1,9 @@
 import uuid
 
-from biocode import utils, gff, tbl
+#from biocode import utils, gff, tbl
+import biocode.utils
+import biocode.gff
+import biocode.tbl
 
 '''
 Warning: this module requires Python 3.2 or higher
@@ -787,9 +790,9 @@ class Gene( LocatableThing ):
         if format == 'text':
             _print_thing(self, fh=fh)
         elif format == 'gff3':
-            gff.print_biogene(gene=self, fh=fh, source=source)
+            biocode.gff.print_biogene(gene=self, fh=fh, source=source)
         elif format == 'tbl':
-            tbl.print_biogene(gene=self, fh=fh, lab=lab)
+            biocode.tbl.print_biogene(gene=self, fh=fh, lab=lab)
         else:
             raise Exception("ERROR: the print_as method only accepts values of 'text' or 'gff3'")
 
