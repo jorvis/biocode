@@ -455,7 +455,7 @@ class MoleculeSet:
                 header = molecule.id
                 
             fh.write(">{0}\n".format(header))
-            fh.write("{0}\n".format(utils.wrapped_fasta(molecule.residues)))
+            fh.write("{0}\n".format(biocode.utils.wrapped_fasta(molecule.residues)))
 
         fh.close()
         
@@ -533,7 +533,7 @@ class AssemblySet( MoleculeSet ):
         self.assemblies.append(assembly)
 
     def load_from_file(self, file):
-        seqs = utils.fasta_dict_from_file(file)
+        seqs = biocode.utils.fasta_dict_from_file(file)
         
         for seq_id in seqs:
             assembly = Assembly(id=seq_id, residues=seqs[seq_id]['s'])
@@ -609,7 +609,7 @@ class CDS( LocatableThing ):
         self.length = len(self.residues)
 
         if loc.strand == -1:
-            self.residues = utils.reverse_complement(self.residues)
+            self.residues = biocode.utils.reverse_complement(self.residues)
 
         return self.residues
 
@@ -685,7 +685,7 @@ class Gene( LocatableThing ):
         self.length = len(self.residues)
 
         if loc.strand == -1:
-            self.residues = utils.reverse_complement(self.residues)
+            self.residues = biocode.utils.reverse_complement(self.residues)
 
         return self.residues
 
@@ -872,7 +872,7 @@ class Match( LocatableThing ):
             _print_thing(self, fh=fh)
         elif format == 'gff3':
             # mode could be passed here to print both GFF3-supported representations (already implemented)
-            gff.print_biomatch(match=self, fh=fh, source=source)
+            biocode.gff.print_biomatch(match=self, fh=fh, source=source)
         else:
             raise Exception("ERROR: You attempted to print a Match with unrecognized format:{0}".format(format))
 
@@ -964,7 +964,7 @@ class PolypeptideSet( MoleculeSet ):
         self.polypeptides.append( polypeptide )
 
     def load_from_file(self, file):
-        seqs = utils.fasta_dict_from_file(file)
+        seqs = biocode.utils.fasta_dict_from_file(file)
         
         for seq_id in seqs:
             polypeptide = Polypeptide(id=seq_id, residues=seqs[seq_id]['s'])
@@ -1176,7 +1176,7 @@ class mRNASet( MoleculeSet ):
         self.mRNAs.append( mRNA )
 
     def load_from_file(self, file):
-        seqs = utils.fasta_dict_from_file(file)
+        seqs = biocode.utils.fasta_dict_from_file(file)
         
         for seq_id in seqs:
             mRNA = mRNA(id=seq_id, residues=seqs[seq_id]['s'])
