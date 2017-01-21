@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+from __future__ import division
 
 """
 A memory-efficient script for subsampling single or paired-end FASTQ files
