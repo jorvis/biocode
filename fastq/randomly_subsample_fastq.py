@@ -150,7 +150,10 @@ def main():
             if args.right is not None:
                 ifh_right = open(right_files[lindex], 'rU')
 
-        for line1 in ifh:
+        while True:
+            line1 = ifh.readline()
+            if not line1:
+                break
             line2 = ifh.readline()
             line3 = ifh.readline()
             line4 = ifh.readline()
