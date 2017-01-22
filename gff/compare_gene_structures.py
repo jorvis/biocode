@@ -102,12 +102,9 @@ from biocode import gff
 
 def interface():
     parser = argparse.ArgumentParser( description='Compare two GFF3 files and generate PPV and SN')
-    parser.add_argument('-a1', '--annotation_1',type=str, required=True,
-		      help='The first annotation file.')
-    parser.add_argument('-a2', '--annotation_2',type=str, required=False,
-		      help='The second annotation file.')
-    parser.add_argument('-f', '--feature',type=str, required=True,
-		      help='Select:Exon or CDS')
+    parser.add_argument('-a1', '--annotation_1',type=str, required=True, help='The first annotation file.')
+    parser.add_argument('-a2', '--annotation_2',type=str, required=False, help='The second annotation file.')
+    parser.add_argument('-f', '--feature',type=str, required=True, help='Select:Exon or CDS')
     
     ## output file to be written
     parser.add_argument('-o', '--output_dir', type=str, required=True, help='Path to an output directory' )
@@ -136,7 +133,10 @@ def base_comparison(p_exon, a_exon):
     e_bed.close()
     
     out2 = args.output_dir + '/exon_2_merged.bed'
-    cmd = "bedtools merge -nms -scores sum -i " + exon2_bed + " -s >"+out2
+    # older bedtools version
+    #cmd = "bedtools merge -nms -scores sum -i " + exon2_bed + " -s >"+out2
+    # newer bedtools version
+    cmd = "bedtools merge -c 4 -o collapse -i " + exon2_bed + " -s >" + out2
     #print(cmd)
     os.system(cmd)
     
@@ -155,7 +155,11 @@ def base_comparison(p_exon, a_exon):
     e_bed.close()
 
     out1 = args.output_dir + '/exon_1_merged.bed'
-    cmd = "bedtools merge -nms -scores sum -i " + exon1_bed + " -s >"+out1
+
+    # newer bedtools version
+    cmd = "bedtools merge -c 4 -o collapse -i " + exon1_bed + " -s >" + out1
+    # older bedtools version
+    #cmd = "bedtools merge -nms -scores sum -i " + exon1_bed + " -s >"+out1
     #print(cmd)
     os.system(cmd)
     
