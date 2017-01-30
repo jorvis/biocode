@@ -7,7 +7,7 @@ inverted repeats within some transcripts.  We wanted a quick utility to detect
 these and generate a simple report on them.
 
 The input is just a FASTA file.  This script will iterate over them, writing each to
-a temporary file, then calling bl2seq (which must be in your PATH) and parsing the
+a temporary file, then calling blastn (which must be in your PATH) and parsing the
 results.  This has only been tested on transcriptome files, not genomic.
 
 The current output will look like this:
@@ -40,6 +40,7 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-n', '--min_repeat_size', type=int, required=True, help='Minimum size of a repeat to consider' )
+    parser.add_argument('-pid', '--percent_identity', type=float, required=False, default=98.0, help='Percent identity cutoff' )
     args = parser.parse_args()
 
     # parse FASTA input, storing into a dict keyed by ID
@@ -59,7 +60,8 @@ def main():
         fasta_fh.close()
 
         # Perform the blast using bl2seq
-        cmd = "bl2seq -i {0} -j {0} -p blastn -e 1e-10 -D 1 -o {1} -W {2}".format(fasta_name, blast_name, args.min_repeat_size)
+        #cmd = "bl2seq -i {0} -j {0} -p blastn -e 1e-10 -D 1 -o {1} -W {2}".format(fasta_name, blast_name, args.min_repeat_size)
+        cmd = "blastn -query {0} -subject {0} -outfmt 6 -out {1} -word_size {2} -perc_identity {3}".format(fasta_name, blast_name, args.min_repeat_size, args.percent_identity)
         run_command(cmd)
 
         # Parse the result file to look for inverted repeats
