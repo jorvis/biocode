@@ -216,7 +216,7 @@ def add_assembly_fasta(mols, fasta_file):
     Takes a collection of molecules (Assembly) objects and adds sequence residues based on
     their IDs being found in the passed FASTA file.
     """
-    fasta_seqs = utils.fasta_dict_from_file(fasta_file)
+    fasta_seqs = fasta_dict_from_file(fasta_file)
 
     for mol_id in mols:
         # check if the FASTA file provides sequence for this
