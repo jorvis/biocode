@@ -11,28 +11,27 @@ reference transcripts.  Steps in her pipeline:
 reference.fasta - The smaller set of reference transcripts for which you want to calculate coverage
 assembly.fasta - The transcriptome assem
 
-formatdb -i assembly.fasta -p F
-blastall -p blastn -d assembly.fasta -i reference.fasta -m 9 -e 1 -o assembly.btab -a 8
-grep -v "#" assembly.btab | awk '{print $1"\t"$7"\t"$8"\t"$2"\t0\t+"}' > assembly.bed
-bedtools sort -i assembly.bed > assembly.sorted.bed
-bedtools merge -i assembly.sorted.bed > assembly.merged.bed
-~/git/biocode/fasta/fasta_size_report.pl -f reference.fasta | cut -f 1,2 > transcript.lengths
-#/local/projects-t3/aplysia/priti_analysis/Scripts/comp_transcript.pl --i assembly.merged.bed --i1 transcript.lengths > assembly.all.per_cov.txt
-/usr/local/projects/aplysia/priti_analysis/Scripts/comp_transcript.pl --i assembly.merged.bed --i1 transcript.lengths > assembly.all.per_cov.txt
-
-#/local/projects-t3/aplysia/priti_analysis/Scripts/longest_transcript.pl --i assembly.btab > assembly.longest.btab
-/usr/local/projects/aplysia/priti_analysis/Scripts/longest_transcript.pl --i assembly.btab > assembly.longest.btab
-grep -v "#" assembly.longest.btab | awk '{print $1"\t"$7"\t"$8"\t"$2"\t0\t+"}' > assembly.longest.bed
-bedtools sort -i assembly.longest.bed > assembly.longest.sorted.bed
-#/local/projects-t3/aplysia/priti_analysis/Scripts/comp_transcript.pl --i assembly.longest.sorted.bed --i1 transcript.lengths > assembly.longest.per_cov.txt
-/usr/local/projects/aplysia/priti_analysis/Scripts/comp_transcript.pl --i assembly.longest.sorted.bed --i1 transcript.lengths > assembly.longest.per_cov.txt
+export BASE=A8_muscle.trinity.standard
+formatdb -p F -i $BASE.fasta
+blastall -p blastn -i toi_20161110.fna -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
+/home/jorvis/git/biocode/blast/calculate_query_coverage_by_blast.py -f toi_20161110.fna -b $BASE.blast.m9 -o $BASE
+sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
+sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
 # then to actually plot these:
 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i assembly.all.per_cov.txt,assembly.longest.per_cov.txt -l All,Longest -t "Repeat filtered Oases + Trinity, post-TGICL"
 
+
+--stacked option:
+Rather than just show coverage with the max Y value at 100, use of this option creates a
+stacked bar chart which gives information about the contig matching the reference and their
+relative lengths.  This allows us to see if a contig covers a reference transcript completely
+BUT is also far longer than the reference.
+
 """
 
 import argparse
+import biocode.utils
 import os
 import plotly.plotly as py
 import plotly.graph_objs as go
@@ -44,6 +43,10 @@ def main():
     parser.add_argument('-i', '--input_files', type=str, required=True, help='Comma-separated list of cov files to be plotted' )
     parser.add_argument('-l', '--labels', type=str, required=True, help='Labels for each cov file passed' )
     parser.add_argument('-t', '--title', type=str, required=False, default='Transcript coverage', help='Title for the plot' )
+    parser.add_argument('-s', '--stacked', dest='stacked', action='store_true')
+    parser.set_defaults(stacked=False)
+    parser.add_argument('-rf', '--ref_fasta', required=False, help='Only needed if passing --stacked')
+    parser.add_argument('-qf', '--qry_fasta', required=False, help='Only needed if passing --stacked')
     parser.add_argument('-o', '--output_image', type=str, required=False, help='Name for PNG file to be created. If not passed, will post to plotly site' )
     args = parser.parse_args()
 
@@ -67,17 +70,39 @@ def main():
 
     # This stores the positions of the labels
     label_position = dict()
+
+    if len(cov_files) > 1 and args.stacked == True:
+        raise Exception("Use of the --stacked option requires a single input file")
+
+    # Only used if doing a single-file stacked bar chart
+    if args.stacked == True:
+        ref_sizes = biocode.utils.fasta_sizes_from_file(args.ref_fasta)
+        qry_sizes = biocode.utils.fasta_sizes_from_file(args.qry_fasta)
     
     traces = []
     file_idx = 0
     for file in cov_files:
         xvals = []
         yvals = []
+        stacked_yvals = []
         
         for line in open(file):
             cols = line.rstrip().split("\t")
-            xvals.append(cols[0])
+            ref_id = cols[0]
+            xvals.append(ref_id)
             yvals.append(float(cols[1]))
+
+            if args.stacked == True:
+                qry_id = cols[2]
+                if qry_sizes[qry_id] > ref_sizes[ref_id]:
+                    # what percentage larger than the reference is the query?
+                    rel_perc = (qry_sizes[qry_id] / ref_sizes[ref_id]) * 100
+
+                    # for the stacked bars we have to subtract the current yval cov, since this adds to it
+                    rel_perc_adj = rel_perc - float(cols[1])
+                    stacked_yvals.append(rel_perc_adj)
+                else:
+                    stacked_yvals.append(0)
         
         trace = go.Bar(
             x=xvals,
@@ -89,7 +114,25 @@ def main():
         )
 
         traces.append(trace)
+
+        if args.stacked == True:
+            trace2 = go.Bar(
+                x=xvals,
+                y=stacked_yvals,
+                name=labels[file_idx],
+                marker=dict(
+                    color='rgb(200,200,200)'
+                )
+            )
+
+            traces.append(trace2)
+
         file_idx += 1
+
+    if args.stacked == True:
+        barmode = 'stack'
+    else:
+        barmode = 'group'
 
     layout = go.Layout(
         title=args.title,
@@ -118,7 +161,7 @@ def main():
                 color='#000'
             )
         ),
-        barmode='group',
+        barmode=barmode,
         bargap=0.15,
         bargroupgap=0.1,
         width=1500,

@@ -14,7 +14,7 @@ Coverage of the entries within query.fasta will be reported.
 
 # Fields: Query id, Subject id, % identity, alignment length, mismatches, gap openings, q. start, q. end, s. start, s. end, e-value, bit score
 
-NOTE: For visualization, you can use the biocode script 
+
 
 """
 
@@ -87,7 +87,7 @@ def main():
                         longest_cov_transcript_id = tid
                         
                 print("LOG: transcript {0} covers {1} (len:{3}) best at {2:.1f}%".format(longest_cov_transcript_id, current_query_id, longest_cov_perc * 100, len(this_cov)))
-                longest_fh.write("{0}\t{1:.1f}\n".format(current_query_id, longest_cov_perc * 100))
+                longest_fh.write("{0}\t{1:.1f}\t{2}\n".format(current_query_id, longest_cov_perc * 100, longest_cov_transcript_id))
 
             # now reset and init this transcript
             current_query_id = query_id
