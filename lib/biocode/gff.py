@@ -1,11 +1,9 @@
 import re
 import sys
 
-#from biocode import things, annotation
 import biocode.things
 import biocode.annotation
 from urllib.parse import unquote, quote
-
 
 def build_column_9( id=None, parent=None, other=None ):
     ## either the id or parent must be defined
