@@ -1081,24 +1081,25 @@ class RNA( LocatableThing ):
         chop = None
 
         # these MUST be handled in a sorted order
-        sorted_cds = sorted(self.CDSs())
-        for cds in sorted_cds:
-            cds_segment = cds.get_residues()
-            segments.append(cds_segment)
-
-        if loc.strand == -1:
-            segments = reversed(segments)
-            chop = sorted_cds[-1].phase
-        else:
-            chop = sorted_cds[0].phase
-
         residues = ''
+        sorted_cds = sorted(self.CDSs())
+        
+        if len(sorted_cds) > 0:
+            for cds in sorted_cds:
+                cds_segment = cds.get_residues()
+                segments.append(cds_segment)
 
-        for segment in segments:
-            residues += segment
+            if loc.strand == -1:
+                segments = reversed(segments)
+                chop = sorted_cds[-1].phase
+            else:
+                chop = sorted_cds[0].phase
 
-        if chop is not None:
-            residues = residues[chop:]
+            for segment in segments:
+                residues += segment
+
+            if chop is not None:
+                residues = residues[chop:]
 
         return residues
 
