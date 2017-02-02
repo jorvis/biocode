@@ -93,34 +93,37 @@ def main():
                     coding_seq = feat.parent.get_CDS_residues(for_translation=True)
                     if feat.parent.locus_tag is not None:
                         export_id = feat.parent.locus_tag
-                
-                fout.write(">{0}".format(export_id))
-                if export_header is not None:
-                    fout.write(" {0}\n".format(export_header))
+
+                if len(coding_seq) > 0:
+                    fout.write(">{0}".format(export_id))
+                    if export_header is not None:
+                        fout.write(" {0}\n".format(export_header))
+                    else:
+                        fout.write("\n")
+
+                    if args.check_ends == True:
+                        # check the starting codon
+                        start_codon = coding_seq[0:3].upper()
+                        if start_codon not in start_codons:
+                            sys.stderr.write("WARN: Non-canonical start codon ({0}) in mRNA {1}\n".format(start_codon, feat.id))
+
+                        stop_codon = coding_seq[-3:].upper()
+                        if stop_codon not in stop_codons:
+                            sys.stderr.write("WARN: Non-canonical stop codon ({0}) in mRNA {1}\n".format(stop_codon, feat.id))                        
+
+                    if args.type == 'cds':
+                        fout.write("{0}\n".format(utils.wrapped_fasta(coding_seq)))
+                    else:
+                        translated_seq = utils.translate(coding_seq)
+
+                        if args.check_internal_stops == True:
+                            internal_stop_count = translated_seq[:-1].count('*')
+                            if internal_stop_count > 0:
+                                sys.stderr.write("Found {0} internal stops in mRNA {1}\n".format(internal_stop_count, feat.id))
+
+                        fout.write("{0}\n".format(utils.wrapped_fasta(translated_seq)))
                 else:
-                    fout.write("\n")
-
-                if args.check_ends == True:
-                    # check the starting codon
-                    start_codon = coding_seq[0:3].upper()
-                    if start_codon not in start_codons:
-                        sys.stderr.write("WARN: Non-canonical start codon ({0}) in mRNA {1}\n".format(start_codon, feat.id))
-
-                    stop_codon = coding_seq[-3:].upper()
-                    if stop_codon not in stop_codons:
-                        sys.stderr.write("WARN: Non-canonical stop codon ({0}) in mRNA {1}\n".format(stop_codon, feat.id))                        
-
-                if args.type == 'cds':
-                    fout.write("{0}\n".format(utils.wrapped_fasta(coding_seq)))
-                else:
-                    translated_seq = utils.translate(coding_seq)
-
-                    if args.check_internal_stops == True:
-                        internal_stop_count = translated_seq[:-1].count('*')
-                        if internal_stop_count > 0:
-                            sys.stderr.write("Found {0} internal stops in mRNA {1}\n".format(internal_stop_count, feat.id))
-                    
-                    fout.write("{0}\n".format(utils.wrapped_fasta(translated_seq)))
+                    print("WARNING: Skipped feature {0} because it had no associated CDS features".format(export_id), file=sys.stderr)
 
 if __name__ == '__main__':
     main()
