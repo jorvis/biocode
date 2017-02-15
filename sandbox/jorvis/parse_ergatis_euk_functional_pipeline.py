@@ -18,8 +18,6 @@ DEFAULT_PRODUCT_NAME = "hypothetical protein"
 
 # /home/jorvis/git/biocode/sandbox/jorvis/parse_ergatis_euk_functional_pipeline.py -f SRS019986.scaffolds.metagenemark.faa -s SRS019986.scaffolds.metagenemark.gff3 -e 1e-10 -g SRS019986.scaffolds.fa -m hmmpfam3.htab.list --hmm_db /usr/local/projects/jorvis/dbs/coding_hmm_lib.sqlite3 -o SRS019986.scaffolds.metagenemark.annotated.hmm.gff3  --format=gff3 
 
-
-
 next_ids = defaultdict(int)
 
 def main():
@@ -305,9 +303,9 @@ def initialize_polypeptides( log_fh, fasta_file ):
 
     for seq_id in seqs:
         polypeptide = things.Polypeptide(id=seq_id, length=len(seqs[seq_id]['s']), residues=seqs[seq_id]['s'])
-        annotation = annotation.FunctionalAnnotation(product_name=DEFAULT_PRODUCT_NAME)
+        annot = annotation.FunctionalAnnotation(product_name=DEFAULT_PRODUCT_NAME)
         log_fh.write("INFO: {0}: Set initial product name to '{1}'\n".format(seq_id, DEFAULT_PRODUCT_NAME))
-        polypeptide.annotation = annotation
+        polypeptide.annotation = annot
         
         polypeptides[seq_id] = polypeptide
     
