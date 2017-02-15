@@ -8,8 +8,7 @@ import sqlite3
 import sys
 from collections import defaultdict
 
-import utils
-from biocode import annotation, gff, things
+from biocode import annotation, gff, things, utils
 
 ## constants
 DEFAULT_PRODUCT_NAME = "hypothetical protein"
