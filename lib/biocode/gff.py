@@ -571,7 +571,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
     fh.write( "\t".join(columns) + "\n" )
 
     ## modifications for the RNA
-    for RNA in gene.RNAs():
+    for RNA in sorted(gene.RNAs()):
         RNA_loc = RNA.location_on( on )
 
         if RNA_loc is None:
@@ -587,7 +587,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         fh.write( "\t".join(columns) + "\n" )
 
         ## Write any 5' UTRs
-        for utr in RNA.five_prime_UTRs():
+        for utr in sorted(RNA.five_prime_UTRs()):
             utr_loc = utr.location_on( on )
 
             if utr_loc is None:
@@ -600,7 +600,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             fh.write( "\t".join(columns) + "\n" )
 
         ## handle each CDS for this mRNA
-        for CDS in RNA.CDSs():
+        for CDS in sorted(RNA.CDSs()):
             CDS_loc = CDS.location_on( on )
 
             if CDS_loc is None:
@@ -615,7 +615,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         columns[7] = '.'
 
         ## handle each exon for this RNA
-        for exon in RNA.exons():
+        for exon in sorted(RNA.exons()):
             exon_loc = exon.location_on( on )
 
             if exon_loc is None:
@@ -627,7 +627,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             fh.write( "\t".join(columns) + "\n" )
 
         # are there polypeptides?
-        for polypeptide in RNA.polypeptides():
+        for polypeptide in sorted(RNA.polypeptides()):
             ## HACK - we probably don't want to keep this
             polypeptide_loc = RNA_loc
             annot = polypeptide.annotation
@@ -669,7 +669,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             fh.write( "\t".join(columns) + "\n" )
 
         ## Write any 5' UTRs
-        for utr in RNA.three_prime_UTRs():
+        for utr in sorted(RNA.three_prime_UTRs()):
             utr_loc = utr.location_on( on )
 
             if utr_loc is None:
