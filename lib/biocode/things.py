@@ -386,6 +386,21 @@ class LocatableThing:
         ## if we got this far, one wasn't found
         return [None, None]
 
+    def update_location( self, on=None, fmin=None, fmax=None, strand=None, phase=None ):
+        '''
+        Allows you to update the location of any Thing that is already located on another one.
+        You can independently pass fmin, fmax, strand, or phase (or any combination) to only 
+        update those attributes.
+        '''
+        if on is None:
+            raise Exception("The 'on' attribute must be passed to the update_location() method.")
+
+        loc = self.location_on(on)
+        
+        if fmin is not None: loc.fmin = fmin
+        if fmax is not None: loc.fmax = fmax
+        if strand is not None: loc.strand = strand
+        if phase is not None: loc.phase = phase
 
 class Location:
     '''
@@ -1056,6 +1071,59 @@ class RNA( LocatableThing ):
     def exons(self):
         return self.children['exon']
 
+    def extend_stop(self, on=None, to=None):
+        '''
+        Extending an RNA involves changing its coordinates, checking if the extension requires
+        the parent gene to be extended, and checking sub features (exon, CDS) for extension.
+        This does all of those things with respect to the molecule passed via the 'on' argument.
+
+        on = Molecule object this RNA is located on
+        to = To what coordinate should the stop be extended?  The strand will be checked
+             automatically
+        '''
+        if on is None or to is None:
+            raise Exception("The 'on' and 'to' attributes must be passed to the extend_stop() method.")
+
+        # Do we need to extend the gene?
+        gene = self.parent
+        gene_loc = gene.location_on(on)
+        self_loc = self.location_on(on)
+
+        if self_loc.strand == 1:
+            # We don't always need to extend the RNA.  It may just be the internal structure that needs it.
+            if self_loc.fmax < to:
+                self_loc.fmax = to
+
+            if gene_loc.fmax < to:
+                gene_loc.fmax = to
+
+            if self.CDS_count() > 0:
+                terminal_CDS = sorted(self.CDSs())[-1]
+                terminal_CDS_loc = terminal_CDS.location_on(on)
+                terminal_CDS_loc.fmax = to
+
+            if self.exon_count() > 0:
+                terminal_exon = sorted(self.exons())[-1]
+                terminal_exon_loc = terminal_exon.location_on(on)
+                terminal_exon_loc.fmax = to
+        else:
+            if self_loc.fmin > to:
+                self_loc.fmin = to                
+
+            if gene_loc.fmin > to:
+                gene_loc.fmin = to
+
+            if self.CDS_count() > 0:
+                terminal_CDS = sorted(self.CDSs())[0]
+                terminal_CDS_loc = terminal_CDS.location_on(on)
+                terminal_CDS_loc.fmin = to
+
+            if self.exon_count() > 0:
+                terminal_exon = sorted(self.exons())[0]
+                terminal_exon_loc = terminal_exon.location_on(on)
+                terminal_exon_loc.fmin = to
+        
+    
     def five_prime_UTRs(self):
         utrs = list()
 
