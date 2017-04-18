@@ -418,15 +418,13 @@ class Location:
     phase is counted from the end field.
 
     The phase is REQUIRED for all CDS features.
-
-    A notable feature missing here is specification of 5' and 3' partiality.  I've considered adding
-    these properties here directly, but use cases so far have been limited, and not worth the overhead
-    of adding it here for ALL located features.  This may change in the future.
     '''
-    def __init__( self, on=None, fmin=None, fmax=None, phase=None, strand=None ):
+    def __init__( self, on=None, fmin=None, fmin_partial=False, fmax=None, fmax_partial=False, phase=None, strand=None ):
         self.on = on
         self.fmin = fmin
+        self.fmin_partial = fmin_partial
         self.fmax = fmax
+        self.fmax_partial = fmax_partial
         self.strand = strand
         self.phase = 0 if phase is None else phase
         

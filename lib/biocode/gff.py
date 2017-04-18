@@ -562,6 +562,10 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
     if gene.locus_tag is not None:
         gene_annot_atts['locus_tag'] = gene.locus_tag
 
+    gene_partiality_string = _partiality_string(gene_loc)
+    if gene_partiality_string is not None:
+        gene_annot_atts['Partial'] = gene_partiality_string
+
     columns = ['.']*9
     columns[0:3] = [gene_loc.on.id, source, 'gene']
     columns[3:7] = [str(gene_loc.fmin + 1), str(gene_loc.fmax), '.', strand]
@@ -580,6 +584,10 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         rna_annot_atts = dict()
         if RNA.locus_tag is not None:
             rna_annot_atts['locus_tag'] = RNA.locus_tag
+
+        rna_partiality_string = _partiality_string(RNA_loc)
+        if rna_partiality_string is not None:
+            rna_annot_atts['Partial'] = rna_partiality_string
 
         columns[2] = RNA.__class__.__name__
         columns[3:5] = [str(RNA_loc.fmin + 1), str(RNA_loc.fmax)]
@@ -606,10 +614,15 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             if CDS_loc is None:
                 raise Exception("ERROR: Expected CDS {0} to be located on {1} but it wasn't".format(CDS.id, on.id) )
 
+            cds_partiality_string = _partiality_string(CDS_loc)
+            cds_annot_atts = dict()
+            if cds_partiality_string is not None:
+                cds_annot_atts['Partial'] = cds_partiality_string
+
             columns[2] = 'CDS'
             columns[3:5] = [str(CDS_loc.fmin + 1), str(CDS_loc.fmax)]
             columns[7] = str(CDS_loc.phase)
-            columns[8] = build_column_9( id=CDS.id, parent=RNA.id, other=None )
+            columns[8] = build_column_9( id=CDS.id, parent=RNA.id, other=cds_annot_atts )
             fh.write( "\t".join(columns) + "\n" )
 
         columns[7] = '.'
@@ -621,9 +634,14 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             if exon_loc is None:
                 raise Exception("ERROR: Expected exon {0} to be located on {1} but it wasn't".format(exon.id, on.id))
 
+            exon_partiality_string = _partiality_string(exon_loc)
+            exon_annot_atts = dict()
+            if exon_partiality_string is not None:
+                exon_annot_atts['Partial'] = exon_partiality_string
+
             columns[2] = 'exon'
             columns[3:5] = [str(exon_loc.fmin + 1), str(exon_loc.fmax)]
-            columns[8] = build_column_9( id=exon.id, parent=RNA.id, other=None )
+            columns[8] = build_column_9( id=exon.id, parent=RNA.id, other=exon_annot_atts )
             fh.write( "\t".join(columns) + "\n" )
 
         # are there polypeptides?
@@ -662,6 +680,9 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
 
             if len(ontology_strs) > 0:
                 assertions['Ontology_term'] = ",".join(ontology_strs)
+
+            if 'Partial' in rna_annot_atts:
+                assertions['Partial'] = rna_annot_atts['Partial']
 
             columns[2] = 'polypeptide'
             columns[3:5] = [str(polypeptide_loc.fmin + 1), str(polypeptide_loc.fmax)]
@@ -752,9 +773,26 @@ def _get_ultimate_parent( p, id ):
 
     return oldest
 
+def _partiality_string(loc):
+    if loc.strand == 1:
+        if loc.fmax_partial == True:
+            if loc.fmin_partial == True:
+                return '5prime,3prime'
+            else:
+                return '3prime'
+        elif loc.fmin_partial == True:
+            return '5prime'
 
+    elif loc.strand == -1:
+        if loc.fmax_partial == True:
+            if loc.fmin_partial == True:
+                return '5prime,3prime'
+            else:
+                return '5prime'
+        elif loc.fmin_partial == True:
+            return '3prime'
 
-
+    return None
 
 
 
