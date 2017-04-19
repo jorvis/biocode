@@ -181,7 +181,7 @@ class LocatableThing:
         # if we got here, there wasn't a match
         return False
 
-    def locate_on( self, target=None, fmin=None, fmax=None, phase=None, strand=None ):
+    def locate_on( self, target=None, fmin=None, fmin_partial=False, fmax=None, fmax_partial=False, phase=None, strand=None ):
         '''
         Locates any given biothing onto another by position range.  Use this to locate a gene
         onto an assembly, for example.  Any biothing can have multiple locations.
@@ -194,7 +194,7 @@ class LocatableThing:
         elif strand == '-':
             strand = -1
 
-        loc = Location(on=target, fmin=fmin, fmax=fmax, strand=strand, phase=phase)
+        loc = Location(on=target, fmin=fmin, fmin_partial=fmin_partial, fmax=fmax, fmax_partial=fmax_partial, strand=strand, phase=phase)
         self.locations.append( loc )
 
     def located_on( self ):

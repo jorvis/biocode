@@ -178,12 +178,12 @@ def get_gff3_features(gff3_file, assemblies=None):
     Parses the passed GFF3 file and returns two dicts, loaded with biocode.biothings objects:
 
     1. The first dict are the Assembly objects, keyed on assembly ID.  Each Assembly has all of the
-       children populated, so you can fully recover gene, RNA, exon and CDS features iterating on
+       children populated, so you can fully recover gene, RNA, exon, CDS, etc. features iterating on
        the assembly.
     2. The second dist is a flat structure of all the descendent feature objects of the Assemblies
        keyed by the feature IDs.  
 
-    See the documentation for each feature type in biocode.biothings for more info
+    See the documentation for each feature type in biocode.things for more info
     '''
 
     if assemblies is None:
@@ -280,36 +280,54 @@ def get_gff3_features(gff3_file, assemblies=None):
             rstrand = 0
 
         phase = cols[7]
+        
+        fmin_partial = False
+        fmax_partial = False
+
+        if 'Partial' in atts:
+            if atts['Partial'] == '5prime,3prime':
+                fmin_partial = True
+                fmax_partial = True
+            elif atts['Partial'] == '3prime':
+                if rstrand == 1:
+                    fmax_partial = True
+                else:
+                    fmin_partial = True
+            elif atts['Partial'] == '5prime':
+                if rstrand == 1:
+                    fmin_partial = True
+                else:
+                    fmax_partial = True
 
         if cols[2] == 'gene':
             gene = biocode.things.Gene(id=feat_id, locus_tag=locus_tag)
-            gene.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            gene.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
             features[feat_id] = gene
             current_assembly.add_gene(gene)
 
         elif cols[2] == 'mRNA':
             mRNA = biocode.things.mRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
-            mRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            mRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
             parent_feat.add_mRNA(mRNA)
             features[feat_id] = mRNA
 
         elif cols[2] == 'rRNA':
             rRNA = biocode.things.rRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
-            rRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            rRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
             parent_feat.add_rRNA(rRNA)
             rRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = rRNA
 
         elif cols[2] == 'tRNA':
             tRNA = biocode.things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
-            tRNA.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            tRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
             parent_feat.add_tRNA(tRNA)
             tRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = tRNA
 
         elif cols[2] == 'exon':
             exon = biocode.things.Exon(id=feat_id, parent=parent_feat)
-            exon.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            exon.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
             parent_feat.add_exon(exon)
             features[feat_id] = exon
 
@@ -320,13 +338,13 @@ def get_gff3_features(gff3_file, assemblies=None):
                 phase = int(phase)
 
             CDS = biocode.things.CDS(id=feat_id, parent=parent_feat, phase=phase)
-            CDS.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand, phase=phase)
+            CDS.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand, phase=phase)
             parent_feat.add_CDS(CDS)
             features[feat_id] = CDS
 
         elif cols[2] == 'polypeptide':
             polypeptide = biocode.things.Polypeptide(id=feat_id, parent=parent_feat)
-            polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
+            polypeptide.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
             parent_feat.add_polypeptide(polypeptide)
             polypeptide.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = polypeptide
