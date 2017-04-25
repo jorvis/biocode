@@ -24,7 +24,7 @@ def build_column_9( id=None, parent=None, other=None ):
 
     # other is a dict of key,value pairs
     if other is not None:
-        for att in other:
+        for att in sorted(other):
             if other[att] is not None:
                 if colstring is not None:
                     colstring += ";"
@@ -519,14 +519,14 @@ def print_gff3_from_assemblies(assemblies=None, ofh=None):
     
     ofh.write("##gff-version 3\n")
 
-    for assembly_id in assemblies:
+    for assembly_id in sorted(assemblies):
         current_assembly = assemblies[assembly_id]
         
         for gene in sorted(assemblies[assembly_id].genes()):
             rnas_found = 0
             mRNAs = gene.mRNAs()
             
-            for mRNA in mRNAs:
+            for mRNA in sorted(mRNAs):
                 mRNA_loc = mRNA.location_on(current_assembly)
                 rnas_found += 1
 
