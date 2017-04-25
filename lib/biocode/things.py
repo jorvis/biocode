@@ -1082,6 +1082,9 @@ class RNA( LocatableThing ):
         if on is None or to is None:
             raise Exception("The 'on' and 'to' attributes must be passed to the extend_stop() method.")
 
+        if to < 0:
+            raise Exception("Attempt to extend coordinates for {0} on {1} to a negative coordinate ({2})".format(self.id, on.id, to))
+
         # Do we need to extend the gene?
         gene = self.parent
         gene_loc = gene.location_on(on)
