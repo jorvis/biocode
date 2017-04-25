@@ -69,10 +69,13 @@ def main():
                     mRNAs_with_terminal_stops += 1
                 else:
                     print("gene:{1}, mRNA: {0} is missing a stop".format(mRNA.id, gene.id))
+                    print("\tCDS: {0}".format(coding_seq))
+                    print("\tcoding sequence ends with {0}, last three a.a.: {1}".format(coding_seq[-3:], translation[-3:]))
                     mRNA_loc = mRNA.location_on(assemblies[assembly_id])
                     
                     CDSs = sorted(mRNA.CDSs())
                     CDS_frame_overhang = len(coding_seq) % 3
+                    print("\tCDS frame overhang: {0}".format(CDS_frame_overhang))
                     codon_step_size = 3
 
                     if mRNA_loc.strand == 1:
@@ -85,31 +88,38 @@ def main():
                         mRNA_limit = mRNA_loc.fmin - args.extension_limit
                         codon_step_size = -3
 
-                    print("\tmRNA:{0}-{1}, CDS end: {2}\n\tExtending".format(mRNA_loc.fmin, mRNA_loc.fmax, CDS_pos), end='')
+                    print("\tmRNA:{0}-{1} ({3}), CDS end: {2}.  Extending ... \n\t".format(mRNA_loc.fmin, mRNA_loc.fmax, CDS_pos, mRNA_loc.strand), end='')
 
                     new_stop_found = False
 
                     # We have to step backwards to start if on the reverse strand
-                    if codon_step_size < 0:
-                        CDS_pos += codon_step_size
+                    CDS_pos += codon_step_size
 
                     while True:
-                        if (codon_step_size < 0 and CDS_pos < mRNA_limit) or (codon_step_size > 0 and CDS_pos > mRNA_limit):
-                            print(" Reached the mRNA limit")
+                        if (mRNA_loc.strand == 1 and CDS_pos > mRNA_limit) or (mRNA_loc.strand == -1 and CDS_pos < mRNA_limit):
+                            print("  Reached the mRNA limit")
+                            break
+                        elif CDS_pos < 1:
+                            print("  Reached beginning of the molecule")
                             break
                         else:
                             next_codon = assemblies[assembly_id].residues[CDS_pos:CDS_pos + 3]
                             
                             if mRNA_loc.strand == -1:
                                 next_codon = utils.reverse_complement(next_codon)
-
-                            print(".{0}({1})".format(next_codon, CDS_pos), end='')
+                                print(".{0}({1}-{2})".format(next_codon, CDS_pos, CDS_pos - 3), end='')
+                            else:
+                                print(".{0}({1}-{2})".format(next_codon, CDS_pos - 3, CDS_pos), end='')
                         
                             if next_codon in stop_codons:
-                                mRNA.extend_stop(on=assemblies[assembly_id], to=CDS_pos)
+                                if mRNA_loc.strand == 1:
+                                    mRNA.extend_stop(on=assemblies[assembly_id], to=(CDS_pos + 3))
+                                    print(" Found a stop, extending to: {0} ({1})".format(CDS_pos + 3, mRNA_loc.strand))
+                                else:
+                                    mRNA.extend_stop(on=assemblies[assembly_id], to=CDS_pos)
+                                    print(" Found a stop, extending to: {0} ({1})".format(CDS_pos, mRNA_loc.strand))
 
                                 new_stop_found = True
-                                print(" Found a stop")
                                 break
 
                         CDS_pos += codon_step_size
