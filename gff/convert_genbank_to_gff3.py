@@ -98,7 +98,7 @@ def main():
                     gene.print_as(fh=ofh, source='GenBank', format='gff3')
                 
                 locus_tag = feat.qualifiers['locus_tag'][0]
-                gene = things.Gene(id=locus_tag)
+                gene = things.Gene(id=locus_tag, locus_tag=locus_tag)
                 gene.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 current_gene = gene
                 current_RNA = None
@@ -108,7 +108,7 @@ def main():
                 rna_count_by_gene[locus_tag] += 1
                 feat_id = "{0}.mRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
                 
-                mRNA = things.mRNA(id=feat_id, parent=current_gene)
+                mRNA = things.mRNA(id=feat_id, parent=current_gene, locus_tag=locus_tag)
                 mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 gene.add_mRNA(mRNA)
                 current_RNA = mRNA
@@ -159,8 +159,17 @@ def main():
                     gene.add_mRNA(mRNA)
                     current_RNA = mRNA
 
-                    product = feat.qualifiers['product'][0]
-                    annot = annotation.FunctionalAnnotation(product_name=product)
+                    if 'product' in feat.qualifiers:
+                        product = feat.qualifiers['product'][0]
+                    else:
+                        product = None
+
+                    if 'gene' in feat.qualifiers:
+                        gene_symbol = feat.qualifiers['gene'][0]
+                    else:
+                        gene_symbol = None
+                        
+                    annot = annotation.FunctionalAnnotation(product_name=product, gene_symbol=gene_symbol)
                     
                     polypeptide_id = "{0}.polypeptide.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
                     polypeptide = things.Polypeptide(id=polypeptide_id, parent=mRNA, annotation=annot)
