@@ -2,10 +2,15 @@
 
 """
 This is a script to convert GenBank flat files to GFF3 format with a specific focus on
-maintaining as much annotation information as possible.
+initially maintaining as much structural annotation as possible, then expanding into
+functional annotation support.
 
 This is not guaranteed to convert all features, but warnings will be printed wherever possible
 for features which aren't included.
+
+Currently supported:
+  Structural features:  gene, CDS, mRNA, tRNA, rRNA
+  Annotations: primary identifiers, gene product name
 
 This is written to handle multi-entry GBK files
 
@@ -13,6 +18,7 @@ Caveats:
 - Because the GBK flatfile format doesn't explicitly model parent/child features, this script
   links them using the expected format convention of shared /locus_tag entries for each feature
   of the gene graph (gene, mRNA, CDS)
+- It has only been tested with prokaryotic (non-spliced) genes
 
 Author: Joshua Orvis (jorvis AT gmail)
 """
@@ -22,7 +28,7 @@ import sys
 from collections import defaultdict
 
 from Bio import SeqIO
-from biocode import things, utils
+from biocode import annotation, things, utils
 
 
 def main():
@@ -141,7 +147,7 @@ def main():
                     raise Exception( "ERROR: two different RNAs found with same ID: {0}".format(feat_id) )
                 else:
                     exon_count_by_RNA[feat_id] = 0
-            
+
             elif feat.type == 'CDS':
                 locus_tag = feat.qualifiers['locus_tag'][0]
                 # If processing a prokaryotic GBK, we'll encounter CDS before mRNA, so we have to
@@ -152,6 +158,13 @@ def main():
                     mRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                     gene.add_mRNA(mRNA)
                     current_RNA = mRNA
+
+                    product = feat.qualifiers['product'][0]
+                    annot = annotation.FunctionalAnnotation(product_name=product)
+                    
+                    polypeptide_id = "{0}.polypeptide.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
+                    polypeptide = things.Polypeptide(id=polypeptide_id, parent=mRNA, annotation=annot)
+                    mRNA.add_polypeptide(polypeptide)
                 
                 exon_count_by_RNA[current_RNA.id] += 1
                 cds_id = "{0}.CDS.{1}".format( current_RNA.id, exon_count_by_RNA[current_RNA.id] )
