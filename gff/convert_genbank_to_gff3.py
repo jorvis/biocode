@@ -170,6 +170,10 @@ def main():
                         gene_symbol = None
                         
                     annot = annotation.FunctionalAnnotation(product_name=product, gene_symbol=gene_symbol)
+
+                    if 'db_xref' in feat.qualifiers:
+                        for dbxref in feat.qualifiers['db_xref']:
+                            annot.add_dbxref(dbxref)
                     
                     polypeptide_id = "{0}.polypeptide.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
                     polypeptide = things.Polypeptide(id=polypeptide_id, parent=mRNA, annotation=annot)
