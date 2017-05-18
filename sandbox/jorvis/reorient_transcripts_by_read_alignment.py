@@ -15,6 +15,33 @@ http://onetipperday.blogspot.com/2012/04/understand-flag-code-of-sam-format.html
 Better detailed version:
 http://blog.nextgenetics.net/?e=18
 
+Flags to check:
+
+16 0x10 SEQ being reverse complemented
+64 0x40 the first segment in the template
+128 0x80 the last segment in the template
+256 0x100 secondary alignment
+512 0x200 not passing filters, such as platform/vendor quality controls
+2048 0x800 supplementary alignment
+   
+EXAMPLE DATA
+
+SN7001163:162:C4A1UACXX:1:1101:1174:2116        81      Locus_14841_Transcript_1__1_Confidence_0.750_Length_603 292     37      101M    =       294     -99     CTCGTCATTTCAATGCCCCCTCTCATATCAGAAGGAAAATCATGAGTGCTCCTTTGTCAAAAGAGCTGAGAGCAAAGTACAATGTGAGAAGTATGCCCATT   >BBDDDDDDDDDDDBDFFHHHHIIHJJJJJJJJJJJJJJIIJJJJJJJJJJJJJJIIIJJJJIJJJJJJJIJJJJJJJHJJJIJJJJJHHHHHFFFFFCCC   XT:A:U  NM:i:0  SM:i:37 AM:i:37 X0:i:1  X1:i:0  XM:i:0  XO:i:0  XG:i:0  MD:Z:101
+flag   16 = True
+flag   64 = True
+flag  128 = False
+flag  256 = False
+flag  512 = False
+flag 2048 = False
+
+SN7001163:162:C4A1UACXX:1:1101:1174:2116        161     Locus_14841_Transcript_1__1_Confidence_0.750_Length_603 294     37      101M    =       292     99      CGTCATTTCAATGCCCCCTCTCATATCAGAAGGAAAATCATGAGTGCTCCTTTGTCAAAAGAGCTGAGAGCAAAGTACAATGTGAGAAGTATGCCCATTAG   BCBFFFFFHHHH?HIJJJJJJJJJJJJJJJJJJJJJJJJJJJJJHIJJJJGHIIHHIJJJJJJJJJIJJJJJHHHHHHFFFFFFFEEEEEEEEDDDDDDDC   XT:A:U  NM:i:1  SM:i:37 AM:i:37 X0:i:1  X1:i:0  XM:i:1  XO:i:0  XG:i:0  MD:Z:99C1
+flag   16 = False
+flag   64 = False
+flag  128 = True
+flag  256 = False
+flag  512 = False
+flag 2048 = False
+
 """
 
 import argparse
@@ -55,11 +82,18 @@ def main():
         cols = line.split("\t")
         if len(cols) < 5: continue
 
-        read_dir = cols[0][-1]
+        flag = cols[1]
+
+        # For an RF strand-specific library, the first segment in the template is 
+        # the /1 mate (from the FASTQ naming convention)
+        if int(flag) & 64:
+            read_dir = '1'
+        else:
+            read_dir = '2'
+
         transcript_id = cols[2]
         total_read_mappings += 1
 
-        flag = cols[1]
         if int(flag) & 16:
             seq_revcomped = 'T'
         else:
