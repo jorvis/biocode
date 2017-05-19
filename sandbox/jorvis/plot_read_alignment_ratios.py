@@ -40,8 +40,8 @@ def main():
     parser = argparse.ArgumentParser( description='Put a description of your script here' )
 
     ## output file to be written
-    parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
-    parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
+    parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input reorientation log file to be read' )
+    parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output image file to be created' )
     parser.add_argument('-f', '--fasta_file', type=str, required=True, help='Path to an input FASTA file' )
     args = parser.parse_args()
 
@@ -110,6 +110,7 @@ def main():
     plt.gca().set_yscale("log")
     plt.savefig(args.output_file)
 
+    sys.stderr.write("Length cutoff: {0} bp".format(LENGTH_CUTOFF))
     sys.stderr.write("Count of ratios < {0}: {1}\n".format(RATIO_MIN, ratio_min_count))
     sys.stderr.write("Count where {0} > ratio < {1}: {2}\n".format(RATIO_MIN, RATIO_MAX, ratio_bet_count))
     sys.stderr.write("Count of ratios > {0}: {1}\n".format(RATIO_MAX, ratio_max_count))
