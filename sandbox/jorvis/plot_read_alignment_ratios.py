@@ -43,24 +43,14 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input reorientation log file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output image file to be created' )
     parser.add_argument('-f', '--fasta_file', type=str, required=True, help='Path to an input FASTA file' )
+    parser.add_argument('-rmin', '--ratio_min', type=float, required=False, default=0.05, help='Left bounds of ratio with correctly mapped reads to export' )
+    parser.add_argument('-rmax', '--ratio_max', type=float, required=False, default=0.95, help='Right bounds of ratio with correctly mapped reads to export' )
     args = parser.parse_args()
 
     ratios = list()
 
     # if set to true, the IDs in the mid-range will be printed to STDOUT
     print_ids = True
-    
-    RATIO_MIN = 0.05
-    RATIO_MAX = 0.95
-
-    #RATIO_MIN = 0.125
-    #RATIO_MAX = 0.875
-
-    #RATIO_MIN = 0.25
-    #RATIO_MAX = 0.75
-
-    #RATIO_MIN = 0.475
-    #RATIO_MAX = 0.525
     
     LENGTH_CUTOFF = 350
     ratio_min_count = 0
@@ -91,9 +81,9 @@ def main():
                 correct_ratio = f_reads_correctly_mapped / f_read_count
                 ratios.append(correct_ratio)
 
-                if correct_ratio < RATIO_MIN:
+                if correct_ratio < args.ratio_min:
                     ratio_min_count += 1
-                elif correct_ratio > RATIO_MAX:
+                elif correct_ratio > args.ratio_max:
                     ratio_max_count += 1
                 else:
                     ratio_bet_count += 1
@@ -110,10 +100,10 @@ def main():
     plt.gca().set_yscale("log")
     plt.savefig(args.output_file)
 
-    sys.stderr.write("Length cutoff: {0} bp".format(LENGTH_CUTOFF))
-    sys.stderr.write("Count of ratios < {0}: {1}\n".format(RATIO_MIN, ratio_min_count))
-    sys.stderr.write("Count where {0} > ratio < {1}: {2}\n".format(RATIO_MIN, RATIO_MAX, ratio_bet_count))
-    sys.stderr.write("Count of ratios > {0}: {1}\n".format(RATIO_MAX, ratio_max_count))
+    sys.stderr.write("Length cutoff: {0} bp\n".format(LENGTH_CUTOFF))
+    sys.stderr.write("Count of ratios < {0}: {1}\n".format(args.ratio_min, ratio_min_count))
+    sys.stderr.write("Count where {0} > ratio < {1}: {2}\n".format(args.ratio_min, args.ratio_max, ratio_bet_count))
+    sys.stderr.write("Count of ratios > {0}: {1}\n".format(args.ratio_max, ratio_max_count))
 
     
 
