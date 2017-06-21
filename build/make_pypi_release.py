@@ -83,8 +83,9 @@ def main():
 
     # create the manifest
     manifest_fh = open("{0}/MANIFEST.in".format(args.output_directory), 'wt')
-    manifest_fh.write("include README.rst\n")
-    manifest_fh.write("graft data\n")
+    manifest_fh.write("include biocode/README.rst\n")
+    # perhaps do this instead of graft?  recursive-include biocode/data *.template
+    manifest_fh.write("graft biocode/data\n")
 
     # include the license
     shutil.copy('LICENSE', "{0}/".format(args.output_directory))
@@ -201,7 +202,7 @@ try:
     from pypandoc import convert
     read_md = lambda f: convert(f, 'rst', 'md')
 except ImportError:
-    raise Exception("warning: pypandoc module not found, could not convert Markdown to RST")
+    raise Exception("Error: pypandoc module not found, could not convert Markdown to RST")
     read_md = lambda f: open(f, 'r').read()
 
 setup(name='biocode',
