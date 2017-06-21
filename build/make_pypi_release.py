@@ -23,6 +23,7 @@ Run it from within a GitHub checkout of Biocode, and it will:
 - Copies all lib/biocode/*.py to biocode/biocode/
 - Uses pypandoc module to convert README.md to README.rst
 - Copies all .py scripts to biocode/bin/
+- Copy all data/* to biocode/data/
 
 """
 
@@ -64,8 +65,16 @@ def main():
     place_script_files(bin_dir, script_paths)
     placed_script_paths = get_placed_script_paths(bin_dir)
 
+    # place the data files
+    datafile_paths = get_biocode_datafile_paths('.')
+    data_dir = "{0}/data".format(lib_path)
+    os.mkdir(data_dir)
+    place_data_files(data_dir, datafile_paths)
+    with open(os.path.join(data_dir, '__init__.py'), 'w'):
+        pass
+
     # place the README
-    shutil.copyfile('README.md', "{0}/README.md".format(args.output_directory))
+    shutil.copyfile('README.md', "{0}/README.md".format(lib_path))
 
     # creates the biocode/setup.py file
     setup_fh = open("{0}/setup.py".format(args.output_directory), 'wt')
@@ -74,18 +83,39 @@ def main():
 
     # create the manifest
     manifest_fh = open("{0}/MANIFEST.in".format(args.output_directory), 'wt')
-    manifest_fh.write("include README.rst")
+    manifest_fh.write("include README.rst\n")
+    manifest_fh.write("graft data\n")
 
     # include the license
     shutil.copy('LICENSE', "{0}/".format(args.output_directory))
-    manifest_fh.write("include LICENSE")
+    manifest_fh.write("include LICENSE\n")
 
     manifest_fh.close()
 
     print("Please be sure the version ({0}) matches a tag on GitHub for the project".format(args.version))
-    print("\nNext do:\n\t$ python3 setup.py sdist")
+    print("\nNext do:\n\t$ cd {0}\n\tpython3 setup.py sdist".format(args.output_directory))
     print("\t$ python3 setup.py sdist upload")
 
+def get_biocode_datafile_paths(base):
+    datafiles = list()
+
+    for directory in os.listdir(base):
+        if directory not in ['data']: continue
+
+        dir_path = "{0}/{1}".format(base, directory)
+        if os.path.isdir(dir_path):
+            for thing in os.listdir(dir_path):
+                if thing == '__init__.py': continue
+                thing_path = "{0}/{1}".format(dir_path, thing)
+
+                if os.path.isfile(thing_path):
+                    datafiles.append(thing_path)
+
+    if len(datafiles) == 0:
+        raise Exception("Error: failed to find any data files under {0}/data".format(base))
+
+    return datafiles
+    
 def get_biocode_package_names(base):
     packages = list()
     
@@ -118,6 +148,18 @@ def get_biocode_script_paths(base):
 
     return scripts
 
+def get_placed_datafile_paths(base):
+    paths = list()
+
+    for thing in os.listdir(base):
+        if os.path.isfile("{0}/{1}".format(base, thing)):
+            paths.append("data/{0}".format(thing))
+            
+    if len(paths) == 0:
+        raise Exception("Failed to find any data files in base: {0}".format(base))
+
+    return paths
+
 def get_placed_script_paths(base):
     paths = list()
 
@@ -129,6 +171,10 @@ def get_placed_script_paths(base):
         raise Exception("Failed to find any py scripts in base: {0}".format(base))
 
     return paths
+
+def place_data_files(dest_dir, paths):
+    for path in paths:
+        shutil.copy(path, dest_dir)
 
 def place_package_files(base, names):
     for name in names:
@@ -175,7 +221,7 @@ setup(name='biocode',
       install_requires={dependencies},
       keywords='bioinformatics scripts modules gff3 fasta fastq bam sam',
       license='MIT',
-      long=read_md('README.md'),
+      long=read_md('biocode/README.md'),
       packages={packages},
       scripts={scripts},
       url='http://github.com/jorvis/biocode',
