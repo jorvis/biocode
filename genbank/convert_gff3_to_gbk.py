@@ -27,10 +27,20 @@ import sys
 from biocode import utils, genbank, gff
 from jinja2 import Environment, FileSystemLoader
 
-PATH = os.path.dirname(os.path.abspath(__file__))
+from pkg_resources import Requirement, resource_filename
+
+# If biocode is installed via a GitHub checkout, the path to the template will be referential
+template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data/genbank_flat_file_header.template')
+
+# if referential discovery didn't work, this was probably a PyPi install.  Use pkg_resources to find it instead.
+if not os.path.isfile(template_path):
+    template_path = resource_filename(Requirement.parse("biocode"), "genbank_flat_file_header.template")
+
+template_dir = os.path.dirname(template_path)
+
 TEMPLATE_ENVIRONMENT = Environment(
     autoescape=False,
-    loader=FileSystemLoader(os.path.join(PATH, '../data')),
+    loader=FileSystemLoader(template_dir),
     trim_blocks=False)
 
 def main():
