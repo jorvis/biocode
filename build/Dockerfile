@@ -12,5 +12,5 @@ RUN apt-get -y update && apt-get install -y \
     python3-pip \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install pypandoc
-RUN pip3 install biocode==0.2.0rc1
+RUN pip3 install pypandoc jinja2
+RUN pip3 install biocode==0.2.0
