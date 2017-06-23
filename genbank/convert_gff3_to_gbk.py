@@ -33,10 +33,11 @@ from pkg_resources import Requirement, resource_filename
 template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data/genbank_flat_file_header.template')
 
 # if referential discovery didn't work, this was probably a PyPi install.  Use pkg_resources to find it instead.
-if not os.path.isfile(template_path):
+if os.path.isfile(template_path):
+    template_dir = os.path.dirname(template_path)
+else:
     template_path = resource_filename(Requirement.parse("biocode"), "genbank_flat_file_header.template")
-
-template_dir = os.path.dirname(template_path)
+    template_dir = "{0}/{1}".format(os.path.dirname(template_path), '/biocode/data')
 
 TEMPLATE_ENVIRONMENT = Environment(
     autoescape=False,
