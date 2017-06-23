@@ -84,9 +84,6 @@ def print_biogene( gene=None, fh=None, on=None ):
     gene_start = gene_loc.fmin + 1
     gene_stop  = gene_loc.fmax
 
-    # area to hack if you want to set default values, for debugging
-    #gene.locus_tag = 'Tparva_0000002'
-
     if gene_loc.strand == 1:
         fh.write("     gene            {0}..{1}\n".format(gene_start, gene_stop))
     else:
@@ -97,6 +94,17 @@ def print_biogene( gene=None, fh=None, on=None ):
     else:
         fh.write("                     /locus_tag=\"{0}\"\n".format(gene.locus_tag))
 
+    # This is complicated, since the 'gene' feature wants a symbol but our annotations are stored on polypeptide.
+    # Descend and get the first one
+
+    for mRNA in sorted(gene.mRNAs()):
+        polypeptides = mRNA.polypeptides()
+        if len(polypeptides) >= 1 and polypeptides[0].annotation is not None:
+            annot = polypeptides[0].annotation
+            if annot.gene_symbol is not None:
+                annot.gene_symbol = annot.gene_symbol.split(' ', 1)[0]
+                fh.write("                     /gene=\"{0}\"\n".format(annot.gene_symbol))
+                break
 
     for mRNA in sorted(gene.mRNAs()):
         mRNA_loc = mRNA.location_on( on )
@@ -154,6 +162,10 @@ def print_biogene( gene=None, fh=None, on=None ):
         polypeptides = mRNA.polypeptides()
         if len(polypeptides) == 1 and polypeptides[0].annotation is not None:
             annot = polypeptides[0].annotation
+
+            if annot.gene_symbol is not None:
+                fh.write("                     /gene=\"{0}\"\n".format(annot.gene_symbol))
+
             if annot.product_name is not None:
                 fh.write("                     /product=\"{0}\"\n".format(annot.product_name))
 
