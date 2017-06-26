@@ -1,0 +1,1039 @@
+[Term]
+id: GO:0008150
+name: biological_process
+namespace: biological_process
+alt_id: GO:0000004
+alt_id: GO:0007582
+def: "Any process specifically pertinent to the functioning of integrated living units: cells, tissues, organs, and organisms. A process is a collection of molecular events with a defined beginning and end." [GOC:go_curators, GOC:isa_complete]
+comment: Note that, in addition to forming the root of the biological process ontology, this term is recommended for use for the annotation of gene products whose biological process is unknown. Note that when this term is used for annotation, it indicates that no information was available about the biological process of the gene product annotated as of the date the annotation was made; the evidence code ND, no data, is used to indicate this.
+subset: goslim_candida
+subset: goslim_pir
+subset: goslim_plant
+subset: goslim_yeast
+subset: gosubset_prok
+synonym: "biological process" EXACT []
+synonym: "biological process unknown" NARROW []
+synonym: "physiological process" EXACT []
+xref: Wikipedia:Biological_process
+disjoint_from: GO:0003674 ! molecular_function
+disjoint_from: GO:0005575 ! cellular_component
+
+[Term]
+id: GO:0044419
+name: interspecies interaction between organisms
+namespace: biological_process
+def: "Any process in which an organism has an effect on an organism of a different species." [GOC:cc]
+subset: goslim_candida
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "interaction with another species" EXACT []
+synonym: "interspecies interaction" EXACT []
+synonym: "interspecies interaction with other organisms" EXACT []
+is_a: GO:0051704 ! multi-organism process
+
+[Term]
+id: GO:0051701
+name: interaction with host
+namespace: biological_process
+def: "An interaction between two organisms living together in more or less intimate association. The term host is used for the larger (macro) of the two members of a symbiosis; the various forms of symbiosis include parasitism, commensalism and mutualism." [GOC:cc]
+subset: gosubset_prok
+is_a: GO:0044419 ! interspecies interaction between organisms
+relationship: part_of GO:0044403 ! symbiosis, encompassing mutualism through parasitism
+
+[Term]
+id: GO:0009405
+name: pathogenesis
+namespace: biological_process
+def: "The set of specific processes that generate the ability of an organism to cause disease in another." [GOC:go_curators]
+comment: Note that this term should not be used to annotate gene products that are involved in the host response to pathogenesis. It should only be used to annotate those gene products involved in the generation of pathogenesis by the pathogen itself.
+subset: goslim_candida
+subset: gosubset_prok
+synonym: "channel-forming toxin activity" RELATED []
+synonym: "cytotoxin activity" RELATED []
+synonym: "endotoxin activity" RELATED []
+synonym: "enterotoxin activity" RELATED []
+synonym: "exotoxin activity" RELATED []
+synonym: "lipoprotein toxin" RELATED []
+synonym: "neurotoxin activity" RELATED []
+synonym: "pore-forming toxin activity" RELATED []
+synonym: "toxin activity" RELATED []
+synonym: "virulence" RELATED []
+is_a: GO:0051704 ! multi-organism process
+
+[Term]
+id: GO:0022610
+name: biological adhesion
+namespace: biological_process
+def: "The attachment of a cell or organism to a substrate or other organism." [GOC:isa_complete]
+subset: goslim_pir
+subset: gosubset_prok
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0065007
+name: biological regulation
+namespace: biological_process
+def: "Any process that modulates the frequency, rate or extent of any biological process, quality or function." [GOC:isa_complete]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "regulation" BROAD []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0005976
+name: polysaccharide metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways involving polysaccharides, a polymer of more than 20 monosaccharide residues joined by glycosidic linkages." [ISBN:0198547684]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "glycan metabolic process" EXACT []
+synonym: "glycan metabolism" EXACT []
+synonym: "polysaccharide metabolism" EXACT []
+is_a: GO:0005975 ! carbohydrate metabolic process
+is_a: GO:0043170 ! macromolecule metabolic process
+
+[Term]
+id: GO:0000746
+name: conjugation
+namespace: biological_process
+def: "The union or introduction of genetic information from compatible mating types that results in a genetically different individual. Conjugation requires direct cellular contact between the organisms." [GOC:elh]
+subset: goslim_candida
+subset: goslim_pir
+subset: goslim_yeast
+subset: gosubset_prok
+xref: Wikipedia:Conjugation
+is_a: GO:0051704 ! multi-organism process
+
+[Term]
+id: GO:0006091
+name: generation of precursor metabolites and energy
+namespace: biological_process
+def: "The chemical reactions and pathways resulting in the formation of precursor metabolites, substances from which energy is derived, and any process involved in the liberation of energy from these substances." [GOC:jl]
+subset: goslim_candida
+subset: goslim_generic
+subset: goslim_pir
+subset: goslim_plant
+subset: goslim_pombe
+subset: goslim_yeast
+subset: gosubset_prok
+synonym: "energy pathways" BROAD []
+synonym: "intermediary metabolism" RELATED [GOC:mah]
+synonym: "metabolic energy generation" RELATED []
+is_a: GO:0044237 ! cellular metabolic process
+
+[Term]
+id: GO:0006139
+name: nucleobase, nucleoside, nucleotide and nucleic acid metabolic process
+namespace: biological_process
+alt_id: GO:0055134
+def: "Any cellular metabolic process involving nucleobases, nucleosides, nucleotides and nucleic acids." [GOC:ai]
+subset: goslim_pir
+subset: goslim_plant
+subset: gosubset_prok
+synonym: "cellular nucleobase, nucleoside, nucleotide and nucleic acid metabolic process" EXACT []
+synonym: "cellular nucleobase, nucleoside, nucleotide and nucleic acid metabolism" EXACT []
+synonym: "nucleobase, nucleoside, nucleotide and nucleic acid metabolism" EXACT []
+is_a: GO:0034641 ! cellular nitrogen compound metabolic process
+is_a: GO:0044238 ! primary metabolic process
+
+[Term]
+id: GO:0006276
+name: plasmid maintenance
+namespace: biological_process
+def: "The maintenance of the integrity of extrachromosomal plasmid DNA; includes processes that ensure plasmids are retained in the daughter cells after cell division." [GOC:ai]
+subset: goslim_pir
+subset: gosubset_prok
+is_a: GO:0009987 ! cellular process
+
+[Term]
+id: GO:0006281
+name: DNA repair
+namespace: biological_process
+def: "The process of restoring DNA after damage. Genomes are subject to damage by chemical and physical agents in the environment (e.g. UV and ionizing radiations, chemical mutagens, fungal and bacterial toxins, etc.) and by free radicals or alkylating agents endogenously generated in metabolism. DNA is also damaged because of errors during its replication. A variety of different DNA repair pathways have been reported that include direct reversal, base excision repair, nucleotide excision repair, photoreactivation, bypass, double-strand break repair pathway, and mismatch repair pathway." [PMID:11563486]
+subset: goslim_pir
+subset: goslim_pombe
+subset: gosubset_prok
+xref: Reactome:1253001 "DNA Damage Reversal"
+xref: Reactome:1253002 "DNA Repair"
+xref: Reactome:1279931 "DNA Damage Reversal"
+xref: Reactome:1279932 "DNA Repair"
+xref: Reactome:1298827 "DNA Damage Reversal"
+xref: Reactome:1298828 "DNA Repair"
+xref: Reactome:1326505 "DNA Damage Reversal"
+xref: Reactome:1326506 "DNA Repair"
+xref: Reactome:1352612 "DNA Damage Reversal"
+xref: Reactome:1352613 "DNA Repair"
+xref: Reactome:1372843 "DNA Damage Reversal"
+xref: Reactome:1372844 "DNA Repair"
+xref: Reactome:1392856 "DNA Damage Reversal"
+xref: Reactome:1392857 "DNA Repair"
+xref: Reactome:1417331 "DNA Damage Reversal"
+xref: Reactome:1417332 "DNA Repair"
+xref: Reactome:1450420 "DNA Damage Reversal"
+xref: Reactome:1450421 "DNA Repair"
+xref: Reactome:1470949 "DNA Damage Reversal"
+xref: Reactome:1470950 "DNA Repair"
+xref: Reactome:1482989 "DNA Damage Reversal"
+xref: Reactome:1482990 "DNA Repair"
+xref: Reactome:1496770 "DNA Repair"
+xref: Reactome:1496851 "DNA Damage Reversal"
+xref: Reactome:1514160 "DNA Repair"
+xref: Reactome:1514244 "DNA Damage Reversal"
+xref: Reactome:1520977 "DNA Damage Reversal"
+xref: Reactome:1520978 "DNA Repair"
+xref: Reactome:1526728 "DNA Damage Reversal"
+xref: Reactome:1526729 "DNA Repair"
+xref: Reactome:1532462 "DNA Repair"
+xref: Reactome:1536010 "DNA Repair"
+xref: Reactome:1537999 "DNA Damage Reversal"
+xref: Reactome:1538000 "DNA Repair"
+xref: Reactome:1539252 "DNA Damage Reversal"
+xref: Reactome:1539253 "DNA Repair"
+xref: Reactome:1540303 "DNA Damage Reversal"
+xref: Reactome:1540304 "DNA Repair"
+xref: Reactome:73894 "DNA Repair"
+xref: Reactome:73942 "DNA Damage Reversal"
+xref: Wikipedia:DNA_repair
+is_a: GO:0006259 ! DNA metabolic process
+is_a: GO:0006974 ! response to DNA damage stimulus
+
+[Term]
+id: GO:0006950
+name: response to stress
+namespace: biological_process
+def: "Any process that results in a change in state or activity of a cell or an organism (in terms of movement, secretion, enzyme production, gene expression, etc.) as a result of a disturbance in organismal or cellular homeostasis, usually, but not necessarily, exogenous (e.g. temperature, humidity, ionizing radiation)." [GOC:mah]
+comment: Note that this term is in the subset of terms that should not be used for direct gene product annotation. Annotations to this term will be removed during annotation QC.
+subset: goslim_candida
+subset: goslim_generic
+subset: goslim_plant
+subset: goslim_yeast
+subset: gosubset_prok
+subset: high_level_annotation_qc
+synonym: "response to abiotic stress" RELATED []
+synonym: "response to biotic stress" RELATED []
+is_a: GO:0050896 ! response to stimulus
+
+[Term]
+id: GO:0009237
+name: siderophore metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways involving siderophores, low molecular weight Fe(III)-chelating substances made by aerobic or facultatively anaerobic bacteria, especially when growing under iron deficient conditions. The complexes of Fe(3+)-siderophores have very high stability constants and are taken up by specific transport systems by microorganisms; the subsequent release of iron requires enzymatic action." [ISBN:0198547684]
+subset: gosubset_prok
+synonym: "siderochrome metabolic process" NARROW []
+synonym: "siderochrome metabolism" NARROW []
+synonym: "siderophore metabolism" EXACT []
+is_a: GO:0051186 ! cofactor metabolic process
+
+[Term]
+id: GO:0009306
+name: protein secretion
+namespace: biological_process
+alt_id: GO:0045166
+alt_id: GO:0045731
+def: "The controlled release of proteins from a cell or group of cells." [GOC:ai]
+subset: gosubset_prok
+synonym: "glycoprotein secretion" NARROW []
+synonym: "protein secretion during cell fate commitment" NARROW []
+synonym: "protein secretion resulting in cell fate commitment" NARROW []
+is_a: GO:0015031 ! protein transport
+is_a: GO:0032940 ! secretion by cell
+
+[Term]
+id: GO:0009307
+name: DNA restriction-modification system
+namespace: biological_process
+def: "Any process that protect an organism from invading foreign DNA by methylation of self DNA at specific sequences and nucleolytic cleavage of unmethylated foreign DNA." [GOC:mah]
+subset: gosubset_prok
+synonym: "DNA restriction" BROAD []
+is_a: GO:0006304 ! DNA modification
+
+[Term]
+id: GO:0015948
+name: methanogenesis
+namespace: biological_process
+def: "The chemical reactions and pathways resulting in the formation of methane, a colorless, odorless, flammable gas with the formula CH4. It is the simplest of the alkanes." [GOC:ai]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "methane biosynthesis" EXACT []
+synonym: "methane biosynthetic process" EXACT []
+xref: UM-BBD_pathwayID:meth
+xref: Wikipedia:Methanogenesis
+is_a: GO:0009061 ! anaerobic respiration
+is_a: GO:0015947 ! methane metabolic process
+is_a: GO:0015975 ! energy derivation by oxidation of reduced inorganic compounds
+is_a: GO:0043447 ! alkane biosynthetic process
+
+[Term]
+id: GO:0030030
+name: cell projection organization
+namespace: biological_process
+def: "A process that is carried out at the cellular level which results in the assembly, arrangement of constituent parts, or disassembly of a prolongation or process extending from a cell, e.g. a flagellum or axon." [GOC:jl, GOC:mah, http://www.cogsci.princeton.edu/~wn/]
+subset: gosubset_prok
+synonym: "cell projection organisation" EXACT [GOC:curators]
+synonym: "cell projection organization and biogenesis" RELATED [GOC:mah]
+synonym: "cell surface structure organization and biogenesis" RELATED [GOC:mah]
+is_a: GO:0071842 ! cellular component organization at cellular level
+
+[Term]
+id: GO:0030436
+name: asexual sporulation
+namespace: biological_process
+def: "The formation of spores derived from the products of mitosis. Examples of this process are found in Bacterial species." [GOC:mah, PMID:9529886]
+subset: gosubset_prok
+synonym: "asexual spore formation" EXACT []
+synonym: "mitotic spore formation" EXACT []
+synonym: "mitotic sporulation" EXACT []
+is_a: GO:0019954 ! asexual reproduction
+is_a: GO:0043934 ! sporulation
+
+[Term]
+id: GO:0032196
+name: transposition
+namespace: biological_process
+def: "Any process involved in mediating the movement of discrete segments of DNA between nonhomologous sites." [GOC:jp, ISBN:1555812090]
+subset: goslim_candida
+subset: goslim_generic
+subset: goslim_pir
+subset: goslim_yeast
+subset: gosubset_prok
+xref: Wikipedia:Transposon
+is_a: GO:0009987 ! cellular process
+
+[Term]
+id: GO:0042710
+name: biofilm formation
+namespace: biological_process
+def: "A process in which microorganisms irreversibly attach to and grow on a surface and produce extracellular polymers that facilitate attachment and matrix formation, resulting in an alteration in the phenotype of the organisms with respect to growth rate and gene transcription." [PMID:11932229]
+subset: goslim_candida
+subset: goslim_pir
+subset: gosubset_prok
+is_a: GO:0051704 ! multi-organism process
+
+[Term]
+id: GO:0051186
+name: cofactor metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways involving a cofactor, a substance that is required for the activity of an enzyme or other protein. Cofactors may be inorganic, such as the metal atoms zinc, iron, and copper in certain forms, or organic, in which case they are referred to as coenzymes. Cofactors may either be bound tightly to active sites or bind loosely with the substrate." [GOC:ai]
+subset: goslim_generic
+subset: goslim_pir
+subset: goslim_pombe
+subset: goslim_yeast
+subset: gosubset_prok
+synonym: "cofactor metabolism" EXACT []
+is_a: GO:0044237 ! cellular metabolic process
+
+[Term]
+id: GO:0001906
+name: cell killing
+namespace: biological_process
+def: "Any process in an organism that results in the killing of its own cells or those of another organism, including in some cases the death of the other organism. Killing here refers to the induction of death in one cell by another cell, not cell-autonomous death due to internal or other environmental conditions." [GOC:add]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "necrosis" RELATED []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0009987
+name: cellular process
+namespace: biological_process
+alt_id: GO:0008151
+alt_id: GO:0050875
+def: "Any process that is carried out at the cellular level, but not necessarily restricted to a single cell. For example, cell communication occurs among more than one cell, but occurs at the cellular level." [GOC:go_curators, GOC:isa_complete]
+subset: goslim_pir
+subset: goslim_plant
+subset: gosubset_prok
+synonym: "cell growth and/or maintenance" NARROW []
+synonym: "cell physiology" EXACT []
+synonym: "cellular physiological process" EXACT []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0055085
+name: transmembrane transport
+namespace: biological_process
+def: "The process in which a solute is transported from one side of a membrane to the other." [GOC:dph, GOC:jid]
+subset: goslim_generic
+subset: goslim_pombe
+xref: Reactome:1252925 "SLC-mediated transmembrane transport"
+xref: Reactome:1252926 "Transmembrane transport of small molecules"
+xref: Reactome:1253666 "ABC-family proteins mediated transport"
+xref: Reactome:1279859 "SLC-mediated transmembrane transport"
+xref: Reactome:1279860 "Transmembrane transport of small molecules"
+xref: Reactome:1280597 "ABC-family proteins mediated transport"
+xref: Reactome:1298773 "SLC-mediated transmembrane transport"
+xref: Reactome:1298774 "Transmembrane transport of small molecules"
+xref: Reactome:1299427 "ABC-family proteins mediated transport"
+xref: Reactome:1326428 "SLC-mediated transmembrane transport"
+xref: Reactome:1326429 "Transmembrane transport of small molecules"
+xref: Reactome:1327183 "ABC-family proteins mediated transport"
+xref: Reactome:1352544 "SLC-mediated transmembrane transport"
+xref: Reactome:1352545 "Transmembrane transport of small molecules"
+xref: Reactome:1353278 "ABC-family proteins mediated transport"
+xref: Reactome:1372771 "SLC-mediated transmembrane transport"
+xref: Reactome:1372772 "Transmembrane transport of small molecules"
+xref: Reactome:1373452 "ABC-family proteins mediated transport"
+xref: Reactome:1392781 "SLC-mediated transmembrane transport"
+xref: Reactome:1392782 "Transmembrane transport of small molecules"
+xref: Reactome:1393477 "ABC-family proteins mediated transport"
+xref: Reactome:1417258 "SLC-mediated transmembrane transport"
+xref: Reactome:1417259 "Transmembrane transport of small molecules"
+xref: Reactome:1417977 "ABC-family proteins mediated transport"
+xref: Reactome:1450347 "SLC-mediated transmembrane transport"
+xref: Reactome:1450348 "Transmembrane transport of small molecules"
+xref: Reactome:1451063 "ABC-family proteins mediated transport"
+xref: Reactome:1470888 "SLC-mediated transmembrane transport"
+xref: Reactome:1470889 "Transmembrane transport of small molecules"
+xref: Reactome:1471425 "ABC-family proteins mediated transport"
+xref: Reactome:1482920 "SLC-mediated transmembrane transport"
+xref: Reactome:1482921 "Transmembrane transport of small molecules"
+xref: Reactome:1483376 "ABC-family proteins mediated transport"
+xref: Reactome:1496716 "SLC-mediated transmembrane transport"
+xref: Reactome:1496717 "Transmembrane transport of small molecules"
+xref: Reactome:1497041 "ABC-family proteins mediated transport"
+xref: Reactome:1514107 "SLC-mediated transmembrane transport"
+xref: Reactome:1514108 "Transmembrane transport of small molecules"
+xref: Reactome:1514428 "ABC-family proteins mediated transport"
+xref: Reactome:1521084 "Transmembrane transport of small molecules"
+xref: Reactome:1521280 "SLC-mediated transmembrane transport"
+xref: Reactome:1521291 "ABC-family proteins mediated transport"
+xref: Reactome:1526677 "SLC-mediated transmembrane transport"
+xref: Reactome:1526678 "Transmembrane transport of small molecules"
+xref: Reactome:1526996 "ABC-family proteins mediated transport"
+xref: Reactome:1532404 "SLC-mediated transmembrane transport"
+xref: Reactome:1532405 "Transmembrane transport of small molecules"
+xref: Reactome:1532734 "ABC-family proteins mediated transport"
+xref: Reactome:1535963 "SLC-mediated transmembrane transport"
+xref: Reactome:1535964 "Transmembrane transport of small molecules"
+xref: Reactome:1538017 "SLC-mediated transmembrane transport"
+xref: Reactome:1538018 "Transmembrane transport of small molecules"
+xref: Reactome:1539378 "Transmembrane transport of small molecules"
+xref: Reactome:1539381 "SLC-mediated transmembrane transport"
+xref: Reactome:1540316 "SLC-mediated transmembrane transport"
+xref: Reactome:1540317 "Transmembrane transport of small molecules"
+xref: Reactome:382551 "Transmembrane transport of small molecules"
+xref: Reactome:382556 "ABC-family proteins mediated transport"
+xref: Reactome:425407 "SLC-mediated transmembrane transport"
+is_a: GO:0006810 ! transport
+is_a: GO:0009987 ! cellular process
+
+[Term]
+id: GO:0044237
+name: cellular metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways by which individual cells transform chemical substances." [GOC:go_curators]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "cellular metabolism" EXACT []
+synonym: "intermediary metabolism" RELATED [GOC:mah]
+is_a: GO:0008152 ! metabolic process
+is_a: GO:0009987 ! cellular process
+
+[Term]
+id: GO:0044262
+name: cellular carbohydrate metabolic process
+namespace: biological_process
+alt_id: GO:0006092
+def: "The chemical reactions and pathways involving carbohydrates, any of a group of organic compounds based of the general formula Cx(H2O)y, as carried out by individual cells." [GOC:jl]
+subset: goslim_yeast
+subset: gosubset_prok
+synonym: "cellular carbohydrate metabolism" EXACT []
+synonym: "main pathways of carbohydrate metabolic process" NARROW []
+synonym: "main pathways of carbohydrate metabolism" NARROW []
+is_a: GO:0005975 ! carbohydrate metabolic process
+is_a: GO:0044237 ! cellular metabolic process
+
+[Term]
+id: GO:0017144
+name: drug metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways involving a drug, a substance used in the diagnosis, treatment or prevention of a disease; as used here antibiotic substances (see antibiotic metabolism) are considered to be drugs, even if not used in medical or veterinary practice." [GOC:cab2]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "drug metabolism" EXACT []
+xref: Reactome:1229974 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1257757 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1283356 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1303789 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1331267 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1356206 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1377217 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1397401 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:1423453 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Reactome:76397 "Acetaminophen oxidised to N-acetylbenzoquinoneimine (NAPQI)"
+xref: Wikipedia:Drug_metabolism
+is_a: GO:0044237 ! cellular metabolic process
+
+[Term]
+id: GO:0009404
+name: toxin metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways involving a toxin, a poisonous compound (typically a protein) that is produced by cells or organisms and that can cause disease when introduced into the body or tissues of an organism." [GOC:cab2]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "toxin metabolism" EXACT []
+is_a: GO:0019748 ! secondary metabolic process
+is_a: GO:0044237 ! cellular metabolic process
+
+[Term]
+id: GO:0006805
+name: xenobiotic metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways involving a xenobiotic compound, a compound foreign to living organisms. Used of chemical compounds, e.g. a xenobiotic chemical, such as a pesticide." [GOC:cab2]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "xenobiotic metabolism" EXACT []
+xref: Reactome:1252918 "Phase II conjugation"
+xref: Reactome:1252919 "Biological oxidations"
+xref: Reactome:1252963 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1253297 "Conjugation of benzoate with glycine"
+xref: Reactome:1253298 "Conjugation of carboxylic acids"
+xref: Reactome:1253299 "Amino Acid conjugation"
+xref: Reactome:1253300 "Conjugation of salicylate with glycine"
+xref: Reactome:1253413 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1279852 "Phase II conjugation"
+xref: Reactome:1279853 "Biological oxidations"
+xref: Reactome:1279893 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1280237 "Conjugation of benzoate with glycine"
+xref: Reactome:1280238 "Conjugation of carboxylic acids"
+xref: Reactome:1280239 "Amino Acid conjugation"
+xref: Reactome:1280240 "Conjugation of salicylate with glycine"
+xref: Reactome:1280353 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1298767 "Phase II conjugation"
+xref: Reactome:1298768 "Biological oxidations"
+xref: Reactome:1298804 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1299097 "Conjugation of benzoate with glycine"
+xref: Reactome:1299098 "Conjugation of carboxylic acids"
+xref: Reactome:1299099 "Amino Acid conjugation"
+xref: Reactome:1299100 "Conjugation of salicylate with glycine"
+xref: Reactome:1299193 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1326421 "Phase II conjugation"
+xref: Reactome:1326422 "Biological oxidations"
+xref: Reactome:1326466 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1326813 "Conjugation of benzoate with glycine"
+xref: Reactome:1326814 "Conjugation of carboxylic acids"
+xref: Reactome:1326815 "Amino Acid conjugation"
+xref: Reactome:1326816 "Conjugation of salicylate with glycine"
+xref: Reactome:1326931 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1352537 "Phase II conjugation"
+xref: Reactome:1352538 "Biological oxidations"
+xref: Reactome:1352580 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1352914 "Conjugation of benzoate with glycine"
+xref: Reactome:1352915 "Conjugation of carboxylic acids"
+xref: Reactome:1352916 "Amino Acid conjugation"
+xref: Reactome:1352917 "Conjugation of salicylate with glycine"
+xref: Reactome:1353026 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1372765 "Phase II conjugation"
+xref: Reactome:1372766 "Biological oxidations"
+xref: Reactome:1372808 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1373120 "Conjugation of benzoate with glycine"
+xref: Reactome:1373121 "Conjugation of carboxylic acids"
+xref: Reactome:1373122 "Amino Acid conjugation"
+xref: Reactome:1373123 "Conjugation of salicylate with glycine"
+xref: Reactome:1373216 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1392775 "Phase II conjugation"
+xref: Reactome:1392776 "Biological oxidations"
+xref: Reactome:1392820 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1393136 "Conjugation of benzoate with glycine"
+xref: Reactome:1393137 "Conjugation of carboxylic acids"
+xref: Reactome:1393138 "Amino Acid conjugation"
+xref: Reactome:1393139 "Conjugation of salicylate with glycine"
+xref: Reactome:1393233 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1417252 "Phase II conjugation"
+xref: Reactome:1417253 "Biological oxidations"
+xref: Reactome:1417293 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1450340 "Phase II conjugation"
+xref: Reactome:1450341 "Biological oxidations"
+xref: Reactome:1450383 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1450719 "Conjugation of benzoate with glycine"
+xref: Reactome:1450720 "Conjugation of carboxylic acids"
+xref: Reactome:1450721 "Amino Acid conjugation"
+xref: Reactome:1450722 "Conjugation of salicylate with glycine"
+xref: Reactome:1450827 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:1470881 "Phase II conjugation"
+xref: Reactome:1470882 "Biological oxidations"
+xref: Reactome:1470910 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1482913 "Phase II conjugation"
+xref: Reactome:1482914 "Biological oxidations"
+xref: Reactome:1482950 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1496709 "Phase II conjugation"
+xref: Reactome:1496710 "Biological oxidations"
+xref: Reactome:1496735 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1514100 "Phase II conjugation"
+xref: Reactome:1514101 "Biological oxidations"
+xref: Reactome:1514125 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1520925 "Phase II conjugation"
+xref: Reactome:1520926 "Biological oxidations"
+xref: Reactome:1521098 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1526671 "Phase II conjugation"
+xref: Reactome:1526672 "Biological oxidations"
+xref: Reactome:1526700 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1532398 "Phase II conjugation"
+xref: Reactome:1532399 "Biological oxidations"
+xref: Reactome:1532426 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1536071 "Phase II conjugation"
+xref: Reactome:1536072 "Biological oxidations"
+xref: Reactome:1538034 "Phase II conjugation"
+xref: Reactome:1538035 "Biological oxidations"
+xref: Reactome:1539244 "Phase 1 - Functionalization of compounds"
+xref: Reactome:1539245 "Biological oxidations"
+xref: Reactome:1539316 "Phase II conjugation"
+xref: Reactome:1540327 "Conjugation of benzoate with glycine"
+xref: Reactome:1540328 "Conjugation of carboxylic acids"
+xref: Reactome:1540329 "Amino Acid conjugation"
+xref: Reactome:1540330 "Phase II conjugation"
+xref: Reactome:1540331 "Biological oxidations"
+xref: Reactome:1540332 "Conjugation of salicylate with glycine"
+xref: Reactome:1540338 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:156580 "Phase II conjugation"
+xref: Reactome:156587 "Amino Acid conjugation"
+xref: Reactome:159424 "Conjugation of carboxylic acids"
+xref: Reactome:177128 "Conjugation of salicylate with glycine"
+xref: Reactome:177135 "Conjugation of benzoate with glycine"
+xref: Reactome:177162 "Conjugation of phenylacetate with glutamine"
+xref: Reactome:211859 "Biological oxidations"
+xref: Reactome:211945 "Phase 1 - Functionalization of compounds"
+xref: Wikipedia:Xenobiotic_metabolism
+is_a: GO:0044237 ! cellular metabolic process
+relationship: part_of GO:0071466 ! cellular response to xenobiotic stimulus
+
+[Term]
+id: GO:0006520
+name: cellular amino acid metabolic process
+namespace: biological_process
+alt_id: GO:0006519
+def: "The chemical reactions and pathways involving amino acids, carboxylic acids containing one or more amino groups, as carried out by individual cells." [CHEBI:33709, GOC:curators, ISBN:0198506732 "Oxford Dictionary of Biochemistry and Molecular Biology"]
+subset: goslim_generic
+subset: goslim_pombe
+subset: gosubset_prok
+synonym: "amino acid and derivative metabolism" EXACT [GOC:curators]
+synonym: "amino acid metabolic process" EXACT [GOC:curators]
+synonym: "cellular amino acid and derivative metabolic process" EXACT []
+synonym: "cellular amino acid metabolism" EXACT []
+is_a: GO:0019752 ! carboxylic acid metabolic process
+is_a: GO:0044106 ! cellular amine metabolic process
+is_a: GO:0044238 ! primary metabolic process
+
+[Term]
+id: GO:0048870
+name: cell motility
+namespace: biological_process
+def: "Any process involved in the controlled self-propelled movement of a cell that results in translocation of the cell from one place to another." [GOC:dgh, GOC:dph, GOC:isa_complete, GOC:mlg]
+subset: goslim_generic
+subset: gosubset_prok
+synonym: "cell locomotion" EXACT []
+synonym: "cell movement" RELATED []
+synonym: "movement of a cell" EXACT []
+is_a: GO:0006928 ! cellular component movement
+is_a: GO:0040011 ! locomotion
+relationship: part_of GO:0051674 ! localization of cell
+
+[Term]
+id: GO:0009758
+name: carbohydrate utilization
+namespace: biological_process
+def: "A series of processes that forms an integrated mechanism by which a cell or an organism detects the depletion of primary carbohydrate sources,usually glucose, and then activates genes to scavenge the last traces of the primary carbohydrate source and to transport and metabolize alternate carbohydrate sources. The utilization process begins when the cell or organism detects carbohydrate levels, includes the activation of genes whose products detect, transport or metabolize carbohydrates, and ends when the carbohydrate is incorporated into the cell or organism's metabolism." [GOC:mah, GOC:mlg]
+is_a: GO:0008150 ! biological_process
+relationship: has_part GO:0005975 ! carbohydrate metabolic process
+relationship: has_part GO:0008643 ! carbohydrate transport
+relationship: has_part GO:0009730 ! detection of carbohydrate stimulus
+
+[Term]
+id: GO:0015976
+name: carbon utilization
+namespace: biological_process
+alt_id: GO:0015978
+def: "A series of processes that forms an integrated mechanism by which a cell or an organism detects the depletion of primary carbon sources and then activates genes to scavenge the last traces of the primary carbon source and to transport and metabolize alternative carbon sources such as carbon dioxide or carbonic acid. The utilization process begins when the cell or organism detects carbon levels, includes the activation of genes whose products detect, transport or metabolize carbon-containing substances, and ends when carbon is incorporated into the cell or organism's metabolism." [GOC:mah, GOC:mlg]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "carbon utilization by utilization of organic compounds" EXACT [GOC:mah]
+synonym: "heterotrophy" EXACT []
+xref: Wikipedia:Heterotroph
+is_a: GO:0008150 ! biological_process
+relationship: has_part GO:0071702 ! organic substance transport
+relationship: has_part GO:0071703 ! detection of organic substance
+relationship: has_part GO:0071704 ! organic substance metabolic process
+
+[Term]
+id: GO:0008283
+name: cell proliferation
+namespace: biological_process
+def: "The multiplication or reproduction of cells, resulting in the expansion of a cell population." [GOC:mah, GOC:mb]
+comment: This term was moved out from being a child of 'cellular process' because it is a cell population-level process, and cellular processes are restricted to those processes that involve individual cells.
+subset: goslim_generic
+subset: goslim_pir
+subset: gosubset_prok
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0071840
+name: cellular component organization or biogenesis
+namespace: biological_process
+def: "A process that results in the biosynthesis of constituent macromolecules, assembly, arrangement of constituent parts, or disassembly of a cellular component." [GOC:mah]
+is_a: GO:0008150 ! biological_process
+created_by: midori
+creation_date: 2010-09-10T01:39:16Z
+
+[Term]
+id: GO:0016265
+name: death
+namespace: biological_process
+def: "A permanent cessation of all vital functions: the end of life; can be applied to a whole organism or to a part of an organism." [GOC:mah, ISBN:0877797099]
+comment: See also the biological process term 'apoptosis ; GO:0006915'.
+subset: goslim_plant
+subset: gosubset_prok
+xref: Wikipedia:Death
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0032502
+name: developmental process
+namespace: biological_process
+def: "A biological process whose specific outcome is the progression of an integrated living unit: an anatomical structure (which may be a subcellular structure, cell, tissue, or organ), or organism over time from an initial condition to a later condition." [GOC:isa_complete]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "development" NARROW []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0051234
+name: establishment of localization
+namespace: biological_process
+def: "The directed movement of a cell, substance or cellular entity, such as a protein complex or organelle, to a specific location." [GOC:ai]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "establishment of localisation" EXACT [GOC:mah]
+is_a: GO:0008150 ! biological_process
+relationship: part_of GO:0051179 ! localization
+
+[Term]
+id: GO:0040007
+name: growth
+namespace: biological_process
+alt_id: GO:0048590
+def: "The increase in size or mass of an entire organism, a part of an organism or a cell." [GOC:bf, GOC:ma]
+comment: See also the biological process term 'cell growth ; GO:0016049'.
+subset: goslim_generic
+subset: goslim_pir
+subset: goslim_plant
+subset: gosubset_prok
+synonym: "growth pattern" RELATED []
+synonym: "non-developmental growth" RELATED [GOC:mah]
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0002376
+name: immune system process
+namespace: biological_process
+def: "Any process involved in the development or functioning of the immune system, an organismal system for calibrated responses to potential internal or invasive threats." [GO_REF:0000022, GOC:add, GOC:mtg_15nov05]
+comment: Note that this term is a direct child of 'biological_process ; GO:0008150' because some immune system processes are types of cellular process (GO:0009987), whereas others are types of multicellular organism process (GO:0032501). This term was added by GO_REF:0000022.
+subset: goslim_generic
+subset: goslim_pir
+xref: Wikipedia:Immune_system
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0051179
+name: localization
+namespace: biological_process
+def: "Any process in which a cell, a substance, or a cellular entity, such as a protein complex or organelle, is transported to, and/or maintained in a specific location." [GOC:ai]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "establishment and maintenance of cellular component location" NARROW []
+synonym: "establishment and maintenance of localization" EXACT []
+synonym: "establishment and maintenance of position" EXACT []
+synonym: "establishment and maintenance of substance location" NARROW []
+synonym: "establishment and maintenance of substrate location" NARROW []
+synonym: "localisation" EXACT [GOC:mah]
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0040011
+name: locomotion
+namespace: biological_process
+def: "Self-propelled movement of a cell or organism from one location to another." [GOC:dgh]
+subset: goslim_generic
+subset: goslim_pir
+subset: gosubset_prok
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0008152
+name: metabolic process
+namespace: biological_process
+def: "The chemical reactions and pathways, including anabolism and catabolism, by which living organisms transform chemical substances. Metabolic processes typically transform small molecules, but also include macromolecular processes such as DNA repair and replication, and protein synthesis and degradation." [GOC:go_curators, ISBN:0198547684]
+comment: Note that metabolic processes do not include single functions or processes such as protein-protein interactions, protein-nucleic acids, nor receptor-ligand interactions.
+subset: goslim_pir
+subset: goslim_plant
+subset: gosubset_prok
+synonym: "metabolic process resulting in cell growth" NARROW []
+synonym: "metabolism" EXACT []
+synonym: "metabolism resulting in cell growth" NARROW []
+xref: Wikipedia:Metabolism
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0051704
+name: multi-organism process
+namespace: biological_process
+alt_id: GO:0051706
+def: "Any process in which an organism has an effect on another organism of the same or different species." [GOC:ai]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "interaction between organisms" EXACT []
+synonym: "physiological interaction between organisms" EXACT []
+synonym: "physiological interaction with other organism" EXACT []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0032501
+name: multicellular organismal process
+namespace: biological_process
+alt_id: GO:0050874
+def: "Any biological process, occurring at the level of a multicellular organism, pertinent to its function." [GOC:curators, GOC:dph, GOC:isa_complete, GOC:tb]
+subset: goslim_pir
+synonym: "organismal physiological process" EXACT []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0048519
+name: negative regulation of biological process
+namespace: biological_process
+alt_id: GO:0043118
+def: "Any process that stops, prevents, or reduces the frequency, rate or extent of a biological process. Biological processes are regulated by many means; examples include the control of gene expression, protein modification or interaction with a protein or substrate molecule." [GOC:jid]
+subset: gosubset_prok
+synonym: "down regulation of biological process" EXACT []
+synonym: "down-regulation of biological process" EXACT []
+synonym: "downregulation of biological process" EXACT []
+synonym: "inhibition of biological process" NARROW []
+synonym: "negative regulation of physiological process" EXACT []
+is_a: GO:0050789 ! regulation of biological process
+intersection_of: GO:0065007 ! biological regulation
+intersection_of: negatively_regulates GO:0008150 ! biological_process
+relationship: negatively_regulates GO:0008150 ! biological_process
+
+[Term]
+id: GO:0019740
+name: nitrogen utilization
+namespace: biological_process
+def: "A series of processes that forms an integrated mechanism by which a cell or an organism detects the depletion of primary nitrogen source, usually ammonia, and then activates genes to scavenge the last traces of the primary nitrogen source and to transport and metabolize alternative nitrogen sources. The utilization process begins when the cell or organism detects nitrogen levels, includes the activation of genes whose products detect, transport or metabolize nitrogen-containing substances, and ends when nitrogen is incorporated into the cell or organism's metabolism." [GOC:mah, GOC:mlg]
+subset: gosubset_prok
+is_a: GO:0008150 ! biological_process
+relationship: has_part GO:0006807 ! nitrogen compound metabolic process
+relationship: has_part GO:0071705 ! nitrogen compound transport
+
+[Term]
+id: GO:0006794
+name: phosphorus utilization
+namespace: biological_process
+def: "A series of processes that forms an integrated mechanism by which a cell or an organism detects the depletion of primary phosphorus source and then activates genes to scavenge the last traces of the primary phosphorus source and to transport and metabolize alternative phosphorus sources. The utilization process begins when the cell or organism detects phosphorus levels, includes the phosphorus-containing substances, and ends when phosphorus is incorporated into the cell or organism's metabolism." [GOC:mah, GOC:mlg]
+subset: gosubset_prok
+is_a: GO:0008150 ! biological_process
+relationship: has_part GO:0006793 ! phosphorus metabolic process
+
+[Term]
+id: GO:0043473
+name: pigmentation
+namespace: biological_process
+def: "The deposition or aggregation of coloring matter in an organism, tissue or cell." [GOC:jl]
+subset: goslim_generic
+subset: goslim_pir
+subset: gosubset_prok
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0048518
+name: positive regulation of biological process
+namespace: biological_process
+alt_id: GO:0043119
+def: "Any process that activates or increases the frequency, rate or extent of a biological process. Biological processes are regulated by many means; examples include the control of gene expression, protein modification or interaction with a protein or substrate molecule." [GOC:jid]
+subset: gosubset_prok
+synonym: "activation of biological process" NARROW []
+synonym: "positive regulation of physiological process" EXACT []
+synonym: "stimulation of biological process" NARROW []
+synonym: "up regulation of biological process" EXACT []
+synonym: "up-regulation of biological process" EXACT []
+synonym: "upregulation of biological process" EXACT []
+is_a: GO:0050789 ! regulation of biological process
+intersection_of: GO:0065007 ! biological regulation
+intersection_of: positively_regulates GO:0008150 ! biological_process
+relationship: positively_regulates GO:0008150 ! biological_process
+
+[Term]
+id: GO:0050789
+name: regulation of biological process
+namespace: biological_process
+alt_id: GO:0050791
+def: "Any process that modulates the frequency, rate or extent of a biological process. Biological processes are regulated by many means; examples include the control of gene expression, protein modification or interaction with a protein or substrate molecule." [GOC:ai, GOC:go_curators]
+subset: gosubset_prok
+synonym: "regulation of physiological process" EXACT []
+is_a: GO:0065007 ! biological regulation
+intersection_of: GO:0065007 ! biological regulation
+intersection_of: regulates GO:0008150 ! biological_process
+relationship: regulates GO:0008150 ! biological_process
+
+[Term]
+id: GO:0000003
+name: reproduction
+namespace: biological_process
+alt_id: GO:0019952
+alt_id: GO:0050876
+def: "The production by an organism of new individuals that contain some portion of their genetic material inherited from that organism." [GOC:go_curators, GOC:isa_complete, ISBN:0198506732 "Oxford Dictionary of Biochemistry and Molecular Biology"]
+subset: goslim_generic
+subset: goslim_pir
+subset: goslim_plant
+subset: gosubset_prok
+synonym: "reproductive physiological process" EXACT []
+xref: Wikipedia:Reproduction
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0022414
+name: reproductive process
+namespace: biological_process
+def: "A biological process that directly contributes to the process of producing new individuals by one or two organisms. The new individuals inherit some proportion of their genetic material from the parent or parents." [GOC:dph, GOC:isa_complete]
+subset: gosubset_prok
+is_a: GO:0008150 ! biological_process
+relationship: part_of GO:0000003 ! reproduction
+
+[Term]
+id: GO:0050896
+name: response to stimulus
+namespace: biological_process
+alt_id: GO:0051869
+def: "Any process that results in a change in state or activity of a cell or an organism (in terms of movement, secretion, enzyme production, gene expression, etc.) as a result of a stimulus. The process begins with detection of the stimulus and ends with a change in state or activity or the cell or organism." [GOC:ai, GOC:bf]
+comment: Note that this term is in the subset of terms that should not be used for direct gene product annotation. Annotations to this term will be removed during annotation QC.
+subset: goslim_pir
+subset: gosubset_prok
+subset: high_level_annotation_qc
+synonym: "physiological response to stimulus" EXACT []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0048511
+name: rhythmic process
+namespace: biological_process
+def: "Any process pertinent to the generation and maintenance of rhythms in the physiology of an organism." [GOC:jid]
+subset: goslim_pir
+subset: gosubset_prok
+synonym: "rhythm" RELATED []
+is_a: GO:0008150 ! biological_process
+
+[Term]
+id: GO:0023052
+name: signaling
+namespace: biological_process
+alt_id: GO:0023046
+def: "The entirety of a process in which information is transmitted. This process begins with an active signal and ends when a cellular response has been triggered." [GOC:mtg_signal, GOC:mtg_signaling_feb11, GOC:signaling]
+comment: Note that a signal is any variable property or parameter that serves to convey information, and may be a physical entity such as a gene product or small molecule, a photon, or a change in state such as movement or voltage change.
+subset: goslim_pombe
+synonym: "signaling process" EXACT []
+synonym: "signalling" EXACT []
+synonym: "signalling process" RELATED [GOC:mah]
+is_a: GO:0008150 ! biological_process
+creation_date: 2010-02-16T09:30:50Z
+
+[Term]
+id: GO:0007587
+name: sugar utilization
+namespace: biological_process
+def: "A series of processes that forms an integrated mechanism by which a cell or an organism detects the depletion of primary sugar sources, usually glucose, and then activates genes to scavenge the last traces of the primary sugar source and to transport and metabolize alternate sugar sources. The utilization process begins when the cell or organism detects sugar levels, includes the activation of genes whose products detect, transport or metabolize sugars, and ends when the sugar is incorporated into the cell or organism's metabolism." [GOC:mah, GOC:mlg]
+is_a: GO:0008150 ! biological_process
+relationship: has_part GO:0005975 ! carbohydrate metabolic process
+relationship: has_part GO:0008643 ! carbohydrate transport
+relationship: has_part GO:0009730 ! detection of carbohydrate stimulus
+
+[Term]
+id: GO:0006791
+name: sulfur utilization
+namespace: biological_process
+def: "A series of processes that forms an integrated mechanism by which a cell or an organism detects the depletion of primary sulfur sources and then activates genes to scavenge the last traces of the primary sulfur source and to transport and metabolize alternate sulfur sources. The utilization process begins when the cell or organism detects sulfur levels, includes the activation of genes whose products detect, transport or metabolize sulfur-containing compounds, and ends when the sulfur is incorporated into the cell or organism's metabolism." [GOC:mah, GOC:mlg]
+subset: gosubset_prok
+synonym: "sulphur utilization" EXACT []
+is_a: GO:0008150 ! biological_process
+relationship: has_part GO:0006790 ! sulfur compound metabolic process
+
+[Term]
+id: GO:0016032
+name: viral reproduction
+namespace: biological_process
+def: "The process in which a virus reproduces. Usually, this is by infection of a host cell, replication of the viral genome, and assembly of progeny virus particles. In some cases the viral genetic material may integrate into the host genome and only subsequently, under particular circumstances, 'complete' its life cycle." [GOC:mah]
+comment: See also the biological process terms 'viral infectious cycle ; GO:0019058' and 'lysogeny ; GO:0030069'.
+subset: goslim_pir
+synonym: "viral infection" RELATED []
+synonym: "viral life cycle" EXACT []
+synonym: "viral replication cycle" EXACT []
+synonym: "virulence" RELATED []
+xref: Reactome:162587 "HIV Life Cycle"
+xref: Reactome:162906 "HIV Infection"
+xref: Reactome:168255 "Influenza Life Cycle"
+xref: Wikipedia:Viral_life_cycle
+is_a: GO:0008150 ! biological_process
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
