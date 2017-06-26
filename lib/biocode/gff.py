@@ -665,7 +665,9 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         # are there polypeptides?
         for polypeptide in sorted(RNA.polypeptides()):
             ## HACK - we probably don't want to keep this
-            polypeptide_loc = RNA_loc
+            if polypeptide.locations is None:
+                polypeptide_loc = RNA_loc
+
             annot = polypeptide.annotation
             assertions = dict()
             dbxref_strs = list()
