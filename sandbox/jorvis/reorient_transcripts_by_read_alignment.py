@@ -122,6 +122,19 @@ def main():
             last_transcript_id = transcript_id
             counts = { '1':{'T':0,'F':0}, '2':{'T':0,'F':0} }
 
+    # deal with the last one
+    ## determine transcript orientation
+    ## Given an RF library, the 1:T count should outnumber the 1:F one
+    if counts['1']['T'] > counts['1']['F']:
+        correct_orientation_count += 1
+    else:
+        incorrect_orientation_count += 1
+        transcripts_to_correct[last_transcript_id] = 1
+                
+    ## report counts
+    print("{0}\t1-T:{1}\t1-F:{2}\t2-T:{3}\t2-F:{4}".format(last_transcript_id, counts['1']['T'], counts['1']['F'], counts['2']['T'], counts['2']['F']))
+
+
 
     for seq_id in seqs:
         seq = seqs[seq_id]
