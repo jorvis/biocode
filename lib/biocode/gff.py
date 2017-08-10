@@ -380,7 +380,10 @@ def parse_annotation_from_column_9(col9):
 
     for att in atts:
         if att == 'product_name':
-            annot.product_name = atts[att]
+            if isinstance(atts[att], str):
+                annot.product_name = atts[att]
+            else:
+                annot.product_name = ', '.join(atts[att])
         elif att == 'Dbxref':
             ec_nums = list()
 
