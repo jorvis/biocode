@@ -223,8 +223,7 @@ def main():
             
     conn.commit()
 
-    #print("INFO: Creating indexes ...")
-    #create_indexes(curs)
+    create_indexes(curs)
     conn.commit()
     curs.close()
     print("INFO: Complete.")
@@ -232,8 +231,7 @@ def main():
 
 
 def create_indexes( cursor ):
-    # CREATE INDEX index_name ON table_name (column_name);
-
+    print("INFO: Creating indexes ...")
     cursor.execute("CREATE INDEX idx_col_us_id  ON uniref (id)")
 
     cursor.execute("CREATE INDEX idx_col_usa_id  ON uniref_acc (id)")
