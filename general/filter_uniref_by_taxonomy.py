@@ -53,35 +53,54 @@ def main():
     taxid = TaxID(dbtype='sqlite', dbname=args.taxadb)
     clades = args.clades.split(',')
 
+    record_count = 0
+    print_every = 1000
+
     clade_counter = dict()
     for clade in clades:
         clade_counter[clade] = 0
+
+    # remembers for each ID if we're keeping it or not
+    id_cache = dict()
 
     fout = open(args.output_fasta, 'wt')
     keep_entry = False
 
     for line in open(args.input_fasta):
         if line[0] == '>':
+            record_count += 1
+            if record_count % print_every == 0:
+                print("{0} records processed ...".format(record_count), flush=True)
+            
             m = re.search('TaxID=(\d+)', line)
             if m:
                 tax_id = m.group(1)
-                lineage = taxid.lineage_name(tax_id, reverse=True)
-                clade_found = False
 
-                if lineage is None:
-                    keep_entry = False
-                    continue
-
-                for clade in clades:
-                    if clade in lineage:
-                        clade_found = True
-                        clade_counter[clade] += 1
-                        break
-
-                if clade_found:
-                    keep_entry = True
+                if tax_id in id_cache:
+                    if id_cache[tax_id] == True:
+                        keep_entry = True
+                    else:
+                        keep_entry = False
                 else:
-                    keep_entry = False
+                    lineage = taxid.lineage_name(tax_id, reverse=True)
+                    clade_found = False
+
+                    if lineage is None:
+                        keep_entry = False
+                        continue
+
+                    for clade in clades:
+                        if clade in lineage:
+                            clade_found = True
+                            clade_counter[clade] += 1
+                            break
+
+                    if clade_found:
+                        keep_entry = True
+                        id_cache[tax_id] = True
+                    else:
+                        keep_entry = False
+                        id_cache[tax_id] = False
                         
             else:
                 keep_entry = False
