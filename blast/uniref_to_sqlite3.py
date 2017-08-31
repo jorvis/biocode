@@ -113,7 +113,11 @@ def main():
     go_ids = list()
     ec_nums = list()
     record_count = 0
+    res_length = 0
+    is_characterized = 0
     is_compressed = False
+
+    characterized_go_codes = ['EXP', 'IDA', 'IMP', 'IGI', 'IPI', 'IEP']
 
     if args.input.endswith('.gz'):
         ifh = gzip.open(args.input, 'rb')
@@ -131,10 +135,17 @@ def main():
         # is this the end of an entry?
         if re.match( "^//", line ):
             # save
+            #print("INSERT INTO uniref (id, full_name, organism, symbol) values ({0},{1},{2},{3})".format(id, full_name, organism, symbol))
             curs.execute("INSERT INTO uniref (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
 
+            # nothing with hypothetical in the name can be characterized
+            m = re.search('hypothetical', full_name, re.IGNORECASE)
+            if m:
+                is_characterized = 0
+            
             for acc in accs:
-                curs.execute("INSERT INTO uniref_acc (id, accession) values (?,?)", (id, acc))
+                #print("INSERT INTO uniref_acc (id, accession, res_length, is_characterized) values ({0},{1},{2},{3})".format(id, acc, res_length, is_characterized))
+                curs.execute("INSERT INTO uniref_acc (id, accession, res_length, is_characterized) values (?,?,?,?)", (id, acc, res_length, is_characterized))
 
             for go_id in go_ids:
                 curs.execute("INSERT INTO uniref_go (id, go_id) values (?,?)", (id, go_id))
@@ -150,6 +161,8 @@ def main():
             symbol = None
             go_ids = list()
             ec_nums = list()
+            res_length = 0
+            is_characterized = 0
 
             record_count += 1
 
@@ -160,7 +173,12 @@ def main():
                 #break
             
         elif line.startswith("ID"):
-            id = line.split()[1]
+            m = re.match("ID\s+(\S+).+?(\d+) AA\.", line)
+            if m:
+                id = m.group(1)
+                res_length = m.group(2)
+            else:
+                raise Exception("ERROR: the following ID line didn't match the expected convention:\n {0}".format(line))
         elif line.startswith("AC"):
             ac_parts = line.split()
             for part in ac_parts:
@@ -184,9 +202,13 @@ def main():
                         ec_nums.append(m.group(1))
 
         elif line.startswith("DR"):
-            m = re.search("GO:(\d+)", line)
+            m = re.search("GO:(\d+)\; .+?\; ([A-Z]+):\S+\.$", line)
             if m:
                 go_ids.append(m.group(1))
+
+                if m.group(2) in characterized_go_codes:
+                    is_characterized = 1
+                
 
         elif line.startswith("OS"):
             m = re.match("OS\s+(.+)\.$", line)
@@ -201,8 +223,8 @@ def main():
             
     conn.commit()
 
-    print("INFO: Creating indexes ...")
-    create_indexes(curs)
+    #print("INFO: Creating indexes ...")
+    #create_indexes(curs)
     conn.commit()
     curs.close()
     print("INFO: Complete.")
