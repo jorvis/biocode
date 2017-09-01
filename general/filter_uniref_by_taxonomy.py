@@ -113,7 +113,7 @@ def main():
     print("Number of entries exported by clade:")
 
     for clade in clades_counter:
-        print("\t{0}: {1}".format(clade_counter[clade]))
+        print("\t{0}: {1}".format(clade, clade_counter[clade]))
 
         
 if __name__ == '__main__':
