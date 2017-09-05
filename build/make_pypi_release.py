@@ -95,7 +95,7 @@ def main():
 
     print("Please be sure the version ({0}) matches a tag on GitHub for the project".format(args.version))
     print("\nNext do:\n\t$ cd {0}\n\tpython3 setup.py sdist".format(args.output_directory))
-    print("\t$ python3 setup.py sdist upload")
+    print("\t$ twine upload dist/*")
 
 def get_biocode_datafile_paths(base):
     datafiles = list()
