@@ -65,6 +65,8 @@ uniprot_sprot_acc
 -----------------
 id = 001R_FRG3G
 accession = Q6GZX4
+res_length = 121
+is_characterized = 1
 
 uniprot_sprot_go
 ----------------
@@ -111,6 +113,9 @@ def main():
     go_ids = list()
     ec_nums = list()
     
+    is_characterized = 0
+    characterized_go_codes = ['EXP', 'IDA', 'IMP', 'IGI', 'IPI', 'IEP']
+    
     print("INFO: Parsing DAT file ...")
     for line in open(args.input):
         line = line.rstrip()
@@ -120,8 +125,13 @@ def main():
             # save
             curs.execute("INSERT INTO uniprot_sprot (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
 
+            # nothing with hypothetical in the name can be characterized
+            m = re.search('hypothetical', full_name, re.IGNORECASE)
+            if m:
+                is_characterized = 0
+            
             for acc in accs:
-                curs.execute("INSERT INTO uniprot_sprot_acc (id, accession, res_length) values (?,?, ?)", (id, acc, aa_length))
+                curs.execute("INSERT INTO uniprot_sprot_acc (id, accession, res_length, is_characterized) values (?,?,?, ?)", (id, acc, aa_length, is_characterized))
 
             for go_id in go_ids:
                 curs.execute("INSERT INTO uniprot_sprot_go (id, go_id) values (?,?)", (id, go_id))
@@ -138,6 +148,7 @@ def main():
             symbol = None
             go_ids = list()
             ec_nums = list()
+            is_characterized = 0
             
         elif line.startswith("ID"):
             m = re.match("ID\s+(\S+).+\s(\d+) AA", line)
@@ -164,9 +175,12 @@ def main():
                     ec_nums.append(m.group(1))
 
         elif line.startswith("DR"):
-            m = re.search("GO:(\d+)", line)
+            m = re.search("GO:(\d+)\; .+?\; ([A-Z]+):\S+\.$", line)
             if m:
                 go_ids.append(m.group(1))
+
+                if m.group(2) in characterized_go_codes:
+                    is_characterized = 1
 
         elif line.startswith("OS"):
             m = re.match("OS\s+(.+)\.$", line)
@@ -218,7 +232,8 @@ def create_tables( cursor ):
               CREATE TABLE uniprot_sprot_acc (
                  id         text not NULL,
                  accession  text not NULL,
-                 res_length INT
+                 res_length INT,
+                 is_characterized integer DEFAULT 0
               )
     """)
     
