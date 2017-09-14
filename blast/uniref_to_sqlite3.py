@@ -65,6 +65,8 @@ uniref_acc
 -----------------
 id = 001R_FRG3G
 accession = Q6GZX4
+res_length = 121
+is_characterized = 1
 
 uniprot_sprot_go
 uniref_go
