@@ -12,7 +12,8 @@ You provide a full go.obo file, and a file of selected terms.  Only the term id,
 and is_a relationship is really used.  The rest is ignored.
 
 Output:
-The output is a key-value lookup, where each key is one of the full set of GO terms
+The output is a lookup with the highest-level keys being the different GO namespaces.  
+Each of these values is a key-value lookup, where each key is one of the full set of GO terms
 and the corresponding value is the closest slim term to which it maps.  Currently stored
 as a python pickled dict() file or JSON text file, depending on option passed.
 
@@ -51,11 +52,13 @@ def main():
     for full_term_id in full_terms:
         full_term = full_terms[full_term_id]
         full_term_ns = full_term['ns']
-        #print("Full term id: {0}, ns: {1}".format(full_term_id, full_term_ns))
+
+        if full_term_ns not in mapping:
+            mapping[full_term_ns] = dict()
 
         slim_id = check_parents(fg=full_graph, ft_ns=full_term_ns, term=full_term, depth=1,
                                  full_terms=full_terms, slim_terms=slim_terms)
-        mapping[full_term_id] = slim_id
+        mapping[full_term_ns][full_term_id] = slim_id
         terms_processed += 1
         print("Processed {0} of {1} terms ... ".format(terms_processed, len(full_terms)), end='\r')
 
@@ -78,13 +81,10 @@ def check_parents(fg=None, ft_ns=None, term=None, depth=None, full_terms=None, s
     """
     for v_idx in fg[ft_ns].neighbors(term['idx'], mode='out'):
         v_id = fg[ft_ns].vs[v_idx]['id']
-        #print("\t" * depth, end='')
 
         if v_id in slim_terms:
-            #print("Vertex out: {0} MATCHES SLIM".format(v_id))
             return v_id
         else:
-            #print("Vertex out: {0}".format(v_id))
             return check_parents(fg=fg, ft_ns=ft_ns, term=full_terms[v_id], depth=depth + 1,
                                  full_terms=full_terms, slim_terms=slim_terms)
 
