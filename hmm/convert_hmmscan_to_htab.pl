@@ -196,9 +196,7 @@ use strict;
 use warnings;
 use Getopt::Long qw(:config no_ignore_case no_auto_abbrev pass_through);
 use Pod::Usage;
-use FindBin;
-use lib "$FindBin::Bin/../lib";
-use HmmTools;
+use TIGR::HmmTools;
 use MLDBM 'DB_File';
 use Fcntl qw( O_RDONLY );
 
