@@ -669,7 +669,7 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         for polypeptide in sorted(RNA.polypeptides()):
             # Original "if polypeptides.location is None" will always False
             # Changed type checking to list checking
-            if len(polypeptide.locations == 0):
+            if len(polypeptide.locations) == 0:
                 polypeptide_loc = RNA_loc
 
             annot = polypeptide.annotation
