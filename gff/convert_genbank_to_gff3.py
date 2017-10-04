@@ -211,9 +211,9 @@ def main():
                 print("WARNING: The following feature was skipped:\n{0}".format(feat))
                 features_skipped_count += 1
 
-        # don't forget to do the last gene, if there were any
-        if current_gene is not None:
-            gene.print_as(fh=ofh, source='GenBank', format='gff3')
+    # don't forget to do the last gene, if there were any
+    if current_gene is not None:
+        gene.print_as(fh=ofh, source='GenBank', format='gff3')
 
     if args.fasta is True:
         if seqs_pending_writes is True:
