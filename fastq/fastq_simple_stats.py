@@ -5,6 +5,7 @@ Reads one or more FASTQ files and reports some basic statistics.  Example:
 
 $ ./fastq_simple_stats.py my.fastq
 
+File: my.fastq
 Total sequence entries: 277971801
 Total bases: 28353123702
 Avg sequence length: 102.0
@@ -71,6 +72,11 @@ def main():
 
 
     avg_entry_length = total_bases / entry_count
+
+    if len(args.input_files) > 1:
+        fout.write("File: multiple\n")
+    else:
+        fout.write("File: {0}\n".format(args.input_files[0]))
 
     fout.write("Total sequence entries: {0}\n".format(entry_count))
     fout.write("Total bases: {0}\n".format(total_bases))
