@@ -20,7 +20,7 @@ class FunctionalAnnotation:
     Also, there's a place for having attributes like this abstracted, stored in
     ontologies, etc.  We've done all that before.  For now I'm going to try
     and hopefully enjoy the utility of having the most common properties always
-    directly, and simply available.
+    directly, and simply, available.
     """
     def __init__( self, product_name=None, gene_symbol=None, go_annotations=None, ec_numbers=None, dbxrefs=None ):
         self.product_name     = product_name
@@ -84,17 +84,186 @@ class FunctionalAnnotation:
         
     def add_ec_number(self, ec_num):
         """
-        Note to self: Modify this to allow passing ECAnnotation object or string.
+        TODO: Modify this to allow passing ECAnnotation object or string.
         Right now it expects an ECAnnotation object
         """
         self.ec_numbers.append(ec_num)
 
     def add_go_annotation(self, go):
         """
-        Note to self: Modify this to allow passing GOAnnotation object or string.
+        TODO: Modify this to allow passing GOAnnotation object or string.
         Right now it expects an GOAnnotation object
         """
         self.go_annotations.append(go)
+
+    def process_product_name(self):
+        """
+        This method applies a series of rules based on years of annotation experience
+        to gene product names, attempting to correct much of the mess of things which
+        which get submitted to Genbank.  This includes:
+
+        - Removing trailing periods
+        - Nonredundifies: 'protein protein', 'family family'
+        - Any starting with 'ORF' or 'orf' get changed to 'conserved hypothetical protein'
+        - Any products which contain 'homolog' get changed to CHP*
+        - Any products with 'similar to' get changed to CHP
+        - Any with 'DUF' or 'UPF' get changed to CHP
+        - Any with 'ncharacteri' (captures US/british spellings of 'uncharacterized'), gets changed to CHP
+        - Select words are changed to their american spellings
+        - Changes any of (predicted|possible|potential|probable) to 'putative'
+        - Change 'TTG start' to CHP
+        - Change any starting with 'residues' to CHP
+        - Removes 'C-terminus' and 'N-terminus' from end of product name
+        - Then a long list of manual name changes
+
+        * CHP = conserved hypothetical protein
+
+        It returns the new product name rather than overwriting the attribute.  For that,
+        use set_processed_product_name()
+        """
+        new_product = self.product_name
+        default_product = 'conserved hypothetical protein'
+
+        # remove/replace troublesome strings
+        new_product = new_product.rstrip('.')
+        new_product = new_product.replace('protein protein', 'protein')
+        new_product = new_product.replace('family family', 'family')
+
+        if new_product.lower().startswith('orf'):
+            return default_product
+
+        if 'ncharacteri' in new_product.lower():
+            return default_product
+            
+        # process some homolog-specific names
+        if 'homolog' in new_product.lower():
+            if 'shiA homolog' in new_product:
+                new_product = 'shiA protein'
+            elif 'virulence factor mviM homolog' in new_product:
+                new_product = 'virulence factor mviM'
+            elif 'protein phnA homolog' in new_product:
+                new_product = 'phnA protein'
+            elif 'protein seqA homolog' in new_product:
+                new_product = 'seqA protein'
+            else:
+                return default_product
+
+        if 'similar to' in new_product.lower():
+            return default_product
+
+        if 'DUF' in new_product or 'UPF' in new_product:
+            return default_product
+
+        # If it is any form of conserved hypothetical, return the proper version of that.
+        if 'onserved hypothe' in new_product.lower():
+            return default_product
+
+        if 'unnamed' in new_product.lower():
+            return default_product
+
+        # Is the name *only* protein (with whitespace)
+        if new_product.lower().lstrip().rstrip() == 'protein':
+            return default_product
+
+        # Some sources give products which start with the word 'residues'
+        if new_product.lower().startswith('residues'):
+            return default_product
+
+        # Some proteins are simply named 'TTG start'
+        if new_product.lower().startswith('ttg start'):
+            return default_product
+
+        # Correct a class of short bogus names we've often encountered
+        m = re.match('^\w{1,2}\d{1,3}$', new_product)
+        if m:
+            return default_product
+
+        m = re.match('gene \d+ protein', new_product)
+        if m:
+            return default_product
+
+        m = re.match('(.*)\d*\s*[CN]\-terminus$', new_product)
+        if m:
+            new_product = m.groups(1)
+
+        # removes trailing symbols
+        new_product = new_product.rstrip('.,-_:/')
+
+        # Americanize some words.  I'm up for arguments against these, but adding them
+        #  because our previous software had them.
+        new_product.replace('utilisation', 'utilization')
+        new_product.replace('utilising', 'utilizing')
+        new_product.replace('dimerisation', 'dimerization')
+        new_product.replace('disulphide', 'disulfide')
+        new_product.replace('sulphur', 'sulfur')
+        new_product.replace('mobilisation', 'mobilization')
+
+        # standardize several different forms of 'putative' to a single one
+        new_product = re.sub("predicted", "putative", new_product, flags=re.I)
+        new_product = re.sub("possible", "putative", new_product, flags=re.I)
+        new_product = re.sub("potential", "putative", new_product, flags=re.I)
+        new_product = re.sub("probable", "putative", new_product, flags=re.I)
+
+        # Fix incorrect spellings which are getting transitively annotated
+        new_product = re.sub("putaive", "putative", new_product, flags=re.I)
+
+        # Replacements requiring word boundaries
+        patt = re.compile(r'\b(?:%s)\b' % 'asparate')
+        new_product = re.sub(patt, "aspartate", new_product)
+
+        # Now a long series of manual name changes we've gathered over the years
+        #  the key is the source, value is what it will be changed to.
+        replacement_products = {
+            'alr5027 protein': 'heme-binding protein HutZ',
+            'arginine-tRNA-transferase, C terminus family protein': 'putative arginine-tRNA-transferase',
+            'bacterial regulatory helix-turn-helix proteins, AraC family protein': 'transcriptional regulator, AraC family',
+            'bacterial regulatory proteins, gntR family protein': 'transcriptional regulator, GntR family',
+            'bacterial regulatory proteins, lacI family protein': 'transcriptional regulator, LacI family',
+            'bacterial regulatory proteins, luxR family protein': 'transcriptional regulator, LuxR family',
+            'bacterial regulatory proteins, tetR family protein': 'transcriptional regulator, TetR family',
+            'bordetella uptake gene (bug) product family protein': 'bug family protein',
+            'conserved protein with nucleoside triphosphate hydrolase domain': 'putative ATP-dependent endonuclease',
+            'cyclic di-GMP binding protein VCA0042': 'cyclic di-GMP binding protein',
+            'cytochrome b(C-terminal)/b6/petD family protein': 'cytochrome b family protein',
+            'domain related to MnhB subunit of Na+/H+ antiporter family protein': 'Na+/H+ antiporter family protein',
+            'FAD linked oxidases, C-terminal domain protein': 'FAD linked oxidase domain protein',
+            'FGGY family of carbohydrate kinases, C-terminal domain protein': 'carbohydrate kinase, FGGY family',
+            'gene 25-like lysozyme family protein': 'lysozyme family protein',
+            'glutamate synthases, NADH/NADPH, small subunit domain protein': 'glutamate synthase, NADH/NADPH, small subunit',
+            'glycogen/starch synthases, ADP-glucose type family protein': 'glycogen/starch synthase',
+            'GSPII_E N-terminal domain protein': 'bacteriophage N4 adsorption protein B',
+            'hydro-lases, Fe-S type, tartrate/fumarate subfamily, beta region domain protein': 'fumarate hydratase family protein',
+            'invasion gene expression up-regulator, SirB family protein': 'invasion gene expression up-regulator',
+            'K+ potassium transporter family protein': 'potassium uptake protein',
+            'menC_gamma/gm+: o-succinylbenzoic acid (OSB) synthetase': 'o-succinylbenzoic acid (OSB) synthetase',
+            'phage/plasmid replication , gene II/X family protein': 'phage/plasmid replication protein, gene II/X family',
+            'phospholipase d active site motif family protein': 'phospholipase D family protein',
+            'PIII': default_product,
+            'putative 2-hydroxyacid dehydrogenase HI_1556': 'putative 2-hydroxyacid dehydrogenase',
+            'SULFATE TRANSPORTER SULFATE TRANSPORTER FAMILY PROTEIN': 'sulfate permease family protein',
+            'thiamin/thiamin pyrophosphate ABC transporter, thiamin/thiamin pyrophospate-binding protein': 'thiamin/thiamine pyrophosphate ABC transporter, thiamin/thiamine pyrophospate-binding protein',
+            'traG-like , N-terminal region family protein': 'putative traG protein',
+            'transcriptional activator of defense systems': 'multiple antibiotic resistance protein MarA',
+            'transcriptional regulatory protein, C terminal family protein': 'putative transcriptional regulator',
+            'transposase and inactivated derivative': 'putative transposase',
+            'tripartite ATP-independent periplasmic transporters, DctQ component family protein': 'tripartite ATP-independent periplasmic transporter, DctQ family',
+            'type IV secretory pathway VirD2 components': 'type IV secretory pathway protein',
+            'zn-dependent hydrolase of the beta-lactamase fold': default_product,
+        }
+
+        for old in replacement_products:
+            if new_product == old:
+                new_product = replacement_products[old]
+                break
+
+        return new_product.rstrip().lstrip()
+        
+
+    def set_processed_product_name(self):
+        """
+        See FunctionalAnnotation.process_product_name() for full list of actions
+        """
+        self.product_name = self.process_product_name()
 
 class Dbxref:
     """
