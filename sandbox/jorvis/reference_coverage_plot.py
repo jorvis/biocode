@@ -6,11 +6,6 @@ Initially written to plot results from Priti's pipeline, where the goal was to d
 how well an assembled transcriptome (Trinity) produced contigs which covered a set of
 reference transcripts.  Steps in her pipeline:
 
-## First create symlinks:
-
-reference.fasta - The smaller set of reference transcripts for which you want to calculate coverage
-assembly.fasta - The transcriptome assem
-
 export BASE=A8_muscle.trinity.standard
 formatdb -p F -i $BASE.fasta
 blastall -p blastn -i toi_20161110.fna -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
@@ -19,8 +14,7 @@ sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
 sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
 # then to actually plot these:
-~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i assembly.all.per_cov.txt,assembly.longest.per_cov.txt -l All,Longest -t "Repeat filtered Oases + Trinity, post-TGICL"
-
+$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "Transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.png
 
 --stacked option:
 Rather than just show coverage with the max Y value at 100, use of this option creates a
@@ -47,6 +41,7 @@ def main():
     parser.set_defaults(stacked=False)
     parser.add_argument('-rf', '--ref_fasta', required=False, help='Only needed if passing --stacked')
     parser.add_argument('-qf', '--qry_fasta', required=False, help='Only needed if passing --stacked')
+    parser.add_argument('-mb', '--margin_bottom', type=int, required=False, default=120, help='Size of the bottom margin, in case X labels are being cut off')
     parser.add_argument('-o', '--output_image', type=str, required=False, help='Name for PNG file to be created. If not passed, will post to plotly site' )
     args = parser.parse_args()
 
@@ -165,7 +160,8 @@ def main():
         bargap=0.15,
         bargroupgap=0.1,
         width=1500,
-        height=800
+        height=800,
+        margin = go.Margin(b = args.margin_bottom, pad=5)
     )
     fig = go.Figure(data=traces, layout=layout)
 
