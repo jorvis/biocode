@@ -129,6 +129,7 @@ foreach my $line (<$ifh>){
 			print "$contig\ttRNAScan-SE\ttRNA\t$stop\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_tRNA;Name=tRNA-$trna;anticodon=$anticodon \n";
 			print "$contig\ttRNAScan-SE\texon\t$stop\t$intron_end\t$score\t-\t.\tID=tRNA-$trna$i\_exon;Note=contains predicted Intron\n";
 			print "$contig\ttRNAScan-SE\texon\t$intron_start\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_exon;Parent=tRNA-$trna$i\_exon\n";
+			$i++;
 		}
 	} else{
 		if ($start < $stop){
