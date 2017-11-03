@@ -54,26 +54,26 @@ The following tables are created in the SQLite3 db (which is created if it doesn
 already exist) (these are fake example data, and there are a lot of 1:many 
 relationships here):
 
-table: uniprot_sprot
+table: entry
 ----------
 id = 001R_FRG3G
 full_name = 11S globulin subunit beta
 organism = Frog virus 3 (isolate Goorha)
 symbol = FV3-001R
 
-uniprot_sprot_acc
+entry_acc
 -----------------
 id = 001R_FRG3G
 accession = Q6GZX4
 res_length = 121
 is_characterized = 1
 
-uniprot_sprot_go
+entry_go
 ----------------
 id = 001R_FRG3G
 go_id = string (0005634)
 
-uniprot_sprot_ec
+entry_ec
 ----------------
 id = 001R_FRG3G
 ec_num = 6.3.4.3
@@ -123,7 +123,7 @@ def main():
         # is this the end of an entry?
         if re.match( "^//", line ):
             # save
-            curs.execute("INSERT INTO uniprot_sprot (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
+            curs.execute("INSERT INTO entry (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
 
             # nothing with hypothetical in the name can be characterized
             m = re.search('hypothetical', full_name, re.IGNORECASE)
@@ -131,13 +131,13 @@ def main():
                 is_characterized = 0
             
             for acc in accs:
-                curs.execute("INSERT INTO uniprot_sprot_acc (id, accession, res_length, is_characterized) values (?,?,?, ?)", (id, acc, aa_length, is_characterized))
+                curs.execute("INSERT INTO entry_acc (id, accession, res_length, is_characterized) values (?,?,?, ?)", (id, acc, aa_length, is_characterized))
 
             for go_id in go_ids:
-                curs.execute("INSERT INTO uniprot_sprot_go (id, go_id) values (?,?)", (id, go_id))
+                curs.execute("INSERT INTO entry_go (id, go_id) values (?,?)", (id, go_id))
 
             for ec_num in ec_nums:
-                curs.execute("INSERT INTO uniprot_sprot_ec (id, ec_num) values (?,?)", (id, ec_num))
+                curs.execute("INSERT INTO entry_ec (id, ec_num) values (?,?)", (id, ec_num))
             
             # reset
             id = None
@@ -206,21 +206,21 @@ def main():
 def create_indexes( cursor ):
     # CREATE INDEX index_name ON table_name (column_name);
 
-    cursor.execute("CREATE INDEX idx_col_us_id  ON uniprot_sprot (id)")
+    cursor.execute("CREATE INDEX idx_col_us_id  ON entry (id)")
 
-    cursor.execute("CREATE INDEX idx_col_usa_id  ON uniprot_sprot_acc (id)")
-    cursor.execute("CREATE INDEX idx_col_usa_acc ON uniprot_sprot_acc (accession)")
+    cursor.execute("CREATE INDEX idx_col_usa_id  ON entry_acc (id)")
+    cursor.execute("CREATE INDEX idx_col_usa_acc ON entry_acc (accession)")
     
-    cursor.execute("CREATE INDEX idx_col_usg_id ON uniprot_sprot_go (id)")
-    cursor.execute("CREATE INDEX idx_col_usg_go ON uniprot_sprot_go (go_id)")
+    cursor.execute("CREATE INDEX idx_col_usg_id ON entry_go (id)")
+    cursor.execute("CREATE INDEX idx_col_usg_go ON entry_go (go_id)")
 
-    cursor.execute("CREATE INDEX idx_col_use_id ON uniprot_sprot_ec (id)")
-    cursor.execute("CREATE INDEX idx_col_use_ec ON uniprot_sprot_ec (ec_num)")
+    cursor.execute("CREATE INDEX idx_col_use_id ON entry_ec (id)")
+    cursor.execute("CREATE INDEX idx_col_use_ec ON entry_ec (ec_num)")
 
 
 def create_tables( cursor ):
     cursor.execute("""
-              CREATE TABLE uniprot_sprot (
+              CREATE TABLE entry (
                  id                text primary key,
                  full_name         text,
                  organism          text,
@@ -229,7 +229,7 @@ def create_tables( cursor ):
     """)
     
     cursor.execute("""
-              CREATE TABLE uniprot_sprot_acc (
+              CREATE TABLE entry_acc (
                  id         text not NULL,
                  accession  text not NULL,
                  res_length INT,
@@ -238,20 +238,18 @@ def create_tables( cursor ):
     """)
     
     cursor.execute("""
-              CREATE TABLE uniprot_sprot_go (
+              CREATE TABLE entry_go (
                  id     text not NULL,
                  go_id  text not NULL
               )
     """)
 
     cursor.execute("""
-              CREATE TABLE uniprot_sprot_ec (
+              CREATE TABLE entry_ec (
                  id     text not NULL,
                  ec_num text not NULL
               )
     """)
-
-
 
 
 if __name__ == '__main__':
