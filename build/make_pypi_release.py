@@ -96,6 +96,8 @@ def main():
     print("Please be sure the version ({0}) matches a tag on GitHub for the project".format(args.version))
     print("\nNext do:\n\t$ cd {0}\n\tpython3 setup.py sdist".format(args.output_directory))
     print("\t$ twine upload dist/*")
+    print("\t$ git tag v{0}".format(args.version))
+    print("\t$ git push --tags")
 
 def get_biocode_datafile_paths(base):
     datafiles = list()
