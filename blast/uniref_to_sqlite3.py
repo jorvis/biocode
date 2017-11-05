@@ -52,30 +52,26 @@ The following tables are created in the SQLite3 db (which is created if it doesn
 already exist) (these are fake example data, and there are a lot of 1:many 
 relationships here):
 
-table: uniprot_sprot
-table: uniref
+table: entry
 ----------
 id = 001R_FRG3G
 full_name = 11S globulin subunit beta
 organism = Frog virus 3 (isolate Goorha)
 symbol = FV3-001R
 
-uniprot_sprot_acc
-uniref_acc
+entry_acc
 -----------------
 id = 001R_FRG3G
 accession = Q6GZX4
 res_length = 121
 is_characterized = 1
 
-uniprot_sprot_go
-uniref_go
+entry_go
 ----------------
 id = 001R_FRG3G
 go_id = string (0005634)
 
-uniprot_sprot_ec
-uniref_ec
+entry_ec
 ----------------
 id = 001R_FRG3G
 ec_num = 6.3.4.3
@@ -136,9 +132,7 @@ def main():
         
         # is this the end of an entry?
         if re.match( "^//", line ):
-            # save
-            #print("INSERT INTO uniref (id, full_name, organism, symbol) values ({0},{1},{2},{3})".format(id, full_name, organism, symbol))
-            curs.execute("INSERT INTO uniref (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
+            curs.execute("INSERT INTO entry (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
 
             # nothing with hypothetical in the name can be characterized
             m = re.search('hypothetical', full_name, re.IGNORECASE)
@@ -146,14 +140,13 @@ def main():
                 is_characterized = 0
             
             for acc in accs:
-                #print("INSERT INTO uniref_acc (id, accession, res_length, is_characterized) values ({0},{1},{2},{3})".format(id, acc, res_length, is_characterized))
-                curs.execute("INSERT INTO uniref_acc (id, accession, res_length, is_characterized) values (?,?,?,?)", (id, acc, res_length, is_characterized))
+                curs.execute("INSERT INTO entry_acc (id, accession, res_length, is_characterized) values (?,?,?,?)", (id, acc, res_length, is_characterized))
 
             for go_id in go_ids:
-                curs.execute("INSERT INTO uniref_go (id, go_id) values (?,?)", (id, go_id))
+                curs.execute("INSERT INTO entry_go (id, go_id) values (?,?)", (id, go_id))
 
             for ec_num in ec_nums:
-                curs.execute("INSERT INTO uniref_ec (id, ec_num) values (?,?)", (id, ec_num))
+                curs.execute("INSERT INTO entry_ec (id, ec_num) values (?,?)", (id, ec_num))
             
             # reset
             id = None
@@ -171,9 +164,7 @@ def main():
             if record_count % 1000 == 0:
                 print("{0} records processed ...".format(record_count))
                 conn.commit()
-                # for debugging only
-                #break
-            
+
         elif line.startswith("ID"):
             m = re.match("ID\s+(\S+).+?(\d+) AA\.", line)
             if m:
@@ -234,16 +225,16 @@ def main():
 
 def create_indexes( cursor ):
     print("INFO: Creating indexes ...")
-    cursor.execute("CREATE INDEX idx_col_us_id  ON uniref (id)")
+    cursor.execute("CREATE INDEX idx_col_us_id  ON entry (id)")
 
-    cursor.execute("CREATE INDEX idx_col_usa_id  ON uniref_acc (id)")
-    cursor.execute("CREATE INDEX idx_col_usa_acc ON uniref_acc (accession)")
+    cursor.execute("CREATE INDEX idx_col_usa_id  ON entry_acc (id)")
+    cursor.execute("CREATE INDEX idx_col_usa_acc ON entry_acc (accession)")
     
-    cursor.execute("CREATE INDEX idx_col_usg_id ON uniref_go (id)")
-    cursor.execute("CREATE INDEX idx_col_usg_go ON uniref_go (go_id)")
+    cursor.execute("CREATE INDEX idx_col_usg_id ON entry_go (id)")
+    cursor.execute("CREATE INDEX idx_col_usg_go ON entry_go (go_id)")
 
-    cursor.execute("CREATE INDEX idx_col_use_id ON uniref_ec (id)")
-    cursor.execute("CREATE INDEX idx_col_use_ec ON uniref_ec (ec_num)")
+    cursor.execute("CREATE INDEX idx_col_use_id ON entry_ec (id)")
+    cursor.execute("CREATE INDEX idx_col_use_ec ON entry_ec (ec_num)")
 
 
 def create_tables( cursor ):
@@ -278,8 +269,6 @@ def create_tables( cursor ):
                  ec_num text not NULL
               )
     """)
-
-
 
 
 if __name__ == '__main__':
