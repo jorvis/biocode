@@ -96,6 +96,31 @@ class FunctionalAnnotation:
         """
         self.go_annotations.append(go)
 
+    def process_gene_symbol(self):
+        """
+        This method applies a series of rules based on our experience in annotation
+        to gene symbols, attempting to correct things before they get submitted to
+        GenBank.  This includes:
+
+        - Removing anything after the first whitespace
+        - DOES NOT change case.  Genbank demands that prok submissions all use lower
+          case but allows organism-specific conventions to be followed for others.
+          - https://www.ncbi.nlm.nih.gov/genbank/genomesubmit_annotation/
+
+        This method returns the new gene symbol rather than overwriting the attribute.  For
+        that, use set_processed_gene_symbol instead.
+        """
+        new_gs = self.gene_symbol
+
+        if not new_gs:
+            return new_gs
+
+        # take off everything after and including the first space, if any
+        new_gs = new_gs.split(' ', 1)[0]
+
+        return new_gs
+        
+
     def process_product_name(self):
         """
         This method applies a series of rules based on years of annotation experience
@@ -119,7 +144,7 @@ class FunctionalAnnotation:
         * CHP = conserved hypothetical protein
 
         It returns the new product name rather than overwriting the attribute.  For that,
-        use set_processed_product_name()
+        use set_processed_product_name() instead.
         """
         new_product = self.product_name
         default_product = 'conserved hypothetical protein'
@@ -258,6 +283,12 @@ class FunctionalAnnotation:
 
         return new_product.rstrip().lstrip()
         
+
+    def set_processed_gene_symbol(self):
+        """
+        See FunctionalAnnotation.process_gene_symbol() for full list of actions
+        """
+        self.gene_symbol = self.process_gene_symbol()
 
     def set_processed_product_name(self):
         """
