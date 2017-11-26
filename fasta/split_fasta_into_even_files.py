@@ -59,7 +59,13 @@ def main():
     print("INFO: There were {0} records found in the input file.".format(total_record_count))
     min_records_per_file = int(total_record_count / args.file_count)
     file_count_to_create = int(total_record_count / min_records_per_file)
-    print("INFO: {0} files will be created.".format(file_count_to_create))
+
+    # words matter
+    if file_count_to_create == 1:
+        print("INFO: {0} file will be created.".format(file_count_to_create))
+    else:
+        print("INFO: {0} files will be created.".format(file_count_to_create))
+
     print("INFO: Most files will have {0} records in each.".format(min_records_per_file))
 
     file_part_num = 1
