@@ -93,9 +93,9 @@ def main():
 
     manifest_fh.close()
 
-    print("Please be sure the version ({0}) matches a tag on GitHub for the project".format(args.version))
+    print("Steps to tag (on GitHub) and release (on PyPi) version {0}:".format(args.version))
     print("\nNext do:\n\t$ cd {0} && python3 setup.py sdist && twine upload dist/*".format(args.output_directory))
-    print("\nThen: $ cd - && git tag v{0} && git push --tags".format(args.version))
+    print("Then: \n\t$ cd - && git tag v{0} && git push --tags".format(args.version))
 
 def get_biocode_datafile_paths(base):
     datafiles = list()
