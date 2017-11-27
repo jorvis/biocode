@@ -146,15 +146,11 @@ class FunctionalAnnotation:
         * CHP = conserved hypothetical protein
 
         It returns the new product name rather than overwriting the attribute.  For that,
-<<<<<<< HEAD
         use set_processed_product_name().
 
         Note:  NCBI submission rules:  https://www.ncbi.nlm.nih.gov/genbank/asndisc.examples/
                Especially the section: SUSPECT_PRODUCT_NAMES
                These are NOT currently all implemented here
-=======
-        use set_processed_product_name() instead.
->>>>>>> d7dcd31b3881edd3363fe9071112438b0a6392eb
         """
         new_product = self.product_name
         default_product = 'conserved hypothetical protein'
