@@ -128,7 +128,8 @@ class FunctionalAnnotation:
         which get submitted to Genbank.  This includes:
 
         - Removing trailing periods
-        - Nonredundifies: 'protein protein', 'family family', 'family protein family protein'
+        - Nonredundifies: 'protein protein', 'family family', 'family protein family protein', 
+          'protein family protein'
         - Any starting with 'ORF' or 'orf' get changed to 'conserved hypothetical protein'
         - Any products which contain 'homolog' get changed to CHP*
         - Any products with 'similar to' get changed to CHP
@@ -141,7 +142,7 @@ class FunctionalAnnotation:
         - Removes 'C-terminus' and 'N-terminus' from end of product name
         - Strips embedded Dbxrefs from end of name:
           - Example: (2E,6E)-farnesyl diphosphate synthase {ECO:0000313|EMBL:OOP19401.1}
-        - Then a long list of manual name changes
+        - Then a long list of manual, specific name changes
 
         * CHP = conserved hypothetical protein
 
@@ -160,6 +161,11 @@ class FunctionalAnnotation:
         new_product = new_product.replace('protein protein', 'protein')
         new_product = new_product.replace('family family', 'family')
         new_product = new_product.replace('family protein family protein', 'family protein')
+        new_product = new_product.replace('family protein domain protein', 'family protein')
+        new_product = new_product.replace('domain domain protein', 'domain protein')
+        new_product = new_product.replace('protein family protein', 'family protein')
+        new_product = new_product.replace('superfamily protein family protein', 'family protein')
+        new_product = new_product.replace(' Protein-like family protein', '-like family protein')
 
         # takes patterns like this off the end:  {ECO:0000313|EMBL:OOP19401.1}
         m = re.match('(.+) \{.+\:.+\}')
@@ -225,6 +231,21 @@ class FunctionalAnnotation:
 
         # removes trailing symbols
         new_product = new_product.rstrip('.,-_:/')
+
+        # Names can't end in family.  Example replacements:
+        #  phage major capsid protein, HK97 family  ->  HK97 family phage major capsid protein
+        #  phage portal protein, lambda family  ->  lambda family phage portal protein
+        if new_product.endswith(' family'):
+            m = re.match('(.+), (.+) family', new_product)
+            if m:
+                new_product = "{0} {1}".format(m.group(2), m.group(1))
+
+        # If family still remains in the name twice, take out the first one
+        #  Peptidase family S49 family protein  ->  Peptidase S49 family protein
+        if new_product.count('family') > 1:
+            m = re.match('(.+?) family (.+)', new_product)
+            if m:
+                new_product = "{0} {1}".format(m.group(1), m.group(2))
 
         # Americanize some words.  I'm up for arguments against these, but adding them
         #  because our previous software had them.
