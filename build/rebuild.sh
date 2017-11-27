@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This should match the PyPi version, which needs to be available first.
-IMAGE_VERSION='0.4.4'
+IMAGE_VERSION='0.4.5'
 
 docker rmi -f jorvis/biocode
 docker build --no-cache -t jorvis/biocode:latest -t jorvis/biocode:${IMAGE_VERSION} .
