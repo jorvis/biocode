@@ -170,7 +170,7 @@ class FunctionalAnnotation:
         # takes patterns like this off the end:  {ECO:0000313|EMBL:OOP19401.1}
         m = re.match('(.+) \{.+\:.+\}', new_product)
         if m:
-            new_product = m.groups(1)
+            new_product = m.group(1)
         
         if new_product.lower().startswith('orf'):
             return default_product
