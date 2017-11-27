@@ -168,7 +168,7 @@ class FunctionalAnnotation:
         new_product = new_product.replace(' Protein-like family protein', '-like family protein')
 
         # takes patterns like this off the end:  {ECO:0000313|EMBL:OOP19401.1}
-        m = re.match('(.+) \{.+\:.+\}')
+        m = re.match('(.+) \{.+\:.+\}', new_product)
         if m:
             new_product = m.groups(1)
         
