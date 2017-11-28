@@ -225,7 +225,43 @@ def add_assembly_fasta(mols, fasta_file):
             mol.residues = fasta_seqs[mol_id]['s']
             mol.length   = len(mol.residues)
 
-    
+
+def serialize_gff3(path=None, assemblies=None, features=None):
+    """
+    Takes an output file path, then dicts of assembly and feature options (usually
+    produced by biocode.gff.get_gff3_features) and serializes these to a file.  The
+    output includes the GFF3 header and FASTA section if any of the assembly features
+    have associated residues.
+    """
+    ## output will either be a file or STDOUT
+    ofh = sys.stdout
+    if path is not None:
+        ofh = open(path, 'wt')
+
+    ofh.write("##gff-version 3\n")
+
+    has_fasta = False
+
+    for assembly_id in assemblies:
+        current_assembly = assemblies[assembly_id]
+        
+        for gene in assemblies[assembly_id].genes():
+            gene.print_as(fh=ofh, format='gff3')
+
+        if current_assembly.length:
+            has_fasta = True
+
+    # handle the fasta section
+    if has_fasta:
+        ofh.write("##FASTA\n")
+
+        for assembly_id in sorted(assemblies):
+            ofh.write(">{0}\n".format(assembly_id))
+            ofh.write("{0}\n".format(utils.wrapped_fasta(assemblies[assembly_id].residues)))
+
+    if path is not None:
+        ofh.close()
+            
 def wrapped_fasta(string, every=60):
     """
     Pass a string of residues (nucleotide or polypeptides) that has NO whitespace and
