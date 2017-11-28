@@ -239,7 +239,7 @@ def create_indexes( cursor ):
 
 def create_tables( cursor ):
     cursor.execute("""
-              CREATE TABLE uniref (
+              CREATE TABLE entry (
                  id                text primary key,
                  full_name         text,
                  organism          text,
@@ -248,7 +248,7 @@ def create_tables( cursor ):
     """)
     
     cursor.execute("""
-              CREATE TABLE uniref_acc (
+              CREATE TABLE entry_acc (
                  id         text not NULL,
                  accession  text not NULL,
                  res_length integer,
@@ -257,14 +257,14 @@ def create_tables( cursor ):
     """)
     
     cursor.execute("""
-              CREATE TABLE uniref_go (
+              CREATE TABLE entry_go (
                  id     text not NULL,
                  go_id  text not NULL
               )
     """)
 
     cursor.execute("""
-              CREATE TABLE uniref_ec (
+              CREATE TABLE entry_ec (
                  id     text not NULL,
                  ec_num text not NULL
               )
