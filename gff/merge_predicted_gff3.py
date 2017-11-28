@@ -38,9 +38,7 @@ def main():
     (assemblies, features) = gff.get_gff3_features(args.model_gff)
 
     if args.barrnap_gff:
-        print("Before Barrnap there are {0} features".format(len(features)))
         add_barrnap_features(assemblies, features, args.barrnap_gff)
-        print("After Barrnap there are {0} features".format(len(features)))
 
     utils.serialize_gff3(path=args.output_gff, assemblies=assemblies, features=features)
 
