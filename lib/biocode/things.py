@@ -1,3 +1,4 @@
+
 import uuid
 
 #from biocode import utils, gff, tbl
@@ -1251,7 +1252,19 @@ class mRNASet( MoleculeSet ):
         for seq_id in seqs:
             mRNA = mRNA(id=seq_id, residues=seqs[seq_id]['s'])
             self.add(mRNA)
-        
+
+class tmRNA( RNA ):
+    '''
+    SO definition (2017-11-29): "A tmRNA liberates a mRNA from a stalled ribosome. To accomplish this part 
+    of the tmRNA is used as a reading frame that ends in a translation stop signal. The broken mRNA is 
+    replaced in the ribosome by the tmRNA and translation of the tmRNA leads to addition of a proteolysis 
+    tag to the incomplete protein enabling recognition by a protease. Recently a number of permuted tmRNAs 
+    genes have been found encoded in two parts. TmRNAs have been identified in eubacteria and some 
+    chloroplasts but are absent from archeal and Eukaryote nuclear genomes."
+    '''
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
+            
 class rRNA( RNA ):
     '''
     SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both
