@@ -653,6 +653,7 @@ class Gene( LocatableThing ):
         self.children = _initialize_type_list(self.children, 'mRNA')
         self.children = _initialize_type_list(self.children, 'rRNA')
         self.children = _initialize_type_list(self.children, 'tRNA')
+        self.children = _initialize_type_list(self.children, 'tmRNA')
 
     def __hash__(self):
         return hash(self.id)
@@ -667,6 +668,8 @@ class Gene( LocatableThing ):
             self.add_rRNA(rna)
         elif isinstance(rna, tRNA):
             self.add_tRNA(rna)
+        elif isinstance(rna, tmRNA):
+            self.add_tmRNA(rna)
         else:
             raise Exception("ERROR: add_RNA() method called for unrecognized type: {0}".format(rna.__class__.__name__))
 
@@ -681,6 +684,10 @@ class Gene( LocatableThing ):
     def add_tRNA(self, rna):
         rna.parent = self
         self.children['tRNA'].append(rna)
+
+    def add_tmRNA(self, rna):
+        rna.parent = self
+        self.children['tmRNA'].append(rna)
 
     def get_residues(self):
         if len(self.locations) == 0:
