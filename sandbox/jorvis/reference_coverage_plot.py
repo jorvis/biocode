@@ -14,7 +14,11 @@ sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
 sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
 # then to actually plot these:
-$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "Transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.png
+$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "Transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.both.png
+
+$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "Longest transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.longest.png
+
+$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "All transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.all.png
 
 --stacked option:
 Rather than just show coverage with the max Y value at 100, use of this option creates a
