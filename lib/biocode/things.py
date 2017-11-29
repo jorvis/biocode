@@ -729,7 +729,7 @@ class Gene( LocatableThing ):
         
 
     def RNAs(self):
-        return self.children['mRNA'] + self.children['tRNA'] + self.children['rRNA']
+        return self.children['mRNA'] + self.children['tRNA'] + self.children['rRNA'] + self.children['tmRNA']
 
     def remove_mRNA(self, rna):
         if rna in self.children['mRNA']:
@@ -1004,7 +1004,8 @@ class RNA( LocatableThing ):
         self.children = children
 
         ## This should be an instance of FunctionalAnnotation from annotation.py
-        #   It's considered best practice to put the annotation on the Polypeptide feature, when appropriate.
+        #   It's considered best practice to put the annotation on the Polypeptide feature for coding RNAs.
+        #   Here we expect things like product (rRNAs), anticodon (tRNAs), etc.
         self.annotation = annotation
 
         ## initialize any types needed
@@ -1291,9 +1292,9 @@ class tRNA( RNA ):
     in two manners: having more than one tRNA (with a specific anti-codon) for a particular amino acid;
     and 'wobble' base-pairing, i.e. permitting non-standard base-pairing at the 3rd anti-codon position."
     '''
-    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None, anticodon=None ):
         super().__init__(id, locations, parent, locus_tag, children)
-
+        self.anticodon = anticodon
 
 class UTR( LocatableThing ):
     '''

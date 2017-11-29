@@ -610,6 +610,15 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
         if rna_partiality_string is not None:
             rna_annot_atts['Partial'] = rna_partiality_string
 
+        # ncRNAs might have annotation elements at the RNA level
+        if RNA.annotation:
+            # tRNAs should have a product and anticodon
+            if RNA.annotation.product_name:
+                rna_annot_atts['product_name'] = RNA.annotation.product_name
+
+            if hasattr(RNA, 'anticodon') and RNA.anticodon:
+                rna_annot_atts['anticodon'] = RNA.anticodon
+
         columns[2] = RNA.__class__.__name__
         columns[3:5] = [str(RNA_loc.fmin + 1), str(RNA_loc.fmax)]
         columns[8] = build_column_9( id=RNA.id, parent=RNA.parent.id, other=rna_annot_atts )
