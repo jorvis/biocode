@@ -236,7 +236,7 @@ class FunctionalAnnotation:
         #  phage major capsid protein, HK97 family  ->  HK97 family phage major capsid protein
         #  phage portal protein, lambda family  ->  lambda family phage portal protein
         if new_product.endswith(' family'):
-            m = re.match('(.+), (.+) family', new_product)
+            m = re.match('(.+), (.+ family)', new_product)
             if m:
                 new_product = "{0} {1}".format(m.group(2), m.group(1))
 
