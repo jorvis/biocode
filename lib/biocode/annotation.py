@@ -129,7 +129,8 @@ class FunctionalAnnotation:
 
         - Removing trailing periods
         - Nonredundifies: 'protein protein', 'family family', 'family protein family protein', 
-          'protein family protein'
+          'protein family protein' and similar
+        - Changes 'superfamily' to 'family'
         - Any starting with 'ORF' or 'orf' get changed to 'conserved hypothetical protein'
         - Any products which contain 'homolog' get changed to CHP*
         - Any products with 'similar to' get changed to CHP
@@ -159,6 +160,7 @@ class FunctionalAnnotation:
         # remove/replace troublesome strings
         new_product = new_product.rstrip('.')
         new_product = new_product.replace('protein protein', 'protein')
+        new_product = new_product.replace('superfamily', 'family')
         new_product = new_product.replace('family family', 'family')
         new_product = new_product.replace('family protein family protein', 'family protein')
         new_product = new_product.replace('family protein domain protein', 'family protein')
@@ -166,6 +168,7 @@ class FunctionalAnnotation:
         new_product = new_product.replace('protein family protein', 'family protein')
         new_product = new_product.replace('superfamily protein family protein', 'family protein')
         new_product = new_product.replace(' Protein-like family protein', '-like family protein')
+        new_product = new_product.replace(' protein-like family protein', '-like family protein')
 
         # takes patterns like this off the end:  {ECO:0000313|EMBL:OOP19401.1}
         m = re.match('(.+) \{.+\:.+\}', new_product)
@@ -233,6 +236,7 @@ class FunctionalAnnotation:
         new_product = new_product.rstrip('.,-_:/')
 
         # Names can't end in family.  Example replacements:
+        #  Raf kinase inhibitor-like protein, YbhB/YbcL family -> YbhB/YbcL family Raf kinase inhibitor-like protein
         #  phage major capsid protein, HK97 family  ->  HK97 family phage major capsid protein
         #  phage portal protein, lambda family  ->  lambda family phage portal protein
         if new_product.endswith(' family'):
