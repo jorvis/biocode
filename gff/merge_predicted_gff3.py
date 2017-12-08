@@ -58,7 +58,8 @@ def add_aragorn_features(assemblies, features, aragorn_file):
         line = line.rstrip()
 
         if line.startswith('>'):
-            current_assembly_id = line[1:]
+            m = re.match('>(\S+)', line)
+            current_assembly_id = m.group(1)
         else:
             cols = line.split()
 
