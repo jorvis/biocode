@@ -15,4 +15,4 @@ RUN apt-get -y update && apt-get install -y \
 RUN cpan JORVIS/TIGR/TIGR-0.03.tar.gz
 
 RUN pip3 install pypandoc jinja2
-RUN pip3 install biocode==0.5.2
+RUN pip3 install biocode==0.5.3
