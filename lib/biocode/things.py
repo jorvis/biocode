@@ -10,8 +10,7 @@ import biocode.tbl
 Warning: this module requires Python 3.2 or higher
 
 Yes, there's a lot of abstraction that could happen here still but I'm trying to allow for
-special consideration to be allowed for each feature type and for calls to read more like
-biology than CS.
+special consideration for each feature type and for calls to read more like biology than CS.
 
 Each of the 'things' is intended to be biologically relevant, and I've included the definitions
 for each from the Sequence Ontology.  Their class representations may not match this perfectly
