@@ -131,12 +131,7 @@ def print_biogene( gene=None, fh=None, on=None ):
 
         ###########################
         ## write the RNA feature (made up of exon fragments)
-        RNA_loc_segments = list()
-        for exon in sorted(rna.exons()):
-            exon_loc = exon.location_on(on)
-            RNA_loc_segments.append( [exon_loc.fmin + 1, exon_loc.fmax] )
-
-        RNA_loc_string = segments_to_string(RNA_loc_segments)
+        RNA_loc_string = _get_location_string(rna, on, 'exons')
 
         if RNA_loc.strand == 1:
             fh.write("     {0}            {1}\n".format(rna_class, RNA_loc_string))
@@ -148,17 +143,13 @@ def print_biogene( gene=None, fh=None, on=None ):
         if gene.locus_tag is not None:
             fh.write("                     /locus_tag=\"{0}\"\n".format(gene.locus_tag))
 
-        if rna.annotation is not None:
-            if rna.annotation.product_name is not None:
-                fh.write("                     /product=\"{0}\"\n".format(rna.annotation.product_name))
-
         ###########################
         ## write the CDS feature (made up of CDS fragments)
         if rna_class == 'mRNA':
             cds_loc_segments = list()
         
             if len(rna.CDSs()) < 1:
-                raise Exception("ERROR: Encountered an mRNA ({0}) without an CDS children".format(rna.id))
+                raise Exception("ERROR: Encountered an mRNA ({0}) without any CDS children".format(rna.id))
         
             for cds in sorted(rna.CDSs()):
                 cds_loc = cds.location_on(on)
@@ -315,6 +306,27 @@ def print_sequence( seq=None, fh=None ):
                 break
         fh.write("\n")
 
+def _get_location_string(rna, parent, ftype):
+    segments = list()
+
+    if ftype == 'exons':
+        subfeats = rna.exons()
+    elif ftype == 'CDSs':
+        subfeats = rna.CDSs()
+    else:
+        raise Exception("ERROR: location string requested on unrecognized subfeature type: {0}".format(ftype))
+
+    if len(subfeats) == 0:
+        feat_loc = rna.location_on(parent)
+        segments.append( [feat_loc.fmin + 1, feat_loc.fmax] )
+    else:
+        for subfeat in sorted(subfeats):
+                subfeat_loc = subfeat.location_on(parent)
+                segments.append( [subfeat_loc.fmin + 1, subfeat_loc.fmax] )
+
+    loc_string = segments_to_string(segments)
+    return loc_string
+        
 def _print_common_annotation_features(fh, annot):
     """
     This prints those annotation attributes which are common to both mRNAs
