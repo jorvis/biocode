@@ -58,7 +58,13 @@ def add_aragorn_features(assemblies, features, aragorn_file):
         line = line.rstrip()
 
         if line.startswith('>'):
-            current_assembly_id = line[1:]
+            m = re.match('>(\S+)', line)
+            current_assembly_id = m.group(1)
+
+            if current_assembly_id not in assemblies:
+                assembly = things.Assembly(id=current_assembly_id, residues='')
+                assemblies[current_assembly_id] = assembly
+            
         else:
             cols = line.split()
 
@@ -117,7 +123,8 @@ def add_barrnap_features(assemblies, features, barrnap_gff):
             if cols[0] in assemblies:
                 current_assembly = assemblies[cols[0]]
             else:
-                raise Exception("ERROR: encountered assembly ID ({0}) in Barrnap file that was not found in the model GFF3 file".format(cols[0]))
+                current_assembly = things.Assembly(id=cols[0], residues='')
+                assemblies[cols[0]] = current_assembly
 
             if cols[2] == 'rRNA':
                 atts = gff.column_9_dict(cols[8])
