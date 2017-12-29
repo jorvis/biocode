@@ -29,6 +29,7 @@ Run it from within a GitHub checkout of Biocode, and it will:
 import argparse
 import json
 import os
+import re
 import shutil
 
 def main():
@@ -104,8 +105,15 @@ def create_script_index_json(script_base, data_dir):
         json_data[category] = list()
 
         for script in sorted(d[category]):
+            desc = None
+
+            for line in open("{0}/{1}".format(category, script)):
+                m = re.match('.+ArgumentParser.+description=\'(.+?)\'', line)
+                if m:
+                    desc = m.group(1)
+
             # TODO: Parse description lines from within each script
-            json_data[category].append({'name': script, 'desc': ''})
+            json_data[category].append({'name': script, 'desc': desc})
 
     # Don't change the path of this JSON file without also changing it in the general/list_biocode utility
     with open("{0}/biocode_script_index.json".format(data_dir), 'w') as f:

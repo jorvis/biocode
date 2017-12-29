@@ -16,11 +16,10 @@ import os
 
 def main():
     parser = argparse.ArgumentParser( description='Prints a list of the scripts which are part of the Biocode install')
-    #parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
-    #parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     args = parser.parse_args()
 
     index_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data/biocode_script_index.json')
+    print("Opening this file: {0}".format(index_path))
 
     if not os.path.exists(index_path):
         error_msg = "ERROR: Failed to find expected index path ({0}). ".format(index_path)
@@ -35,7 +34,7 @@ def main():
 
         for item in sorted(json_data[cat], key=itemgetter('name')):
 
-            print("\t{0}".format(item['name']))
+            print("\t{0}\n\t\t{1}".format(item['name'], item['desc']))
     
 
 if __name__ == '__main__':
