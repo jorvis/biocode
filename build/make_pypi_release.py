@@ -176,8 +176,6 @@ def get_biocode_script_dict(base):
         dir_path = "{0}/{1}".format(base, directory)
 
         if os.path.isdir(dir_path):
-            print("Processing directory: {0}".format(dir_path))            
-
             d[directory] = list()
 
             for thing in os.listdir(dir_path):
