@@ -138,20 +138,6 @@ def main():
         parent = gff.column_9_value(cols[8], 'Parent')
         type = cols[2]
 
-# issue
-
-# 66F4EEF2E3C863C251F831817FF71233
-# 7F1917E4D81A959078C9A38E15488BC0
-# E22888670919A4A888572155F40F2654
-# B9D9CF1F7A8E5A2E1124F0A6C68840DC -> BBM_I00232
-# gene before is: 6DE6BCCE69CCDC39994A0940B2ED524A - novel
-
-# errors on: BmicrotiR1_01g00233 -> BBM_I00233
-#5800A4110A62E4EAE57AFAD1F8D65CB3        BBM_I00233
-
-
-
-
         if type == 'gene':
             while True:
                 if id in id_mapping:
