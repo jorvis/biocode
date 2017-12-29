@@ -40,6 +40,24 @@ Ex2 (feature table of GenBank flat file):
                      YPENVEQVDMLLDIVKKCNFNGGLVVDNPNSVKAKKYYLCIWSYNSNIYHKLPNPIEQ
                      NGDHEEVEFDEVESCVMKKRKNKLTYKDRIIKKKQQQRNKGMKTRPDTKYTGRKRPHA
                      F"
+     gene            197875..199416
+                     /gene="rrsH"
+                     /locus_tag="ECDH10B_0182"
+     rRNA            197875..199416
+                     /gene="rrsH"
+                     /locus_tag="ECDH10B_0182"
+                     /product="16S ribosomal RNA"
+                     /db_xref="ASAP:AEC-0004218"
+     gene            199604..199679
+                     /gene="alaV"
+                     /locus_tag="ECDH10B_0184"
+     tRNA            199604..199679
+                     /gene="alaV"
+                     /locus_tag="ECDH10B_0184"
+                     /product="tRNA-Ala"
+                     /note="codon recognized:GCD"
+                     /db_xref="ASAP:AEC-0004111"
+
 
 Ex3 (sequence entry in GenBank flat file):
           |------------------- 60 characters per line --------------------|
@@ -71,6 +89,7 @@ def print_biogene( gene=None, fh=None, on=None ):
     '''
     This method accepts a Gene object located on an Assembly object (from things.py) and prints
     the feature graph for that gene in Genbank flat file format, including the gene, RNA and CDS
+    for coding genes or just the gene and specific type (rRNA, tRNA) for non-coding ones
     '''
     if gene is None:
         raise Exception( "ERROR: The print_biogene() function requires a biogene to be passed via the 'gene' argument" );
@@ -94,8 +113,8 @@ def print_biogene( gene=None, fh=None, on=None ):
     else:
         fh.write("                     /locus_tag=\"{0}\"\n".format(gene.locus_tag))
 
-    # This is complicated, since the 'gene' feature wants a symbol but our annotations are stored on polypeptide.
-    # Descend and get the first one
+    # This is complicated, since the 'gene' feature wants a symbol but our annotations are stored 
+    #  on polypeptide.  Descend and get the first one
 
     for mRNA in sorted(gene.mRNAs()):
         polypeptides = mRNA.polypeptides()
@@ -106,107 +125,87 @@ def print_biogene( gene=None, fh=None, on=None ):
                 fh.write("                     /gene=\"{0}\"\n".format(annot.gene_symbol))
                 break
 
-    for mRNA in sorted(gene.mRNAs()):
-        mRNA_loc = mRNA.location_on( on )
+    for rna in sorted(gene.RNAs()):
+        rna_class = rna.__class__.__name__
+        RNA_loc = rna.location_on( on )
 
         ###########################
-        ## write the mRNA feature (made up of exon fragments)
-        mRNA_loc_segments = list()
-        for exon in sorted(mRNA.exons()):
-            exon_loc = exon.location_on(on)
-            mRNA_loc_segments.append( [exon_loc.fmin + 1, exon_loc.fmax] )
+        ## write the RNA feature (made up of exon fragments)
+        RNA_loc_string = _get_location_string(rna, on, 'exons')
 
-        mRNA_loc_string = segments_to_string(mRNA_loc_segments)
-
-        if mRNA_loc.strand == 1:
-            fh.write("     mRNA            {0}\n".format(mRNA_loc_string))
+        if RNA_loc.strand == 1:
+            fh.write("     {0}            {1}\n".format(rna_class, RNA_loc_string))
         else:
-            fh.write("     mRNA            complement({0})\n".format(mRNA_loc_string))
+            fh.write("     {0}            complement({1})\n".format(rna_class, RNA_loc_string))
 
         # Handle the locus tag, but we've already warned if not present on the gene, so don't
         #  do it again here.
         if gene.locus_tag is not None:
             fh.write("                     /locus_tag=\"{0}\"\n".format(gene.locus_tag))
-
-        if mRNA.annotation is not None:
-            # debug:  You can try out some annotation defaults for printing here
-            mRNA.annotation.product_name = "Hypothetical protein"
-
-            if mRNA.annotation.product_name is not None:
-                fh.write("                     /product=\"{0}\"\n".format(mRNA.annotation.product_name))
 
         ###########################
         ## write the CDS feature (made up of CDS fragments)
-        cds_loc_segments = list()
-
-        if len(mRNA.CDSs()) < 1:
-            raise Exception("ERROR: Encountered an mRNA ({0}) without an CDS children".format(mRNA.id))
+        if rna_class == 'mRNA':
+            cds_loc_segments = list()
         
-        for cds in sorted(mRNA.CDSs()):
-            cds_loc = cds.location_on(on)
-            cds_loc_segments.append( [cds_loc.fmin + 1, cds_loc.fmax] )
+            if len(rna.CDSs()) < 1:
+                raise Exception("ERROR: Encountered an mRNA ({0}) without any CDS children".format(rna.id))
+        
+            for cds in sorted(rna.CDSs()):
+                cds_loc = cds.location_on(on)
+                cds_loc_segments.append( [cds_loc.fmin + 1, cds_loc.fmax] )
 
-        cds_loc_string = segments_to_string(cds_loc_segments)
+                cds_loc_string = segments_to_string(cds_loc_segments)
 
-        if cds_loc.strand == 1:
-            fh.write("     CDS             {0}\n".format(cds_loc_string))
+                if cds_loc.strand == 1:
+                    fh.write("     CDS             {0}\n".format(cds_loc_string))
+                else:
+                    fh.write("     CDS             complement({0})\n".format(cds_loc_string))
+
+            # Handle the locus tag, but we've already warned if not present on the gene, so don't
+            #  do it again here.
+            if gene.locus_tag is not None:
+                fh.write("                     /locus_tag=\"{0}\"\n".format(gene.locus_tag))
+
+            ## if there is annotation on the polypeptide, include it here
+            polypeptides = mRNA.polypeptides()
+            if len(polypeptides) == 1 and polypeptides[0].annotation is not None:
+                annot = polypeptides[0].annotation
+                _print_common_annotation_features(fh, annot)
+
+        # all ncRNA classes
         else:
-            fh.write("     CDS             complement({0})\n".format(cds_loc_string))
+            if rna.annotation is not None:
+                _print_common_annotation_features(fh, rna.annotation)
+            
+        if rna_class == 'mRNA':
+            cds_residues = rna.get_CDS_residues()
+            polypeptide_residues = biocode.utils.translate(cds_residues)
 
-        # Handle the locus tag, but we've already warned if not present on the gene, so don't
-        #  do it again here.
-        if gene.locus_tag is not None:
-            fh.write("                     /locus_tag=\"{0}\"\n".format(gene.locus_tag))
+            if len(polypeptide_residues) > 0:
+                # This is the easiest case first, where no wrapping is needed.
+                if len(polypeptide_residues) < MAX_FTABLE_CONTENT_WIDTH - 15:
+                    fh.write("                     /translation=\"{0}\"\n".format(polypeptide_residues))
+                else:
+                    # If we get here, we must wrap
+                    fh.write("                     /translation=\"{0}\n".format(polypeptide_residues[0:MAX_FTABLE_CONTENT_WIDTH - 14]))
+                    remaining = polypeptide_residues[MAX_FTABLE_CONTENT_WIDTH - 14:]
+                    closing_parens_written = False
 
-        ## if there is annotation on the polypeptide, include it here
-        polypeptides = mRNA.polypeptides()
-        if len(polypeptides) == 1 and polypeptides[0].annotation is not None:
-            annot = polypeptides[0].annotation
+                    while len(remaining) > 0:
+                        if len(remaining) > MAX_FTABLE_CONTENT_WIDTH - 1:
+                            fh.write("                     {0}\n".format(remaining[0:MAX_FTABLE_CONTENT_WIDTH]))
+                            remaining = remaining[MAX_FTABLE_CONTENT_WIDTH:]
+                        else:
+                            fh.write("                     {0}\"\n".format(remaining))
+                            remaining = ""
+                            closing_parens_written = True
 
-            if annot.gene_symbol is not None:
-                fh.write("                     /gene=\"{0}\"\n".format(annot.gene_symbol))
-
-            if annot.product_name is not None:
-                fh.write("                     /product=\"{0}\"\n".format(annot.product_name))
-
-            if len(annot.ec_numbers) > 0:
-                for ec_num in annot.ec_numbers:
-                    fh.write("                     /EC_number=\"{0}\"\n".format(ec_num.number))
-
-            if len(annot.go_annotations) > 0:
-                for go_annot in annot.go_annotations:
-                    fh.write("                     /db_xref=\"GO:{0}\"\n".format(go_annot.go_id))
-
-        cds_residues = mRNA.get_CDS_residues()
-        polypeptide_residues = biocode.utils.translate(cds_residues)
-
-        if len(polypeptide_residues) > 0:
-            # This is the easiest case first, where no wrapping is needed.
-            if len(polypeptide_residues) < MAX_FTABLE_CONTENT_WIDTH - 15:
-                fh.write("                     /translation=\"{0}\"\n".format(polypeptide_residues))
-            else:
-                # If we get here, we must wrap
-                fh.write("                     /translation=\"{0}\n".format(polypeptide_residues[0:MAX_FTABLE_CONTENT_WIDTH - 14]))
-                remaining = polypeptide_residues[MAX_FTABLE_CONTENT_WIDTH - 14:]
-                closing_parens_written = False
-                
-                while len(remaining) > 0:
-                    if len(remaining) > MAX_FTABLE_CONTENT_WIDTH - 1:
-                        fh.write("                     {0}\n".format(remaining[0:MAX_FTABLE_CONTENT_WIDTH]))
-                        remaining = remaining[MAX_FTABLE_CONTENT_WIDTH:]
-                    else:
-                        fh.write("                     {0}\"\n".format(remaining))
-                        remaining = ""
-                        closing_parens_written = True
-
-                if closing_parens_written == False:
-                    # G675_02159
-                    fh.write("                     \"\n")
+                    if closing_parens_written == False:
+                        # G675_02159
+                        fh.write("                     \"\n")
 
                 
-
-
-
 def segments_to_string(locs):
     lines = list()
 
@@ -307,6 +306,47 @@ def print_sequence( seq=None, fh=None ):
                 break
         fh.write("\n")
 
+def _get_location_string(rna, parent, ftype):
+    segments = list()
 
+    if ftype == 'exons':
+        subfeats = rna.exons()
+    elif ftype == 'CDSs':
+        subfeats = rna.CDSs()
+    else:
+        raise Exception("ERROR: location string requested on unrecognized subfeature type: {0}".format(ftype))
+
+    if len(subfeats) == 0:
+        feat_loc = rna.location_on(parent)
+        segments.append( [feat_loc.fmin + 1, feat_loc.fmax] )
+    else:
+        for subfeat in sorted(subfeats):
+                subfeat_loc = subfeat.location_on(parent)
+                segments.append( [subfeat_loc.fmin + 1, subfeat_loc.fmax] )
+
+    loc_string = segments_to_string(segments)
+    return loc_string
+        
+def _print_common_annotation_features(fh, annot):
+    """
+    This prints those annotation attributes which are common to both mRNAs
+    and ncRNAs including 'gene', 'product', 'EC_number' and 'db_xref'
+
+    These are printed at the same indent level regardless of feature type
+    so the function doesn't need to know which it is.
+    """
+    if annot.gene_symbol is not None:
+        fh.write("                     /gene=\"{0}\"\n".format(annot.gene_symbol))
+
+    if annot.product_name is not None:
+        fh.write("                     /product=\"{0}\"\n".format(annot.product_name))
+
+    if len(annot.ec_numbers) > 0:
+        for ec_num in annot.ec_numbers:
+            fh.write("                     /EC_number=\"{0}\"\n".format(ec_num.number))
+
+    if len(annot.go_annotations) > 0:
+        for go_annot in annot.go_annotations:
+            fh.write("                     /db_xref=\"GO:{0}\"\n".format(go_annot.go_id))
         
 
