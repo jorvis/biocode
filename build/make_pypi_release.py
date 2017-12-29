@@ -29,7 +29,6 @@ Run it from within a GitHub checkout of Biocode, and it will:
 
 import argparse
 import os
-import pypandoc
 import shutil
 
 def main():
@@ -74,7 +73,7 @@ def main():
         pass
 
     # place the README
-    shutil.copyfile('README.md', "{0}/README.md".format(lib_path))
+    shutil.copyfile('README.md', "{0}/README.rst".format(lib_path))
 
     # creates the biocode/setup.py file
     setup_fh = open("{0}/setup.py".format(args.output_directory), 'wt')
@@ -191,19 +190,14 @@ def populate_setup_file(fh, version, script_paths):
         'email': 'jorvis@gmail.com',
         'version': version,
         'packages': ['biocode'],
-        'dependencies': ['pypandoc', 'igraph', 'jinja2', 'matplotlib'],
+        'dependencies': ['igraph', 'jinja2', 'matplotlib'],
         'scripts': script_paths
     }
 
     fh.write("""
 from setuptools import setup
 
-try:
-    from pypandoc import convert
-    read_md = lambda f: convert(f, 'rst', 'md')
-except ImportError:
-    raise Exception("Error: pypandoc module not found, could not convert Markdown to RST")
-    read_md = lambda f: open(f, 'r').read()
+read = lambda f: open(f, 'r').read()
 
 setup(name='biocode',
       author='{author}',
@@ -222,7 +216,7 @@ setup(name='biocode',
       install_requires={dependencies},
       keywords='bioinformatics scripts modules gff3 fasta fastq bam sam',
       license='MIT',
-      long=read_md('biocode/README.md'),
+      long_description=read('biocode/README.rst'),
       packages={packages},
       scripts={scripts},
       url='http://github.com/jorvis/biocode',
