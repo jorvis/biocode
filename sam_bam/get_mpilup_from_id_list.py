@@ -24,7 +24,7 @@ import subprocess
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Generates an mpileup file for a subset of molecules in a large BAM file')
 
     ## output file to be written
     parser.add_argument('-b', '--bam_file', type=str, required=True, help='Path to an input BAM file to be read (actually, the index base name/path)' )
