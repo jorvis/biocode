@@ -181,7 +181,7 @@ def get_gff3_features(gff3_file, assemblies=None):
        children populated, so you can fully recover gene, RNA, exon, CDS, etc. features iterating on
        the assembly.
     2. The second dist is a flat structure of all the descendent feature objects of the Assemblies
-       keyed by the feature IDs.  
+       keyed by the feature IDs.
 
     See the documentation for each feature type in biocode.things for more info
     '''
@@ -283,6 +283,16 @@ def get_gff3_features(gff3_file, assemblies=None):
         
         fmin_partial = False
         fmax_partial = False
+
+        # Landmark features are those whose IDs match the molecule label.  They establish the coordinate
+        #  range for any features located upon then.  For these we need to see if they are marked as
+        #  circular.
+        if feat_id == mol_id:
+            if 'Is_circular' in atts:
+                if atts['Is_circular'].lower() == 'true':
+                    current_assembly.is_circular = True
+                else:
+                    current_assembly.is_circular = False
 
         if 'Partial' in atts:
             if atts['Partial'] == '5prime,3prime':
