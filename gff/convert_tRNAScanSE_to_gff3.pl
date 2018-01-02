@@ -108,18 +108,41 @@ foreach my $line (<$ifh>){
     
 	my $start = $cols[2];
 	my $stop = $cols[3];
-	my $target = $cols[4];
+	my $trna = $cols[4];
 	my $score = $cols[8];
-	if ($start < $stop){
-		print "$contig\ttRNAScan-SE\tgene\t$start\t$stop\t$score\t+\t.\tID=$target\_$i\n";
-		print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t$score\t+\t.\tID=$target\_$i\_tRNA;Parent=$target\_$i\n";
-		print "$contig\ttRNAScan-SE\texon\t$start\t$stop\t$score\t+\t.\tID=$target\_$i\_exon;Parent=$target\_$i\_tRNA\n";
-		$i++;
-	}else{
-		print "$contig\ttRNAScan-SE\tgene\t$stop\t$start\t$score\t-\t.\tID=$target\_$i\n";
-                print "$contig\ttRNAScan-SE\ttRNA\t$stop\t$start\t$score\t-\t.\tID=$target\_$i\_tRNA;Parent=$target\_$i\n";
-                print "$contig\ttRNAScan-SE\texon\t$stop\t$start\t$score\t-\t.\tID=$target\_$i\_exon;Parent=$target\_$i\_tRNA\n";
-		$i++;
+	my $anticodon = $cols[5];
+	
+	## Check if tRNAScan-SE predicted a possible intron (value in column 6 > 0)
+	if ($cols[6] > 0) {
+   		if ($start < $stop){
+			my $intron_start = $cols[6]-1; ## offset intron boundaries
+			my $intron_end = $cols[7]+1;
+			print "$contig\ttRNAScan-SE\tgene\t$start\t$stop\t$score\t+\t.\tID=tRNA-$trna$i\_gene\n";
+			print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t$score\t+\t.\tID=tRNA-$trna$i\_tRNA;Name=tRNA-$trna;anticodon=$anticodon \n";
+			print "$contig\ttRNAScan-SE\texon\t$start\t$intron_start\t$score\t+\t.\tID=tRNA-$trna$i\_exon;Note=contains predicted Intron\n";
+			print "$contig\ttRNAScan-SE\texon\t$intron_end\t$stop\t$score\t+\t.\tID=tRNA-$trna$i\_exon;Parent=tRNA-$trna$i\_exon\n";
+			$i++;
+    	}else{
+			my $intron_start = $cols[6]+1; ## offset intron boundaries
+			my $intron_end = $cols[7]-1;
+			print "$contig\ttRNAScan-SE\tgene\t$stop\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_gene\n";
+			print "$contig\ttRNAScan-SE\ttRNA\t$stop\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_tRNA;Name=tRNA-$trna;anticodon=$anticodon \n";
+			print "$contig\ttRNAScan-SE\texon\t$stop\t$intron_end\t$score\t-\t.\tID=tRNA-$trna$i\_exon;Note=contains predicted Intron\n";
+			print "$contig\ttRNAScan-SE\texon\t$intron_start\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_exon;Parent=tRNA-$trna$i\_exon\n";
+			$i++;
+		}
+	} else{
+		if ($start < $stop){
+			print "$contig\ttRNAScan-SE\tgene\t$start\t$stop\t$score\t+\t.\tID=tRNA-$trna$i\_gene\n";
+			print "$contig\ttRNAScan-SE\ttRNA\t$start\t$stop\t$score\t+\t.\tID=tRNA-$trna$i\_tRNA;Name=tRNA-$trna;anticodon=$anticodon \n";
+			print "$contig\ttRNAScan-SE\texon\t$start\t$stop\t$score\t+\t.\tID=tRNA-$trna$i\_exon\n";
+			$i++;
+		}else{
+			print "$contig\ttRNAScan-SE\tgene\t$stop\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_gene\n";
+			print "$contig\ttRNAScan-SE\ttRNA\t$stop\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_tRNA;Name=tRNA-$trna;anticodon=$anticodon \n";
+			print "$contig\ttRNAScan-SE\texon\t$stop\t$start\t$score\t-\t.\tID=tRNA-$trna$i\_exon\n";
+			$i++;
+		}
 	}
 }
 

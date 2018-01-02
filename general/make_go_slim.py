@@ -27,7 +27,7 @@ from biocode import gff
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Creates a slim version of a set of ontology terms.')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Input file with one term per line. This is your file with ALL terms.' )

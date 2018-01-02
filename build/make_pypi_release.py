@@ -19,16 +19,17 @@ Run it from within a GitHub checkout of Biocode, and it will:
 - Create the output directory if necessary (should be called 'biocode')
 - Creates the biocode/biocode/__init__.py file (empty)
 - Creates and populates the biocode/setup.py file
-  - All files ending in .py under 'lib' are assumed to be packages
+  - All files ending in .py under 'lib/' are assumed to be packages
 - Copies all lib/biocode/*.py to biocode/biocode/
-- Uses pypandoc module to convert README.md to README.rst
 - Copies all .py scripts to biocode/bin/
 - Copy all data/* to biocode/data/
 
 """
 
 import argparse
+import json
 import os
+import re
 import shutil
 
 def main():
@@ -64,16 +65,16 @@ def main():
     place_script_files(bin_dir, script_paths)
     placed_script_paths = get_placed_script_paths(bin_dir)
 
-    # place the data files
-    datafile_paths = get_biocode_datafile_paths('.')
+    # make a JSON file to use for the script index
     data_dir = "{0}/data".format(lib_path)
     os.mkdir(data_dir)
+    create_script_index_json('.', data_dir)
+
+    # place the data files
+    datafile_paths = get_biocode_datafile_paths('.')
     place_data_files(data_dir, datafile_paths)
     with open(os.path.join(data_dir, '__init__.py'), 'w'):
         pass
-
-    # place the README
-    shutil.copyfile('README.md', "{0}/README.rst".format(lib_path))
 
     # creates the biocode/setup.py file
     setup_fh = open("{0}/setup.py".format(args.output_directory), 'wt')
@@ -96,6 +97,28 @@ def main():
     print("\nNext do:\n\t$ cd {0} && python3 setup.py sdist && twine upload dist/*".format(args.output_directory))
     print("Then: \n\t$ cd - && git tag v{0} && git push --tags".format(args.version))
 
+def create_script_index_json(script_base, data_dir):
+    d = get_biocode_script_dict(script_base)
+    json_data = dict()
+
+    for category in sorted(d):
+        json_data[category] = list()
+
+        for script in sorted(d[category]):
+            desc = None
+
+            for line in open("{0}/{1}".format(category, script)):
+                m = re.match('.+ArgumentParser.+description=\'(.+?)\'', line)
+                if m:
+                    desc = m.group(1)
+
+            # TODO: Parse description lines from within each script
+            json_data[category].append({'name': script, 'desc': desc})
+
+    # Don't change the path of this JSON file without also changing it in the general/list_biocode utility
+    with open("{0}/biocode_script_index.json".format(data_dir), 'w') as f:
+        f.write(json.dumps(json_data))
+    
 def get_biocode_datafile_paths(base):
     datafiles = list()
 
@@ -133,7 +156,7 @@ def get_biocode_script_paths(base):
     scripts = list()
 
     for directory in os.listdir(base):
-        if directory in ['build', 'sandbox']: continue
+        if directory in ['build', '.git', 'sandbox', 'tests']: continue
 
         dir_path = "{0}/{1}".format(base, directory)
         if os.path.isdir(dir_path):
@@ -147,6 +170,30 @@ def get_biocode_script_paths(base):
         raise Exception("Error: failed to find any .py files under */")
 
     return scripts
+
+def get_biocode_script_dict(base):
+    """
+    Returns a dict where each key is a script category 'fasta', 'blast', etc.
+    and the values are the names of the scripts within that directory
+    """
+    d = dict()
+
+    for directory in os.listdir(base):
+        if directory in ['build', '.git', 'sandbox', 'tests']: continue
+
+        dir_path = "{0}/{1}".format(base, directory)
+
+        if os.path.isdir(dir_path):
+            d[directory] = list()
+
+            for thing in os.listdir(dir_path):
+                if thing == '__init__.py': continue
+
+                if thing.endswith('.py'):
+                    d[directory].append(thing)
+
+    return d
+    
 
 def get_placed_datafile_paths(base):
     paths = list()

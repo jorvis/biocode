@@ -31,7 +31,7 @@ import uuid
 from biocode import annotation, gff, things, utils
 
 def main():
-    parser = argparse.ArgumentParser( description='Put a description of your script here')
+    parser = argparse.ArgumentParser( description='Creates a single GFF from the output of a few different model prediction tools (coding and non-coding)')
 
     ## output file to be written
     parser.add_argument('-m', '--model_gff', type=str, required=True, help='Input (pass-through) GFF file' )
