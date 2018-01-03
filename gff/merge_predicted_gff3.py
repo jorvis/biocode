@@ -64,7 +64,7 @@ def add_aragorn_features(assemblies, features, aragorn_file):
             if current_assembly_id not in assemblies:
                 assembly = things.Assembly(id=current_assembly_id, residues='')
                 assemblies[current_assembly_id] = assembly
-            
+
         else:
             cols = line.split()
 
@@ -86,6 +86,17 @@ def add_aragorn_features(assemblies, features, aragorn_file):
                 if m:
                     rfmin = int(m.group(2)) - 1
                     rfmax = int(m.group(3))
+
+                    # For predictions spanning the origin of circular molecules, fmax needs to be adjusted
+                    #  https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
+                    # Sub-heading: Circular Genomes
+                    #
+                    # Example input lines:
+                    #  62  tRNA-Met                 c[2764659,18]      29      (cat)
+                    #  1   tRNA-Ile                  [2697442,47]      35      (gat)
+                    if rfmax < rfmin:
+                        assemblies[current_assembly_id].is_circular = True
+                        rfmax = rfmin + rfmax + 1
 
                     if m.group(1):
                         rstrand = -1
