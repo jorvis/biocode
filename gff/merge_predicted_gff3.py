@@ -37,10 +37,12 @@ def main():
     parser.add_argument('-m', '--model_gff', type=str, required=True, help='Input (pass-through) GFF file' )
     parser.add_argument('-o', '--output_gff', type=str, required=False, help='Output file to be written.  Default=STDOUT' )
     parser.add_argument('-b', '--barrnap_gff', type=str, required=False, help='GFF file from Barrnap prediction' )
+    parser.add_argument('-g', '--genomic_fasta', type=str, required=True, help='Source genomic FASTA file' )
     parser.add_argument('-a', '--aragorn_out', type=str, required=False, help='Raw output file (with -w) from ARAGORN prediction' )
     args = parser.parse_args()
 
     (assemblies, features) = gff.get_gff3_features(args.model_gff)
+    utils.add_assembly_fasta(assemblies, args.genomic_fasta)
 
     if args.barrnap_gff:
         add_barrnap_features(assemblies, features, args.barrnap_gff)
