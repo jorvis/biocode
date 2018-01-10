@@ -284,16 +284,6 @@ def get_gff3_features(gff3_file, assemblies=None):
         fmin_partial = False
         fmax_partial = False
 
-        # Landmark features are those whose IDs match the molecule label.  They establish the coordinate
-        #  range for any features located upon then.  For these we need to see if they are marked as
-        #  circular.
-        if feat_id == mol_id:
-            if 'Is_circular' in atts:
-                if atts['Is_circular'].lower() == 'true':
-                    current_assembly.is_circular = True
-                else:
-                    current_assembly.is_circular = False
-
         if 'Partial' in atts:
             if atts['Partial'] == '5prime,3prime':
                 fmin_partial = True
@@ -328,6 +318,13 @@ def get_gff3_features(gff3_file, assemblies=None):
             rRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = rRNA
 
+        elif cols[2] == 'tmRNA':
+            tmRNA = biocode.things.tmRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            tmRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
+            parent_feat.add_tmRNA(tmRNA)
+            tmRNA.annotation = parse_annotation_from_column_9(cols[8])
+            features[feat_id] = tmRNA
+
         elif cols[2] == 'tRNA':
             tRNA = biocode.things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
@@ -359,6 +356,15 @@ def get_gff3_features(gff3_file, assemblies=None):
             polypeptide.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = polypeptide
 
+        elif cols[2] == 'region':
+            # Regions where the ID value matches col[0] attach attributes to the molecule.  So far,
+            #  we're only looking for a definition of circularity
+            if 'Is_circular' in atts:
+                if atts['Is_circular'].lower() == 'true':
+                    current_assembly.is_circular = True
+                else:
+                    current_assembly.is_circular = False
+
         elif cols[2] == 'five_prime_UTR':
             utr = biocode.things.FivePrimeUTR(id=feat_id, parent=parent_feat)
             utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
@@ -375,7 +381,10 @@ def get_gff3_features(gff3_file, assemblies=None):
             sys.stderr.write( "Skipping feature {0} with type {1}\n".format(feat_id, cols[2]) )
             continue
 
-        features[feat_id].length = rfmax - rfmin
+        if cols[2] == 'region':
+            current_assembly.length = rfmax - rfmin
+        else:
+            features[feat_id].length = rfmax - rfmin
 
     return (assemblies, features)
 
