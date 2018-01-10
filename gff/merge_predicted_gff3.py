@@ -25,9 +25,6 @@ import os
 import re
 import uuid
 
-#import sys
-#sys.path.insert(0, '/home/jorvis/git/biocode/lib')
-
 from biocode import annotation, gff, things, utils
 
 def main():
