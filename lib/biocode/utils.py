@@ -224,55 +224,6 @@ def add_assembly_fasta(mols, fasta_file):
             mol = mols[mol_id]
             mol.residues = fasta_seqs[mol_id]['s']
             mol.length   = len(mol.residues)
-
-
-def serialize_gff3(path=None, assemblies=None, features=None, source=None):
-    """
-    Takes an output file path, then dicts of assembly and feature options (usually
-    produced by biocode.gff.get_gff3_features) and serializes these to a file.  The
-    output includes the GFF3 header and FASTA section if any of the assembly features
-    have associated residues.
-    """
-    ## output will either be a file or STDOUT
-    ofh = sys.stdout
-    if path is not None:
-        ofh = open(path, 'wt')
-
-    if source is None:
-        source = '.'
-
-    ofh.write("##gff-version 3\n")
-
-    has_fasta = False
-
-    for assembly_id in assemblies:
-        current_assembly = assemblies[assembly_id]
-
-        if current_assembly.length:
-            has_fasta = True
-
-            if current_assembly.is_circular == True:
-                circ_str = ';Is_circular=true'
-            elif current_assembly.is_circular == False:
-                circ_str = ';Is_circular=false'
-            else:
-                circ_str = ''
-                
-            ofh.write("{0}\t{1}\tregion\t1\t{2}\t.\t+\t.\tID={0};Name={0}{3}\n".format(assembly_id, source, current_assembly.length, circ_str))
-        
-        for gene in assemblies[assembly_id].genes():
-            gene.print_as(fh=ofh, format='gff3', source=source)
-
-    # handle the fasta section
-    if has_fasta:
-        ofh.write("##FASTA\n")
-
-        for assembly_id in sorted(assemblies):
-            ofh.write(">{0}\n".format(assembly_id))
-            ofh.write("{0}\n".format(wrapped_fasta(assemblies[assembly_id].residues)))
-
-    if path is not None:
-        ofh.close()
             
 def wrapped_fasta(string, every=60):
     """

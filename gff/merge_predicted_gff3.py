@@ -47,7 +47,8 @@ def main():
     if args.aragorn_out:
         add_aragorn_features(assemblies, features, args.aragorn_out)
 
-    utils.serialize_gff3(path=args.output_gff, assemblies=assemblies, features=features)
+    with open(args.output_gff, 'wt') as f:
+        gff.print_gff3_from_assemblies(ofh=f, assemblies=assemblies)
 
 
 def add_aragorn_features(assemblies, features, aragorn_file):
