@@ -85,11 +85,13 @@ HEADER_MARGIN_WIDTH = MAX_CONTENT_WIDTH - MAX_HEADER_CONTENT_WIDTH
 HEADER_MARGIN = " " * HEADER_MARGIN_WIDTH
 SEQ_BP_PER_LINE = SEQ_GROUP_BP * SEQ_GROUPS_PER_LINE
 
-def print_biogene( gene=None, fh=None, on=None ):
+def print_biogene( gene=None, fh=None, on=None, go_index=None ):
     '''
     This method accepts a Gene object located on an Assembly object (from things.py) and prints
     the feature graph for that gene in Genbank flat file format, including the gene, RNA and CDS
-    for coding genes or just the gene and specific type (rRNA, tRNA) for non-coding ones
+    for coding genes or just the gene and specific type (rRNA, tRNA) for non-coding ones.
+
+    The go_index option is a reference to an opened
     '''
     if gene is None:
         raise Exception( "ERROR: The print_biogene() function requires a biogene to be passed via the 'gene' argument" );
@@ -171,12 +173,12 @@ def print_biogene( gene=None, fh=None, on=None ):
             polypeptides = mRNA.polypeptides()
             if len(polypeptides) == 1 and polypeptides[0].annotation is not None:
                 annot = polypeptides[0].annotation
-                _print_common_annotation_features(fh, annot)
+                _print_common_annotation_features(fh=fh, annot=annot, go_index=go_index)
 
         # all ncRNA classes
         else:
             if rna.annotation is not None:
-                _print_common_annotation_features(fh, rna.annotation)
+                _print_common_annotation_features(fh=fh, annot=rna.annotation)
             
         if rna_class == 'mRNA':
             cds_residues = rna.get_CDS_residues()
@@ -327,7 +329,7 @@ def _get_location_string(rna, parent, ftype):
     loc_string = segments_to_string(segments)
     return loc_string
         
-def _print_common_annotation_features(fh, annot):
+def _print_common_annotation_features(fh=None, annot=None, go_index=None):
     """
     This prints those annotation attributes which are common to both mRNAs
     and ncRNAs including 'gene', 'product', 'EC_number' and 'db_xref'
@@ -345,8 +347,38 @@ def _print_common_annotation_features(fh, annot):
         for ec_num in annot.ec_numbers:
             fh.write("                     /EC_number=\"{0}\"\n".format(ec_num.number))
 
-    if len(annot.go_annotations) > 0:
-        for go_annot in annot.go_annotations:
-            fh.write("                     /db_xref=\"GO:{0}\"\n".format(go_annot.go_id))
+    if go_index is not None:
+        if len(annot.go_annotations) > 0:
+            go_note_string = ''
+            
+            for go_annot in annot.go_annotations:
+                go_id = "GO:{0}".format(go_annot.go_id)
+                
+                try:
+                    go_ns = go_index['terms'][go_id]['ns']
+                except KeyError:
+                    print("Failed to find go ID ({0}).  Index has {1} terms.  They are:".format(go_id, len(go_index['terms'])))
+                    for term in go_index['terms']:
+                        print("\t{0}".format(term))
+                    sys.exit(1)
+ 
+                go_name = go_index['terms'][go_id]['name']
+    
+                if go_ns == 'biological_process':
+                    this_go_string = "GO_process: {0} - {1};".format(go_id, go_name)
+                elif go_ns == 'cellular_component':
+                    this_go_string = "GO_component: {0} - {1};".format(go_id, go_name)
+                elif go_ns == 'molecular_function':
+                    this_go_string = "GO_function: {0} - {1};".format(go_id, go_name)
+                else:
+                    raise Exception("ERROR: Unexpected namespace value ({0}) in index for GO ID ({1})".format(go_ns, go_id))
+                    
+                # The first GO term in the note string has no leading whitespace
+                if go_note_string == '':
+                    go_note_string = this_go_string
+                else:
+                    go_note_string += "\n                     {0}".format(this_go_string)
+                    
+            fh.write("                     /note=\"{0}\"\n".format(go_note_string))
         
 
