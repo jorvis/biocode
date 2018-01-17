@@ -90,6 +90,8 @@ def parse_obo_graph(path):
     #  been seen yet.
 
     if stored_pickles_found is False:
+        alt_ids = list()
+
         for line in open(path):
             line = line.rstrip()
             if line.startswith('[Term]'):
@@ -105,10 +107,15 @@ def parse_obo_graph(path):
                     next_idx[namespace] += 1
                     terms[id] = {'ns': namespace, 'idx': idx, 'name': name}
 
+                    # duplicate this for any aliases
+                    for alt_id in alt_ids:
+                        terms[alt_id] = {'ns': namespace, 'idx': idx, 'name': name}
+
                 # reset for next term
                 id = None
                 namespace = None
                 name = None
+                alt_ids = list()
 
             elif line.startswith('id:'):
                 id = line.split(' ')[1]
@@ -122,9 +129,11 @@ def parse_obo_graph(path):
                     name = m.group(1).rstrip()
                 else:
                     raise Exception("Failed to regex this line: {0}".format(line))
+
+            elif line.startswith('alt_id: '):
+                alt_ids.append(line.split(' ')[1])
     
     id = None
-    alt_ids = list()
     namespace = None
     name = None
     is_obsolete = False
@@ -142,14 +151,10 @@ def parse_obo_graph(path):
                         if terms[id]['ns'] != terms[is_a_id]['ns']:
                             raise Exception("is_a relationship found with terms in different namespaces")
 
-                        # g[namespace].add_edges([(terms[id]['idx'], terms[is_a_id]['idx']), ])
-                        #  the line above is supposed to be able to instead be this, according to the 
-                        #  documentation, but it fails:
                         g[namespace].add_edge(terms[id]['idx'], terms[is_a_id]['idx'])
 
                 # reset for this term
                 id = None
-                alt_ids = list()
                 namespace = None
                 is_obsolete = False
                 is_a = list()
