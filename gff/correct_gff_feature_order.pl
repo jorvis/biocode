@@ -167,7 +167,9 @@ while (my $line = <$ifh>) {
     } elsif ( $feat_type eq 'mRNA' ||
               $feat_type eq 'CDS' || 
               $feat_type eq 'exon' || 
+              $feat_type eq 'five_prime_UTR' ||
               $feat_type eq 'polypeptide' ||
+              $feat_type eq 'three_prime_UTR' ||
               $feat_type eq 'tRNA' ||
               $feat_type eq 'rRNA' ||
               $feat_type eq 'non_canonical_five_prime_splice_site' ||
@@ -224,25 +226,26 @@ for my $molecule_id ( sort keys %molecules ) {
         
         ## print the gene first
         print $ofh join("\t", @{$features{$feat_id}{cols}}), "\n";
+
+        ## 5' UTRs
+        for my $utr_id ( @{$features{$feat_id}{children}{five_prime_UTR}} ) {
+            print $ofh join("\t", @{$features{$utr_id}{cols}}), "\n";
+        }
         
         ## then the mRNAs
         for my $mRNA_id ( @{$features{$feat_id}{children}{mRNA}} ) {
-            #print STDERR "found an mRNA\n";
             print $ofh join("\t", @{$features{$mRNA_id}{cols}}), "\n";
         }
 
         ## then the rRNAs
         for my $rRNA_id ( @{$features{$feat_id}{children}{rRNA}} ) {
-            #print STDERR "found an rRNA\n";
             print $ofh join("\t", @{$features{$rRNA_id}{cols}}), "\n";
         }
 
         ## then the tRNAs
         for my $tRNA_id ( @{$features{$feat_id}{children}{tRNA}} ) {
-            #print STDERR "found an tRNA\n";
             print $ofh join("\t", @{$features{$tRNA_id}{cols}}), "\n";
         }
-        
 
         for my $child_type ( qw(exon CDS polypeptide ) ) {
             if ( exists $features{$feat_id}{children}{$child_type} ) {
@@ -259,6 +262,11 @@ for my $molecule_id ( sort keys %molecules ) {
                     }
                 }
             }
+        }
+
+        ## 3' UTRs
+        for my $utr_id ( @{$features{$feat_id}{children}{three_prime_UTR}} ) {
+            print $ofh join("\t", @{$features{$utr_id}{cols}}), "\n";
         }
     }
 }
