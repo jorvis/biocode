@@ -1,6 +1,5 @@
 import sys
 
-#from biocode import utils, things
 import biocode.utils
 import biocode.things
 
@@ -114,7 +113,7 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
         on = gene.location().on
 
     gene_loc = gene.location_on( on )
-    gene_coords = utils.interbase0_to_humancoords(gene_loc.fmin, gene_loc.fmax, gene_loc.strand)
+    gene_coords = biocode.utils.interbase0_to_humancoords(gene_loc.fmin, gene_loc.fmax, gene_loc.strand)
 
     # Genes MUST have locus tags in TBL format
     gene_annot_atts = dict()
@@ -163,7 +162,7 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             if exon_loc is None:
                 raise Exception("ERROR: Expected exon {0} to be located on {1} but it wasn't".format(exon.id, on.id) )
 
-            exon_coords = utils.interbase0_to_humancoords(exon_loc.fmin, exon_loc.fmax, exon_loc.strand)
+            exon_coords = biocode.utils.interbase0_to_humancoords(exon_loc.fmin, exon_loc.fmax, exon_loc.strand)
 
             if exons_printed == 0:
                 fh.write("{0}\t{1}\t{2}\n".format(exon_coords[0], exon_coords[1], RNA.__class__.__name__))
@@ -195,7 +194,7 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
             if CDS_loc is None:
                 raise Exception("ERROR: Expected CDS {0} to be located on {1} but it wasn't".format(CDS.id, on.id) )
 
-            CDS_coords = utils.interbase0_to_humancoords(CDS_loc.fmin, CDS_loc.fmax, CDS_loc.strand)
+            CDS_coords = biocode.utils.interbase0_to_humancoords(CDS_loc.fmin, CDS_loc.fmax, CDS_loc.strand)
 
             if CDS_printed == 0:
                 fh.write("{0}\t{1}\tCDS\n".format(CDS_coords[0], CDS_coords[1]))
