@@ -119,7 +119,11 @@ def get_accessions_from_id_range(accs=None, output_dir=None):
 
     # this gets me an XML ID range:
     #  https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=KI535340:KI535343[accn]
-    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term={0}:{1}[accn]&tool=biocode".format(accs[0], accs[1])
+    if accs[1] is None:
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term={0}[accn]&tool=biocode".format(accs[0])
+    else:
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term={0}:{1}[accn]&tool=biocode".format(accs[0], accs[1])
+
     r = requests.get(url)
     acc_xml_path = "{0}/accession_ranges.xml".format(output_dir)
 
@@ -181,7 +185,13 @@ def process_master_xml(acc=None, text=None, output_dir=None):
 
         GBAltSeqItem = item.find('GBAltSeqData_items')[0]
         first_acc = GBAltSeqItem.find('GBAltSeqItem_first-accn').text
-        last_acc  = GBAltSeqItem.find('GBAltSeqItem_last-accn').text
+
+        last_acc_elm = GBAltSeqItem.find('GBAltSeqItem_last-accn')
+
+        if last_acc_elm is None:
+            last_acc = None
+        else:
+            last_acc  = GBAltSeqItem.find('GBAltSeqItem_last-accn').text
 
         if name == 'WGS':
             wgs_range = [first_acc, last_acc]
