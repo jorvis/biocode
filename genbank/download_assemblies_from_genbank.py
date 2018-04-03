@@ -11,6 +11,19 @@ skipped, since NCBI allows faster API calls if you have a key.  To get one, regi
 
   https://www.ncbi.nlm.nih.gov/books/NBK25497/#_chapter2_Usage_Guidelines_and_Requiremen_
 
+How each ID is handled depends on the ID format.  Those like this are master records for assemblies:
+
+   ACKQ00000000
+   ACDJ00000000
+   LSCU00000000
+   ABWL00000000
+
+While shorter ones are direct assembled contigs:
+
+   CP002390
+   CP007064
+   KR131712
+
 For each ID passed, this script first gets the master record XML file for it and looks for this section:
 
     <GBSeq_alt-seq>
@@ -87,9 +100,20 @@ def main():
         r = requests.get(url)
 
         if r.status_code == 200:
-            id_range = process_master_xml(acc=acc, text=r.text, output_dir=args.output_directory)
-            ids = get_accessions_from_id_range(accs=id_range, output_dir="{0}/{1}".format(args.output_directory, acc))
-            make_multi_fasta(ids=ids, output_dir="{0}/{1}".format(args.output_directory, acc))
+            outdir = "{0}/{1}".format(args.output_directory, acc)
+            
+            # ids like 'ACKQ00000000' are processed as master records
+            if len(acc) == 12:
+                id_range = process_master_xml(acc=acc, text=r.text, output_dir=args.output_directory)
+                ids = get_accessions_from_id_range(accs=id_range, output_dir="{0}/{1}".format(args.output_directory, acc))
+                make_multi_fasta(ids=ids, output_dir=outdir)
+            else:
+                outdir = "{0}/{1}".format(args.output_directory, acc)
+                if not os.path.exists(outdir):
+                    os.mkdir(outdir)
+                    
+                make_multi_fasta(ids=[acc], output_dir=outdir)
+                
         else:
             print("\t{0}\t{1}\tERROR".format(acc, r.status_code))
             continue
