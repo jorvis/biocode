@@ -1,4 +1,4 @@
-FROM ubuntu:yakkety
+FROM ubuntu:latest
 
 MAINTAINER Joshua Orvis <jorvis@gmail.com>
 LABEL Description="This image is used to run any bioinformatics utilities/scripts in the Biocode collection"
