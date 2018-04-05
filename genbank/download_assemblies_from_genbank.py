@@ -144,9 +144,9 @@ def get_accessions_from_id_range(accs=None, output_dir=None):
     # this gets me an XML ID range:
     #  https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=KI535340:KI535343[accn]
     if accs[1] is None:
-        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term={0}[accn]&tool=biocode".format(accs[0])
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term={0}[accn]&tool=biocode&retmax=100000".format(accs[0])
     else:
-        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term={0}:{1}[accn]&tool=biocode".format(accs[0], accs[1])
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term={0}:{1}[accn]&tool=biocode&retmax=100000".format(accs[0], accs[1])
 
     r = requests.get(url)
     acc_xml_path = "{0}/accession_ranges.xml".format(output_dir)
@@ -160,6 +160,14 @@ def get_accessions_from_id_range(accs=None, output_dir=None):
 
     tree = ET.parse(acc_xml_path)
     root = tree.getroot()
+
+    # Make sure the record isn't too large.  This would require multiple fetches to get the entire thing, which isn't currently supported
+    record_count = int(root.find('./Count').text)
+    retmax = int(root.find('./RetMax').text)
+    
+    if record_count > retmax:
+        raise Exception("ERROR: The number of records for this accession/range ({0}) is greater than what NCBI will return at once ({1}).".format(record_count, retmax))
+        
     ids = list()
 
     for id_elm in root.find('./IdList'):
