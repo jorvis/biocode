@@ -417,6 +417,9 @@ class Location:
     For forward strand features, phase is counted from the start field. For reverse strand features,
     phase is counted from the end field.
 
+    The possible values for strand are 1, 0 and -1.  1 is for forward features, -1 for reverse, and
+    0 is for unstranded features.
+
     The phase is REQUIRED for all CDS features.
     '''
     def __init__( self, on=None, fmin=None, fmin_partial=False, fmax=None, fmax_partial=False, phase=None, strand=None ):
