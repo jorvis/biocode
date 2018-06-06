@@ -5,7 +5,7 @@ This script can be used to transform a GFF3 file into a BED file.
 
 LIMITATIONS:
 
-- The only currently-tested input GFF3 consists of gene models.
+- The only currently-tested input GFF3 consists of coding gene models.
 - Its encoding is meant to include prokaryotes and eukaryotes, though it was
   written/tested first for eukaryotes.
 

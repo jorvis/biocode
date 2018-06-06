@@ -74,7 +74,7 @@ def print_biogene(gene=None, fh=None, on=None):
     gene_strand = '+' if gene_loc.strand == 1 else '-'
 
     for RNA in gene.RNAs():
-        fh.write("{0}\t{1}\t{2}\t{3}\t0\t{4}\t.\t.\t0\t".format(
+        fh.write("{0}\t{1}\t{2}\t{3}\t0\t{4}\t".format(
             on.id, gene_loc.fmin, gene_loc.fmax, locus_tag, gene_strand
         ))
 
@@ -88,21 +88,24 @@ def print_biogene(gene=None, fh=None, on=None):
         if RNA_loc.strand == -1:
             exons.reverse()
 
-        exon_starts = list()
+        block_starts = list()
         exon_lengths = list()
-            
+
         for exon in exons:
             exon_loc = exon.location_on(on)
-            exon_starts.append(str(exon_loc.fmin))
+            block_starts.append(str(exon_loc.fmin - gene_loc.fmin))
             exon_lengths.append(str(exon_loc.fmax - exon_loc.fmin))
             
         if len(exons):
-            fh.write("{0}\t{1},\t{2},\n".format(str(len(exons)), ','.join(exon_lengths), ','.join(exon_starts)))
+            thick_start = exons[0].location()
+            thick_end   = exons[-1].location()
+            fh.write("{0}\t{1}\t0\t{2}\t{3},\t{4},\n".format(
+                thick_start.fmin, thick_end.fmax, len(exons), ','.join(exon_lengths), ','.join(block_starts)))
         else:
-            fh.write("{0}\t.\t.\n".format(str(len(exons))))
+            # Catch here for genes without exons (tRNAs, etc.)
+            fh.write("{0}\t{1}\t0\t{2}\t{3},\t0,\n".format(gene_loc.fmin, gene_loc.fmin, 1, 
+                                                           gene_loc.fmax - gene_loc.fmin))
 
-            
-            
 
 
 
