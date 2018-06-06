@@ -74,7 +74,7 @@ def print_biogene(gene=None, fh=None, on=None):
     gene_strand = '+' if gene_loc.strand == 1 else '-'
 
     for RNA in gene.RNAs():
-        fh.write("{0}\t{1}\t{2}\t{3}\t.\t{4}\t.\t.\t0\t".format(
+        fh.write("{0}\t{1}\t{2}\t{3}\t0\t{4}\t.\t.\t0\t".format(
             on.id, gene_loc.fmin, gene_loc.fmax, locus_tag, gene_strand
         ))
 
@@ -96,7 +96,10 @@ def print_biogene(gene=None, fh=None, on=None):
             exon_starts.append(str(exon_loc.fmin))
             exon_lengths.append(str(exon_loc.fmax - exon_loc.fmin))
             
-        fh.write("{0}\t{1},\t{2},\n".format(str(len(exons)), ','.join(exon_lengths), ','.join(exon_starts)))
+        if len(exons):
+            fh.write("{0}\t{1},\t{2},\n".format(str(len(exons)), ','.join(exon_lengths), ','.join(exon_starts)))
+        else:
+            fh.write("{0}\t.\t.\n".format(str(len(exons))))
 
             
             
