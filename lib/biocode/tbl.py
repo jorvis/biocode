@@ -53,6 +53,11 @@ def print_tbl_from_assemblies(assemblies=None, ofh=None, go_obo=None, lab_name=N
     is because, at the time of this writing, there is no standard in GFF for specifying terms as part of
     the 'process', 'function' or 'component' namespaces but the TBL format requires this distinction
     for each term.  This function indexes it instead so this distinction can be made.
+
+    References:
+      Eukaryotic submission examples:
+      https://www.ncbi.nlm.nih.gov/genbank/eukaryotic_genome_submission_examples/
+
     """
     if type(ofh).__name__ != 'TextIOWrapper':
         ofh = sys.stdout #TextIOWrapper
@@ -80,6 +85,7 @@ def print_tbl_from_assemblies(assemblies=None, ofh=None, go_obo=None, lab_name=N
                     
                     print("INFO: splitting mRNA off gene {0}".format(gene.id))
                     new_gene = biocode.things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
+                    
                     new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
                     new_gene.add_RNA(mRNA)
                     print_biogene(gene=new_gene, fh=ofh, obo_dict=go_idx, lab_name=lab_name)
