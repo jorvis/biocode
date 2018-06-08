@@ -25,9 +25,6 @@ import os
 import re
 import uuid
 
-#import sys
-#sys.path.insert(0, '/home/jorvis/git/biocode/lib')
-
 from biocode import annotation, gff, things, utils
 
 def main():
@@ -37,10 +34,12 @@ def main():
     parser.add_argument('-m', '--model_gff', type=str, required=True, help='Input (pass-through) GFF file' )
     parser.add_argument('-o', '--output_gff', type=str, required=False, help='Output file to be written.  Default=STDOUT' )
     parser.add_argument('-b', '--barrnap_gff', type=str, required=False, help='GFF file from Barrnap prediction' )
+    parser.add_argument('-g', '--genomic_fasta', type=str, required=True, help='Source genomic FASTA file' )
     parser.add_argument('-a', '--aragorn_out', type=str, required=False, help='Raw output file (with -w) from ARAGORN prediction' )
     args = parser.parse_args()
 
     (assemblies, features) = gff.get_gff3_features(args.model_gff)
+    utils.add_assembly_fasta(assemblies, args.genomic_fasta)
 
     if args.barrnap_gff:
         add_barrnap_features(assemblies, features, args.barrnap_gff)
@@ -48,7 +47,8 @@ def main():
     if args.aragorn_out:
         add_aragorn_features(assemblies, features, args.aragorn_out)
 
-    utils.serialize_gff3(path=args.output_gff, assemblies=assemblies, features=features)
+    with open(args.output_gff, 'wt') as f:
+        gff.print_gff3_from_assemblies(ofh=f, assemblies=assemblies)
 
 
 def add_aragorn_features(assemblies, features, aragorn_file):
@@ -64,7 +64,7 @@ def add_aragorn_features(assemblies, features, aragorn_file):
             if current_assembly_id not in assemblies:
                 assembly = things.Assembly(id=current_assembly_id, residues='')
                 assemblies[current_assembly_id] = assembly
-            
+
         else:
             cols = line.split()
 
@@ -86,6 +86,17 @@ def add_aragorn_features(assemblies, features, aragorn_file):
                 if m:
                     rfmin = int(m.group(2)) - 1
                     rfmax = int(m.group(3))
+
+                    # For predictions spanning the origin of circular molecules, fmax needs to be adjusted
+                    #  https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
+                    # Sub-heading: Circular Genomes
+                    #
+                    # Example input lines:
+                    #  62  tRNA-Met                 c[2764659,18]      29      (cat)
+                    #  1   tRNA-Ile                  [2697442,47]      35      (gat)
+                    if rfmax < rfmin:
+                        assemblies[current_assembly_id].is_circular = True
+                        rfmax = rfmin + rfmax + 1
 
                     if m.group(1):
                         rstrand = -1

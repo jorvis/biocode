@@ -510,11 +510,12 @@ class Assembly( LocatableThing ):
     aligning two or more different regions."
     '''
 
-    def __init__( self, id=None, locations=None, length=None, residues=None, children=None ):
+    def __init__( self, id=None, locations=None, length=None, residues=None, is_circular=None, children=None ):
         super().__init__(locations)
         self.id = id
         self.length = length
         self.residues = residues
+        self.is_circular = is_circular
         self.children = children
 
         if length is None and self.residues is not None and len(self.residues) > 0:

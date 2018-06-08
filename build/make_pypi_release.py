@@ -55,6 +55,9 @@ def main():
     init_fh = open("{0}/__init__.py".format(lib_path), 'wt')
     init_fh.close()
 
+    # place the README
+    shutil.copy('README.rst', "{0}/".format(args.output_directory))
+
     # get packages under lib/*.py and copy to release directory
     package_names = get_biocode_package_names('lib/biocode/')
     place_package_files(args.output_directory, package_names)
@@ -83,7 +86,7 @@ def main():
 
     # create the manifest
     manifest_fh = open("{0}/MANIFEST.in".format(args.output_directory), 'wt')
-    manifest_fh.write("include biocode/README.rst\n")
+    manifest_fh.write("include README.rst\n")
     # perhaps do this instead of graft?  recursive-include biocode/data *.template
     manifest_fh.write("graft biocode/data\n")
 
@@ -263,7 +266,7 @@ setup(name='biocode',
       install_requires={dependencies},
       keywords='bioinformatics scripts modules gff3 fasta fastq bam sam',
       license='MIT',
-      long_description=read('biocode/README.rst'),
+      long_description=read('README.rst'),
       packages={packages},
       scripts={scripts},
       url='http://github.com/jorvis/biocode',

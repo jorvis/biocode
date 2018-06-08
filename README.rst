@@ -133,10 +133,10 @@ with a single line of code. For example:
 That's it. You can then iterate over the assemblies and their children,
 or access the 'features' dict, which is keyed on each feature's ID.
 
-Getting the code (pip, latest release)
+Getting the code (pip3, latest release)
 ======================================
 
-You can install biocode using pip (requires Python3) like this:
+You can install biocode using pip3 (requires Python3) like this:
 
 ::
 

@@ -22,6 +22,7 @@ MAJOR assumptions:
 
 import argparse
 import os
+import pickle
 import sys
 
 from biocode import utils, genbank, gff
@@ -39,6 +40,9 @@ else:
     template_path = resource_filename(Requirement.parse("biocode"), "genbank_flat_file_header.template")
     template_dir = "{0}/{1}".format(os.path.dirname(template_path), '/biocode/data')
 
+# for now, these are the same
+data_dir = template_dir
+    
 TEMPLATE_ENVIRONMENT = Environment(
     autoescape=False,
     loader=FileSystemLoader(template_dir),
@@ -52,6 +56,7 @@ def main():
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to a Genbank flat file to be created. Supersedes --output_dir if both are specified.' )
     parser.add_argument('-od', '--output_dir', type=str, required=False, help='Path to an output directory. If this option is specified then each input assembly will be written to a separate GenBank output file, named with the assembly_id.' )
     parser.add_argument('-g', '--genome_fasta', type=str, required=False, help='Optional.  You must specify this unless the FASTA sequences for the molecules are embedded in the GFF')
+    parser.add_argument('-go', '--go_index', type=str, required=False, default='', help='Pickled GO index (created by biocode/general/make_go_index.py). By default, reads from within the data directory within the biocode distribution')
     parser.add_argument('-mt', '--molecule_type', type=str, required=False, default='DNA', help='Molecule type' )
     parser.add_argument('-gbd', '--genbank_division', type=str, required=False, default='.', help='GenBank Division (3-letter abbreviation)' )
     parser.add_argument('-md', '--modification_date', type=str, required=False, default='DD-MMM-YYYY', help='The modification date for header in format like 21-JUN-1999' )
@@ -73,6 +78,16 @@ def main():
 
     # line-wrap lineage to stay below 79 character GenBank flat file width
     lineage = genbank.line_wrap_lineage_string(args.lineage)
+
+    if args.go_index == '':
+        go_index_path = "{0}/go.pickle".format(data_dir)
+    else:
+        go_index_path = args.go_index
+
+    if os.path.isfile(go_index_path):
+        go_index = pickle.load(open(go_index_path, 'rb'))
+    else:
+        raise Exception("ERROR: Expected to find a pickled GO index at the following path: {0}".format(go_index_path))
 
     (assemblies, features) = gff.get_gff3_features(args.input_file)
     ofh = sys.stdout
@@ -99,6 +114,7 @@ def main():
                     'source':args.source, 'definition':args.definition, 'organism':args.organism,
                     'lineage':lineage
         }
+        
         header = TEMPLATE_ENVIRONMENT.get_template('genbank_flat_file_header.template').render(context)
         ofh.write(header)
         ofh.write("\nFEATURES             Location/Qualifiers\n")
@@ -113,7 +129,7 @@ def main():
             ofh.write("                     /db_xref=\"taxon:{0}\"\n".format(args.taxon_id))
         
         for gene in assemblies[assembly_id].genes():
-            genbank.print_biogene(gene=gene, fh=ofh, on=assembly)
+            genbank.print_biogene(gene=gene, fh=ofh, on=assembly, go_index=go_index)
 
         if args.include_sequence:
             ofh.write("ORIGIN\n")

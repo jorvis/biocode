@@ -44,7 +44,8 @@ def print_bed_from_assemblies(assemblies=None, ofh=None):
                     
                     new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
                     new_gene.add_RNA(mRNA)
-                    print_biogene(gene=new_gene, fh=ofh, obo_dict=go_idx, lab_name=lab_name)
+
+                    print_biogene(gene=new_gene, fh=ofh)
 
             if len(mRNAs) > 1:
                 gene_loc = gene.location_on(current_assembly)
@@ -56,7 +57,7 @@ def print_bed_from_assemblies(assemblies=None, ofh=None):
             print_biogene(gene=gene, fh=ofh)
 
 
-def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
+def print_biogene(gene=None, fh=None, on=None):
     '''
     This method accepts a Gene object located on an Assembly object (from things.py) and prints
     the gene in BED format.
@@ -71,110 +72,44 @@ def print_biogene( gene=None, fh=None, on=None, obo_dict=None, lab_name=None ):
 
     gene_loc = gene.location_on( on )
 
-    if gene.locus_tag is None:
-        locus_tag = '.'
-    else:
-        locus_tag = gene.locus_tag
-
-    
-
-    fh.write("{0}\t{1}\t{2}\t{3}\t.\t{4}\t".format(
-        on.id, gene_coords[0], gene_coords[1], locus_tag, gene_loc.
-    ))
+    locus_tag = '.' if gene.locus_tag is None else gene.locus_tag
+    gene_strand = '+' if gene_loc.strand == 1 else '-'
 
     for RNA in gene.RNAs():
+        fh.write("{0}\t{1}\t{2}\t{3}\t0\t{4}\t".format(
+            on.id, gene_loc.fmin, gene_loc.fmax, locus_tag, gene_strand
+        ))
+
         RNA_loc = RNA.location_on(on)
 
         if RNA_loc is None:
             raise Exception("ERROR: Expected RNA {0} to be located on {1} but it wasn't".format(RNA.id, on.id))
 
-        # In this format, the RNA is supposed to be provided as segmented coordinates
-        exons_printed = 0
         exons = sorted(RNA.exons())
+
         if RNA_loc.strand == -1:
             exons.reverse()
-            
+
+        block_starts = list()
+        exon_lengths = list()
+
         for exon in exons:
             exon_loc = exon.location_on(on)
+            block_starts.append(str(exon_loc.fmin - gene_loc.fmin))
+            exon_lengths.append(str(exon_loc.fmax - exon_loc.fmin))
             
-            if exon_loc is None:
-                raise Exception("ERROR: Expected exon {0} to be located on {1} but it wasn't".format(exon.id, on.id) )
+        if len(exons):
+            thick_start = exons[0].location()
+            thick_end   = exons[-1].location()
+            fh.write("{0}\t{1}\t0\t{2}\t{3},\t{4},\n".format(
+                thick_start.fmin, thick_end.fmax, len(exons), ','.join(exon_lengths), ','.join(block_starts)))
+        else:
+            # Catch here for genes without exons (tRNAs, etc.)
+            fh.write("{0}\t{1}\t0\t{2}\t{3},\t0,\n".format(gene_loc.fmin, gene_loc.fmin, 1, 
+                                                           gene_loc.fmax - gene_loc.fmin))
 
-            exon_coords = biocode.utils.interbase0_to_humancoords(exon_loc.fmin, exon_loc.fmax, exon_loc.strand)
 
-            if exons_printed == 0:
-                fh.write("{0}\t{1}\t{2}\n".format(exon_coords[0], exon_coords[1], RNA.__class__.__name__))
-            else:
-                fh.write("{0}\t{1}\n".format(exon_coords[0], exon_coords[1]))
 
-            exons_printed += 1
-
-        if annot is not None and exons_printed > 0:
-            if RNA.__class__.__name__ == 'mRNA':
-                fh.write("\t\t\tprotein_id\t{0}\n".format(official_protein_id))
-                
-            fh.write("\t\t\ttranscript_id\t{0}\n".format(official_transcript_id))
-            fh.write("\t\t\tproduct\t{0}\n".format(annot.product_name))
-            if 'Note' in annot.other_attributes:
-                # Sometimes this is a string, sometimes a list.  Only strings have the lower function:
-                if hasattr(annot.other_attributes['Note'], 'lower'):
-                    fh.write("\t\t\tnote\t{0}\n".format(annot.other_attributes['Note']))
-                else:
-                    fh.write("\t\t\tnote\t{0}\n".format(",".join(annot.other_attributes['Note'])))
-
-        CDS_printed = 0
-        CDSs = sorted(RNA.CDSs())
-        if RNA_loc.strand == -1:
-            CDSs.reverse()
-        for CDS in CDSs:
-            CDS_loc = CDS.location_on(on)
-
-            if CDS_loc is None:
-                raise Exception("ERROR: Expected CDS {0} to be located on {1} but it wasn't".format(CDS.id, on.id) )
-
-            CDS_coords = biocode.utils.interbase0_to_humancoords(CDS_loc.fmin, CDS_loc.fmax, CDS_loc.strand)
-
-            if CDS_printed == 0:
-                fh.write("{0}\t{1}\tCDS\n".format(CDS_coords[0], CDS_coords[1]))
-            else:
-                fh.write("{0}\t{1}\n".format(CDS_coords[0], CDS_coords[1]))
-
-            CDS_printed += 1
-
-        if annot is not None and CDS_printed > 0:
-            fh.write("\t\t\tprotein_id\t{0}\n".format(official_protein_id))
-            fh.write("\t\t\ttranscript_id\t{0}\n".format(official_transcript_id))
-            fh.write("\t\t\tproduct\t{0}\n".format(annot.product_name))
-
-            if len(annot.ec_numbers) > 0:
-                for ec_number in annot.ec_numbers:
-                    fh.write("\t\t\tEC_number\t{0}\n".format(ec_number.number))
-        
-            if obo_dict is not None and len(annot.go_annotations) > 0:
-                for go_term in annot.go_annotations:
-                    go_id = "GO:{0}".format(go_term.go_id)
-                    
-                    """
-                    There should actually be a distinction here between ISA (from blast/rapsearch matches)
-                    and ISM (from HMM searches) but this is currently not encoded into the GFF, which is
-                    our only source so far.  TODO: devise a way to pass this through.  For now, safer
-                    to just use the all-encompassing 'ISS'
-
-                    Reference:  http://geneontology.org/page/iss-inferred-sequence-or-structural-similarity
-                    """
-                    if go_id in obo_dict:
-                        if obo_dict[go_id]['n'] == 'molecular_function':
-                            fh.write("\t\t\tgo_function\t{1}|{0}||ISS\n".format(go_term.go_id, obo_dict[go_id]['p']))
-                        elif obo_dict[go_id]['n'] == 'biological_process':
-                            fh.write("\t\t\tgo_process\t{1}|{0}||ISS\n".format(go_term.go_id, obo_dict[go_id]['p']))
-                        elif obo_dict[go_id]['n'] == 'cellular_component':
-                            fh.write("\t\t\tgo_component\t{1}|{0}||ISS\n".format(go_term.go_id, obo_dict[go_id]['p']))
-                    else:
-                        raise Exception("ERROR: Didn't find GO id ({0}) in passed OBO file".format(go_id))
-
-            if len(annot.dbxrefs) > 0:
-                for dbxref in annot.dbxrefs:
-                    fh.write("\t\t\tdb_xref\t{0}:{1}\n".format(dbxref.db, dbxref.identifier))
         
 
     

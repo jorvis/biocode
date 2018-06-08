@@ -3,6 +3,7 @@ import sys
 
 import biocode.things
 import biocode.annotation
+import biocode.utils
 from urllib.parse import unquote, quote
 
 def build_column_9( id=None, parent=None, other=None ):
@@ -181,7 +182,7 @@ def get_gff3_features(gff3_file, assemblies=None):
        children populated, so you can fully recover gene, RNA, exon, CDS, etc. features iterating on
        the assembly.
     2. The second dist is a flat structure of all the descendent feature objects of the Assemblies
-       keyed by the feature IDs.  
+       keyed by the feature IDs.
 
     See the documentation for each feature type in biocode.things for more info
     '''
@@ -318,6 +319,13 @@ def get_gff3_features(gff3_file, assemblies=None):
             rRNA.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = rRNA
 
+        elif cols[2] == 'tmRNA':
+            tmRNA = biocode.things.tmRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            tmRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
+            parent_feat.add_tmRNA(tmRNA)
+            tmRNA.annotation = parse_annotation_from_column_9(cols[8])
+            features[feat_id] = tmRNA
+
         elif cols[2] == 'tRNA':
             tRNA = biocode.things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
@@ -349,6 +357,15 @@ def get_gff3_features(gff3_file, assemblies=None):
             polypeptide.annotation = parse_annotation_from_column_9(cols[8])
             features[feat_id] = polypeptide
 
+        elif cols[2] == 'region':
+            # Regions where the ID value matches col[0] attach attributes to the molecule.  So far,
+            #  we're only looking for a definition of circularity
+            if 'Is_circular' in atts:
+                if atts['Is_circular'].lower() == 'true':
+                    current_assembly.is_circular = True
+                else:
+                    current_assembly.is_circular = False
+
         elif cols[2] == 'five_prime_UTR':
             utr = biocode.things.FivePrimeUTR(id=feat_id, parent=parent_feat)
             utr.locate_on(target=current_assembly, fmin=rfmin, fmax=rfmax, strand=rstrand)
@@ -365,7 +382,10 @@ def get_gff3_features(gff3_file, assemblies=None):
             sys.stderr.write( "Skipping feature {0} with type {1}\n".format(feat_id, cols[2]) )
             continue
 
-        features[feat_id].length = rfmax - rfmin
+        if cols[2] == 'region':
+            current_assembly.length = rfmax - rfmin
+        else:
+            features[feat_id].length = rfmax - rfmin
 
     return (assemblies, features)
 
@@ -513,17 +533,34 @@ def parse_gff3_by_relationship( gff3_file ):
     return fgraph
 
 
-def print_gff3_from_assemblies(assemblies=None, ofh=None):
+def print_gff3_from_assemblies(assemblies=None, ofh=None, source=None):
     """
     Utility function to write a complete GFF3 file from a list() of biothings.Assembly objects
     """
     if type(ofh).__name__ != 'TextIOWrapper':
         ofh = sys.stdout #TextIOWrapper
+
+    if source is None:
+        source = '.'
     
     ofh.write("##gff-version 3\n")
 
+    has_fasta = False
+
     for assembly_id in sorted(assemblies):
         current_assembly = assemblies[assembly_id]
+
+        if current_assembly.length:
+            has_fasta = True
+
+            if current_assembly.is_circular == True:
+                circ_str = ';Is_circular=true'
+            elif current_assembly.is_circular == False:
+                circ_str = ';Is_circular=false'
+            else:
+                circ_str = ''
+                
+            ofh.write("{0}\t{1}\tregion\t1\t{2}\t.\t+\t.\tID={0};Name={0}{3}\n".format(assembly_id, source, current_assembly.length, circ_str))
         
         for gene in sorted(assemblies[assembly_id].genes()):
             rnas_found = 0
@@ -540,7 +577,7 @@ def print_gff3_from_assemblies(assemblies=None, ofh=None):
                     new_gene = things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
                     new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
                     new_gene.add_RNA(mRNA)
-                    new_gene.print_as(fh=ofh, format='gff3')
+                    new_gene.print_as(fh=ofh, format='gff3', source=source)
 
             if len(mRNAs) > 1:
                 gene_loc = gene.location_on(current_assembly)
@@ -551,7 +588,16 @@ def print_gff3_from_assemblies(assemblies=None, ofh=None):
 
             gene.print_as(fh=ofh, format='gff3')
     
-    
+    # handle the fasta section
+    if has_fasta:
+        ofh.write("##FASTA\n")
+
+        for assembly_id in sorted(assemblies):
+            ofh.write(">{0}\n".format(assembly_id))
+            ofh.write("{0}\n".format(biocode.utils.wrapped_fasta(assemblies[assembly_id].residues)))
+
+    if type(ofh).__name__ == 'TextIOWrapper':
+        ofh.close()
 
 
 def print_biogene( gene=None, fh=None, source=None, on=None ):
