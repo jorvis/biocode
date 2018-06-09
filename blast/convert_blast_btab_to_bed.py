@@ -27,10 +27,19 @@ The output is a BED file with the following tabs:
 
 <queryID> <start> <end> <matchID> <score> <strand>
 
+What goes in the 'score' field depends on the options you pass.  In BED format the value must be
+an integer between 0 and 1000, which doesn't let itself well to being either bitscore or E-value.
+
+By default the bitscore is used but maxes at 1000.  If you pass --score_by=evalue we have the
+same issue of needing to scale it into something useful between 0 and 1000.  Here I've chosen to
+use 0 - log(e-value) limiting the range within that span.
+
 """
 
 import argparse
+import math
 import os
+import re
 
 from biocode import gff
 
@@ -40,6 +49,7 @@ def main():
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-m', '--map_to_gff_coords', type=str, required=False, help='GFF3 file to use to map coordinates onto genomic space' )
+    parser.add_argument('-s', '--score_by', type=str, required=False, default='bitscore', help='Populates the score column by bitscore or evalue' )
     args = parser.parse_args()
 
     if not os.path.exists(args.input_file):
@@ -50,8 +60,16 @@ def main():
     if args.map_to_gff_coords is not None:
         (assemblies, features) = gff.get_gff3_features(args.map_to_gff_coords)
 
+    rapsearch_detected = False
+
     for line in open(args.input_file):
-        if line.startswith('#'): continue
+        if line.startswith('#'): 
+            m = re.search('RAPSearch', line)
+            if m:
+                rapsearch_detected = True
+
+            continue
+
         line = line.rstrip()
         cols = line.split("\t")
         if len(cols) < 12: continue
@@ -71,7 +89,21 @@ def main():
             else:
                 raise Exception("ERROR: Failed to find feature {0} in GFF3 feature set".format(cols[0]))
 
-        ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format(mol_id, start, stop, cols[1], int(float(cols[11])), strand))
+        if args.score_by == 'bitscore':
+            adj_score = int(float(cols[11]))
+        else:
+            e_val = float(cols[10])
+            if rapsearch_detected == True:
+                adj_score = int(0 - e_val)
+            else:
+                adj_score = int(0 - math.log(e_val))
+
+        if adj_score < 0:
+            adj_score = 0
+        elif adj_score > 1000:
+            adj_score = 1000
+            
+        ofh.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format(mol_id, start, stop, cols[1], adj_score, strand))
 
     ofh.close()
 
