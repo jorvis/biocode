@@ -83,8 +83,8 @@ def main():
         else:
             if cols[0] in features:
                 feat_loc = features[cols[0]].location()
-                start = feat_loc.fmin + 1
-                stop = feat_loc.fmax
+                start = feat_loc.fmin + int(cols[6])
+                stop = feat_loc.fmin + int(cols[7])
                 mol_id = feat_loc.on.id
             else:
                 raise Exception("ERROR: Failed to find feature {0} in GFF3 feature set".format(cols[0]))
