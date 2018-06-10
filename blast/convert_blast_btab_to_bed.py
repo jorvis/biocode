@@ -77,13 +77,13 @@ def main():
         strand = '+' if int(cols[6]) < int(cols[7]) else '-'
 
         if args.map_to_gff_coords is None:
-            start = int(cols[6]) - 1
+            start = cols[6]
             stop = cols[7]
             mol_id = cols[0]
         else:
             if cols[0] in features:
                 feat_loc = features[cols[0]].location()
-                start = feat_loc.fmin + int(cols[6])
+                start = feat_loc.fmin + int(cols[6]) - 1
                 stop = feat_loc.fmin + int(cols[7])
                 mol_id = feat_loc.on.id
             else:
