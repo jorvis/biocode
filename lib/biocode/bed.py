@@ -7,7 +7,7 @@ def print_bed_from_assemblies(assemblies=None, ofh=None):
     """
     Utility function to write a BED file from a list() of biothings.Assembly objects.
 
-    No headers are used so the output is compatible with other tools like bedToBigBed
+    No headers are used so the output is compatible with other tools like bedToBigBed.
 
     References:
 
@@ -61,6 +61,9 @@ def print_biogene(gene=None, fh=None, on=None):
     '''
     This method accepts a Gene object located on an Assembly object (from things.py) and prints
     the gene in BED format.
+
+    The 4th column of the BED output is to identify the gene.  By default, the locus identifier
+    is used but if this isn't present we default to the gene's ID.
     '''
     if gene is None:
         raise Exception( "ERROR: The print_biogene() function requires a biogene to be passed via the 'gene' argument" );
@@ -72,7 +75,7 @@ def print_biogene(gene=None, fh=None, on=None):
 
     gene_loc = gene.location_on( on )
 
-    locus_tag = '.' if gene.locus_tag is None else gene.locus_tag
+    locus_tag = gene.id if gene.locus_tag is None else gene.locus_tag
     gene_strand = '+' if gene_loc.strand == 1 else '-'
 
     for RNA in gene.RNAs():
