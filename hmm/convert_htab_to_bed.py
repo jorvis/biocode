@@ -94,9 +94,15 @@ def main():
         else:
             if cols[5] in features:
                 feat_loc = features[cols[5]].location()
-                start = feat_loc.fmin + int(cols[8])
-                stop = feat_loc.fmin + int(cols[9])
                 strand = '+' if feat_loc.strand == 1 else '-'
+
+                if strand == '+':
+                    start = feat_loc.fmin + ((int(cols[8]) - 1) * 3)
+                    stop  = feat_loc.fmin + (int(cols[9]) * 3)
+                else:
+                    start = feat_loc.fmin + ((int(cols[8]) - 1) * 3)
+                    stop  = feat_loc.fmin + ((int(cols[9]) + 1) * 3)
+
                 mol_id = feat_loc.on.id
             else:
                 raise Exception("ERROR: Failed to find feature {0} in GFF3 feature set".format(cols[0]))
