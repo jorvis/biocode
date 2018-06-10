@@ -74,17 +74,21 @@ def main():
         cols = line.split("\t")
         if len(cols) < 12: continue
 
-        strand = '+' if int(cols[6]) < int(cols[7]) else '-'
-
         if args.map_to_gff_coords is None:
             start = cols[6]
             stop = cols[7]
             mol_id = cols[0]
+            strand = '+'
         else:
             if cols[0] in features:
                 feat_loc = features[cols[0]].location()
-                start = feat_loc.fmin + int(cols[6]) - 1
-                stop = feat_loc.fmin + int(cols[7])
+                strand = '+' if feat_loc.strand == 1 else '-'
+                
+                protein_length = int(cols[7]) - int(cols[6]) + 1
+
+                start = feat_loc.fmin + ((int(cols[6]) - 1) * 3)
+                stop = start + ((protein_length + 1) * 3)
+                    
                 mol_id = feat_loc.on.id
             else:
                 raise Exception("ERROR: Failed to find feature {0} in GFF3 feature set".format(cols[0]))
