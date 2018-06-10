@@ -14,4 +14,4 @@ RUN apt-get -y update && apt-get install -y \
 RUN cpan JORVIS/TIGR/TIGR-0.03.tar.gz
 
 RUN pip3 install jinja2
-RUN pip3 install biocode==0.6.0
+RUN pip3 install biocode==0.7.0
