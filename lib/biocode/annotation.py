@@ -406,7 +406,7 @@ class ECAnnotation:
     systematic_name = benzenediol:oxygen oxidoreductase
     CAS_registry_number = 80498-15-3
     """
-    def __init__( self, number=None ):
+    def __init__(self, number=None):
         self.number = number
         self.class1 = None
         self.class2 = None
@@ -423,3 +423,5 @@ class ECAnnotation:
         else:
             raise Exception("ERROR: Attempt to add an EC number ({0}) in unrecognized format.  Expected N.N.N.N (where N can be 0-9 or a dash)".format(self.number))
         
+    def __repr__(self):
+        return "EC:{0}".format(self.number)
