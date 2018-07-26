@@ -117,13 +117,14 @@ def print_biogene( gene=None, fh=None, on=None, go_index=None ):
 
     # This is complicated, since the 'gene' feature wants a symbol but our annotations are stored 
     #  on polypeptide.  Descend and get the first one
-
     for mRNA in sorted(gene.mRNAs()):
         polypeptides = mRNA.polypeptides()
         if len(polypeptides) >= 1 and polypeptides[0].annotation is not None:
             annot = polypeptides[0].annotation
             if annot.gene_symbol is not None:
-                annot.gene_symbol = annot.gene_symbol.split(' ', 1)[0]
+                if ' ' in annot.gene_symbol:
+                    annot.gene_symbol = annot.gene_symbol.split(' ', 1)[0]
+                    
                 fh.write("                     /gene=\"{0}\"\n".format(annot.gene_symbol))
                 break
 
