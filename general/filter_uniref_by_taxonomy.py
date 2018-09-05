@@ -3,15 +3,21 @@
 """
 Filter the UniRef100 FASTA release by taxonomy.  Assumes you have already downloaded
 this file (or other UniRef variant):
-  ftp://ftp.ebi.ac.uk/pub/databases/uniprot/uniref/uniref100/uniref100.fasta.gz
+
+   ftp://ftp.ebi.ac.uk/pub/databases/uniprot/uniref/uniref100/uniref100.fasta.gz
 
 This utility relies on the taxadb python module:
-  https://github.com/HadrienG/taxadb
+  
+   https://github.com/HadrienG/taxadb
+   or
+   pip3 install taxadb
 
-That GitHub page lists sqlite3 databases needed in order for the module to
-work, so you'll need to build or download one before using this script.
+The taxadb module requires you to first build a taxonomy database, which this script
+uses.  If it's your first time, you'll need to install the taxadb Python module, then
+build a database like this:
 
-   Example:  http://139.162.178.46/files/taxadb/taxadb_gb.sqlite.gz
+   $ taxadb download -o taxadb
+   $ taxadb create -i taxadb --fast --dbname taxadb.sqlite
 
 This script assumes FASTA headers like this:
 
