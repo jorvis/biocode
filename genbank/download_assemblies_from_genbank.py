@@ -47,8 +47,8 @@ For each ID passed, this script first gets the master record XML file for it and
       </GBAltSeqData>
     </GBSeq_alt-seq>
 
-It first looks for a scaffold range to use and, if not present, falls back on the WGS range.  For
-whichever range is chosen, ESearch is used to get an id range:
+Separate FASTA files are created for the WGS and WGS_SCAFLD ranges (if present).  For
+each range, ESearch is used to get an id range:
 
   <eSearchResult>
     <Count>4</Count>
@@ -62,7 +62,16 @@ whichever range is chosen, ESearch is used to get an id range:
     </IdList>
   ...
 
-Then EFetch is used again to pull each of these IDs in FASTA format.
+Then EFetch is used again to pull each of these IDs in FASTA format.  Whatever output
+directory you pass will be used as the base, and a subdirectory will be created with the
+accession name.  So, if I pass '-a ACIN00000000 -o ./' I'll get this output tree:
+
+.
+└── ACIN00000000
+    ├── accession_ranges.xml
+    ├── master.xml
+    ├── wgs_accessions.fasta
+    └── wgs_scaffold_accessions.fasta
 
 """
 
@@ -104,9 +113,15 @@ def main():
             
             # ids like 'ACKQ00000000' are processed as master records
             if len(acc) == 12:
-                id_range = process_master_xml(acc=acc, text=r.text, output_dir=args.output_directory)
-                ids = get_accessions_from_id_range(accs=id_range, output_dir="{0}/{1}".format(args.output_directory, acc))
-                make_multi_fasta(ids=ids, output_dir=outdir)
+                ranges = process_master_xml(acc=acc, text=r.text, output_dir=args.output_directory)
+
+                if ranges['wgs'] is not None:
+                    ids = get_accessions_from_id_range(accs=ranges['wgs'], output_dir="{0}/{1}".format(args.output_directory, acc))
+                    make_multi_fasta(ids=ids, output_dir=outdir, label='wgs_accessions')
+                    
+                if ranges['wgs_scaffold'] is not None:
+                    ids = get_accessions_from_id_range(accs=ranges['wgs_scaffold'], output_dir="{0}/{1}".format(args.output_directory, acc))
+                    make_multi_fasta(ids=ids, output_dir=outdir, label='wgs_scaffold_accessions')
             else:
                 outdir = "{0}/{1}".format(args.output_directory, acc)
                 if not os.path.exists(outdir):
@@ -176,9 +191,9 @@ def get_accessions_from_id_range(accs=None, output_dir=None):
     return ids
 
 
-def make_multi_fasta(ids=None, output_dir=None):
+def make_multi_fasta(ids=None, output_dir=None, label=None):
     url_base = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id={0}&rettype=fasta&retmode=text&tool=biocode"
-    ofh = open("{0}/accessions.fasta".format(output_dir), 'wt')
+    ofh = open("{0}/{1}.fasta".format(output_dir, label), 'wt')
 
     for id in ids:
         url = url_base.format(id)
@@ -230,12 +245,7 @@ def process_master_xml(acc=None, text=None, output_dir=None):
         elif name == 'WGS_SCAFLD':
             wgs_scaffold_range = [first_acc, last_acc]
 
-    if wgs_scaffold_range is not None:
-        return wgs_scaffold_range
-    elif wgs_range is not None:
-        return wgs_range
-
-    return None
+    return {'wgs': wgs_range, 'wgs_scaffold': wgs_scaffold_range}
 
 
 if __name__ == '__main__':

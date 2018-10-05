@@ -2,6 +2,7 @@ Hey, let's keep a change log.
 
 0.7.1
 -----
+- Changed genbank/download_assemblies_from_genbank.py to export BOTH contig and scaffold range files automatically
 - Bugfix: genbank module was failing if the gene symbol contained a comma
 - Corrected python module dependency from igraph -> python-igraph
 - Updated documenation on taxadb generation in general/filter_uniref_by_taxonomy.py
