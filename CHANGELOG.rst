@@ -8,6 +8,7 @@ Hey, let's keep a change log.
 - Updated documenation on taxadb generation in general/filter_uniref_by_taxonomy.py
 - Added taxadb to formal dependencies
 - Changed BED export library to use gene.id for 4th column if no locus is found
+- Added ncbigff module and script to use it for conversions
 
 0.7.0
 -----
