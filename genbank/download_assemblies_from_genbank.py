@@ -87,6 +87,7 @@ def main():
     parser.add_argument('-i', '--id_list', type=str, required=False, help='List of Genbank accessions in a file, one per line')
     parser.add_argument('-a', '--accession', type=str, required=False, help='Single Genbank accession')
     parser.add_argument('-o', '--output_directory', type=str, required=True, help='Base directory where output files will be written' )
+    parser.add_argument('--skip_existing', dest='skip_existing', action='store_true', help="Skip any entries for which the output directory already exists.  Useful if restarting after a network error.")
     parser.add_argument('-ak', '--api_key', type=str, required=False, help='Passing a registered NCBI API key allows for faster processing of id lists')
     args = parser.parse_args()
 
@@ -110,23 +111,26 @@ def main():
 
         if r.status_code == 200:
             outdir = "{0}/{1}".format(args.output_directory, acc)
-            
+
+            if os.path.exists(outdir):
+                if args.skip_existing:
+                    print("\tSkipped because --skip_existing and directory exists")
+                    continue
+            else:
+                os.mkdir(outdir)
+
             # ids like 'ACKQ00000000' are processed as master records
             if len(acc) == 12:
                 ranges = process_master_xml(acc=acc, text=r.text, output_dir=args.output_directory)
 
                 if ranges['wgs'] is not None:
-                    ids = get_accessions_from_id_range(accs=ranges['wgs'], output_dir="{0}/{1}".format(args.output_directory, acc))
+                    ids = get_accessions_from_id_range(accs=ranges['wgs'], output_dir=outdir)
                     make_multi_fasta(ids=ids, output_dir=outdir, label='wgs_accessions')
                     
                 if ranges['wgs_scaffold'] is not None:
-                    ids = get_accessions_from_id_range(accs=ranges['wgs_scaffold'], output_dir="{0}/{1}".format(args.output_directory, acc))
+                    ids = get_accessions_from_id_range(accs=ranges['wgs_scaffold'], output_dir=outdir)
                     make_multi_fasta(ids=ids, output_dir=outdir, label='wgs_scaffold_accessions')
             else:
-                outdir = "{0}/{1}".format(args.output_directory, acc)
-                if not os.path.exists(outdir):
-                    os.mkdir(outdir)
-                    
                 make_multi_fasta(ids=[acc], output_dir=outdir)
                 
         else:
