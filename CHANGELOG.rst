@@ -2,6 +2,7 @@ Hey, let's keep a change log.
 
 0.7.1
 -----
+- NCBI API key now required for all E-Utility calls
 - Added --skip_existing option to batch genbank downloader" download_assemblies_from_genbank.py
 - Changed genbank/download_assemblies_from_genbank.py to export BOTH contig and scaffold range files automatically
 - Bugfix: genbank module was failing if the gene symbol contained a comma
