@@ -6,8 +6,8 @@ genome projects based on the parent Genbank ID of each.  It uses EUtils for this
 
   https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=ACIN00000000&retmode=xml&rettype=gb
 
-If you pass the --api_key option, the 1-second delay between accession list entries is
-skipped, since NCBI allows faster API calls if you have a key.  To get one, register:
+If you pass the --api_key option (required after May 1, 2018), the 1-second delay between accession 
+list entries is skipped, since NCBI allows faster API calls if you have a key.  To get one, register:
 
   https://www.ncbi.nlm.nih.gov/books/NBK25497/#_chapter2_Usage_Guidelines_and_Requiremen_
 
@@ -88,7 +88,7 @@ def main():
     parser.add_argument('-a', '--accession', type=str, required=False, help='Single Genbank accession')
     parser.add_argument('-o', '--output_directory', type=str, required=True, help='Base directory where output files will be written' )
     parser.add_argument('--skip_existing', dest='skip_existing', action='store_true', help="Skip any entries for which the output directory already exists.  Useful if restarting after a network error.")
-    parser.add_argument('-ak', '--api_key', type=str, required=False, help='Passing a registered NCBI API key allows for faster processing of id lists')
+    parser.add_argument('-ak', '--api_key', type=str, required=True, help='NCBI requires an API key for all E-utility calls as of May 1, 2018.  https://www.ncbi.nlm.nih.gov/books/NBK25500/#_chapter1_Announcement_')
     args = parser.parse_args()
 
     if args.id_list is None and args.accession is None:
