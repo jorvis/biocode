@@ -25,6 +25,7 @@ def main():
     parser.add_argument('input_file', nargs=2, help='<options> file1 file2')
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
     parser.add_argument('-n', '--no_header', action='store_true', help="Pass if files don't heave header lines")
+    parser.add_argument('-s', '--skip_na', action='store_true', help="Pass if it should skip rows whose index value is 'NA'")
     parser.add_argument('-1', '--file1_index', type=int, required=True, help='1-based column number of index in file 1' )
     parser.add_argument('-2', '--file2_index', type=int, required=True, help='1-based column number of index in file 2' )
     args = parser.parse_args()
@@ -50,6 +51,9 @@ def main():
 
         f1_key = cols[args.file1_index - 1]
 
+        if f1_key == 'NA' and args.skip_na:
+            continue
+
         # Have we seen this index already?
         if f1_key in f1_idx:
             raise Exception("ERROR: Duplicate index ({}) in file1".format(f1_key))
@@ -68,6 +72,9 @@ def main():
             continue
 
         f2_key = cols[args.file2_index - 1]
+
+        if f2_key == 'NA' and args.skip_na:
+            continue
 
         if f2_key in f1_idx:
             print("\t".join(f1_idx[f2_key] + cols), file=ofh)
