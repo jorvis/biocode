@@ -5,10 +5,7 @@ LABEL Description="This image is used to run any bioinformatics utilities/script
 
 # From the best practices guide:
 #  https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
-RUN apt-get -y update && apt-get install -y \
-    libmldbm-perl \
-    python3 \
-    python3-pip \
+RUN apt-get -y update && apt-get install -y libmldbm-perl python3 python3-pip zlib1g-dev libxml2-dev \
  && rm -rf /var/lib/apt/lists/*
 
 RUN cpan JORVIS/TIGR/TIGR-0.03.tar.gz
