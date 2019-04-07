@@ -7,10 +7,12 @@ Hey, let's keep a change log.
 - Changed genbank/download_assemblies_from_genbank.py to export BOTH contig and scaffold range files automatically
 - Bugfix: genbank module was failing if the gene symbol contained a comma
 - Corrected python module dependency from igraph -> python-igraph
-- Updated documenation on taxadb generation in general/filter_uniref_by_taxonomy.py
+- Updated documentation on taxadb generation in general/filter_uniref_by_taxonomy.py
 - Added taxadb to formal dependencies
 - Changed BED export library to use gene.id for 4th column if no locus is found
 - Added ncbigff module and script to use it for conversions
+- Added general/join_columnar_files.py
+- Added fasta/fasta_simple_stats.py
 
 0.7.0
 -----
