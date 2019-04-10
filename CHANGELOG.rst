@@ -1,5 +1,12 @@
 Hey, let's keep a change log.
 
+0.8.0
+-----
+- This actually should have been what the previous release was called. X.X.N releases
+  should only be for bug fixes.
+- Added report_go_slim_counts.py script
+- Added metaphlan-parsing R script (though needs major clean-up)
+
 0.7.1
 -----
 - NCBI API key now required for all E-Utility calls
