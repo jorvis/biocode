@@ -45,11 +45,15 @@ def main():
     full_obo_index = parse_full_go(args.full_obo)
     slim_counts = map_to_slim(source_terms=source_go_terms, slim_map_file=args.obo_slim_pickle)
 
+    out_fh = open(args.output_file, 'wt')
+    
     for ns in slim_counts:
         if ns == 'unknown': continue
         for term in slim_counts[ns]:
             if term == 'unknown': continue
-            print("{0}\t{1}\t{2}\t{3}".format(ns, term, full_obo_index[term]['name'], slim_counts[ns][term]))
+            print("{0}\t{1}\t{2}\t{3}".format(ns, term, full_obo_index[term]['name'], slim_counts[ns][term]), file=out_fh)
+
+    out_fh.close()
 
 
 # Goal is to create summary slim counts on main page like this:
