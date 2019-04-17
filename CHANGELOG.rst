@@ -1,9 +1,15 @@
 Hey, let's keep a change log.
 
+0.9.0
+-----
+- Added ncRNA feature class and changed inheritance for all related types (rRNA, tRNA, etc.)
+- gff.parse_annotation_from_column_9() now recognizes both 'product_name' and 'product' in 9th column.
+
 0.8.0
 -----
 - This actually should have been what the previous release was called. X.X.N releases
   should only be for bug fixes.
+- Added dependency support for R in Docker build
 - Added report_go_slim_counts.py script
 - Added metaphlan-parsing R script (though needs major clean-up)
 
