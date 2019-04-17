@@ -399,7 +399,7 @@ def parse_annotation_from_column_9(col9):
     skip = ['ID', 'Parent']
 
     for att in atts:
-        if att == 'product_name':
+        if att == 'product_name' or att == 'product':
             if isinstance(atts[att], str):
                 annot.product_name = atts[att]
             else:
