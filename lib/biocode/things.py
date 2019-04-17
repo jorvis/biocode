@@ -1,4 +1,5 @@
 
+import sys
 import uuid
 
 #from biocode import utils, gff, tbl
@@ -23,8 +24,6 @@ http://sphinx-doc.org/
 A set of abstract classes are defined first, then the other classes, all within alphabetic order
 within each group.
 '''
-
-
 
 class LocatableThing:
     '''
@@ -1010,9 +1009,13 @@ class RNA( LocatableThing ):
         self.children = children
 
         ## This should be an instance of FunctionalAnnotation from annotation.py
-        #   It's considered best practice to put the annotation on the Polypeptide feature for coding RNAs.
+        #   It's considered best practice to put the annotation on the Polypeptide feature for
+        #   coding RNAs.
         #   Here we expect things like product (rRNAs), anticodon (tRNAs), etc.
         self.annotation = annotation
+
+        if annotation is not None:
+            print("Warning: The RNA.annotation attribute is deprecated and will soon be removed.  Instead, use ncRNA.annotation", file=sys.stderr)
 
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'exon')
@@ -1267,19 +1270,33 @@ class mRNASet( MoleculeSet ):
             mRNA = mRNA(id=seq_id, residues=seqs[seq_id]['s'])
             self.add(mRNA)
 
-class tmRNA( RNA ):
+class ncRNA( RNA ):
+    '''
+    SO definition (2019-04-17): "An RNA transcript that does not encode for a protein rather the RNA 
+    molecule is the gene product."
+
+    An ncRNA object has an annotation associated with it, since for protein-coding genes it is added 
+    on the polypeptide level.
+    '''
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None, annotation=None ):
+        super().__init__(id, locations, parent, locus_tag, children)
+
+        ## this should be an instance of FunctionalAnnotation from annotation.py
+        self.annotation = annotation
+            
+class tmRNA( ncRNA ):
     '''
     SO definition (2017-11-29): "A tmRNA liberates a mRNA from a stalled ribosome. To accomplish this part 
     of the tmRNA is used as a reading frame that ends in a translation stop signal. The broken mRNA is 
     replaced in the ribosome by the tmRNA and translation of the tmRNA leads to addition of a proteolysis 
     tag to the incomplete protein enabling recognition by a protease. Recently a number of permuted tmRNAs 
-    genes have been found encoded in two parts. TmRNAs have been identified in eubacteria and some 
+    genes have been found encoded in two parts. tmRNAs have been identified in eubacteria and some 
     chloroplasts but are absent from archeal and Eukaryote nuclear genomes."
     '''
     def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
         super().__init__(id, locations, parent, locus_tag, children)
             
-class rRNA( RNA ):
+class rRNA( ncRNA ):
     '''
     SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both
     structural scaffolding and catalytic activity."
@@ -1287,7 +1304,7 @@ class rRNA( RNA ):
     def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
         super().__init__(id, locations, parent, locus_tag, children)
 
-class tRNA( RNA ):
+class tRNA( ncRNA ):
     '''
     SO definition (2013-05-22): "Transfer RNA (tRNA) molecules are approximately 80 nucleotides in length.
     Their secondary structure includes four short double-helical elements and three loops (D, anti-codon,
@@ -1313,7 +1330,6 @@ class UTR( LocatableThing ):
         self.parent = parent
         self.length = length
 
-
 class FivePrimeUTR( UTR ):
     '''
     SO definition (2014-06-12): "A region at the 5' end of a mature transcript (preceding the initiation
@@ -1321,7 +1337,6 @@ class FivePrimeUTR( UTR ):
     '''
     def __init__( self, id=None, locations=None, parent=None, length=None ):
         super().__init__(id, locations, parent, length)
-
 
 class ThreePrimeUTR( UTR ):
     '''
