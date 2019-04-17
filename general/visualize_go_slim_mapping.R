@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript --vanilla
+#!/usr/bin/env Rscript
 
 library(ggplot2)
 library(readr)
