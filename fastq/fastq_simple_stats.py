@@ -52,7 +52,7 @@ def main():
             fh = gzip.open( input_file, 'rb')
             is_compressed = True
         else:
-            fh = open( input_file, 'rU' )
+            fh = open(input_file, 'r')
             is_compressed = False
 
         if args.individual:
