@@ -20,7 +20,7 @@ gene model, defined here:
 http://www.sequenceontology.org/gff3.shtml
 
 WARNING: The augustus output format appears to change pretty frequently.  I've provided
-an example of the expected input below, and the versions I tested with are 2.7 and 3.0.1
+an example of the expected input below, and the versions I tested with are 2.7, 3.0.1 and 3.3
 
 WARNING: Only the gene/transcript/CDS rows are kept (and exon rows are created).  All
 others are discarded.
