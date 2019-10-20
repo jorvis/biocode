@@ -7,18 +7,19 @@ how well an assembled transcriptome (Trinity) produced contigs which covered a s
 reference transcripts.  Steps in her pipeline:
 
 export BASE=A8_muscle.trinity.standard
+export REF=toi_20191007.fasta
 formatdb -p F -i $BASE.fasta
-blastall -p blastn -i toi_20161110.fna -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
-/home/jorvis/git/biocode/blast/calculate_query_coverage_by_blast.py -f toi_20161110.fna -b $BASE.blast.m9 -o $BASE
+blastall -a 4 -p blastn -i $REF -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
+/home/jorvis/git/biocode/blast/calculate_query_coverage_by_blast.py -f $REF -b $BASE.blast.m9 -o $BASE
 sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
 sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
 # then to actually plot these:
-$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "Transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.both.png
+$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "Transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.both.png
 
-$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "Longest transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.longest.png
+$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "Longest transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.longest.png
 
-$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "All transcript coverage" -rf toi_20161110.fna  -qf $BASE.fasta -o $BASE.all.png
+$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "All transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.all.png
 
 --stacked option:
 Rather than just show coverage with the max Y value at 100, use of this option creates a
