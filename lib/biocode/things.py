@@ -853,7 +853,7 @@ class Match( LocatableThing ):
     The sequence ontology provides a host of specific match terms, but I'm using this
     as a lightweight implementation of them all rather than explicitly creating
     dozens of subclasses.  Instead, create a Match object and simply set any more
-    specific term using Match.class
+    specific term using Match.subclass
 
     Future mod: Add Annotation object to store info on the match?
     '''
