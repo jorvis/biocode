@@ -121,10 +121,15 @@ def main():
             elif feat.type == 'tRNA':
                 locus_tag = feat.qualifiers['locus_tag'][0]
                 rna_count_by_gene[locus_tag] += 1
-                feat_id = "{0}.tRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
+                feat_id = "{0}.tRNA.{1}".format(locus_tag, rna_count_by_gene[locus_tag])
+
+                if 'product' in feat.qualifiers:
+                    anticodon = feat.qualifiers['product'][0]
+                else:
+                    anticodon = None
                 
-                tRNA = things.tRNA(id=feat_id, parent=current_gene)
-                tRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
+                tRNA = things.tRNA(id=feat_id, parent=current_gene, anticodon=anticodon)
+                tRNA.locate_on(target=current_assembly, fmin=fmin, fmax=fmax, strand=strand)
                 gene.add_tRNA(tRNA)
                 current_RNA = tRNA
 
@@ -136,9 +141,16 @@ def main():
             elif feat.type == 'rRNA':
                 locus_tag = feat.qualifiers['locus_tag'][0]
                 rna_count_by_gene[locus_tag] += 1
-                feat_id = "{0}.rRNA.{1}".format( locus_tag, rna_count_by_gene[locus_tag] )
+                feat_id = "{0}.rRNA.{1}".format(locus_tag, rna_count_by_gene[locus_tag])
+
+                if 'product' in feat.qualifiers:
+                    product = feat.qualifiers['product'][0]
+                else:
+                    product = None
+
+                annot = annotation.FunctionalAnnotation(product_name=product)
                 
-                rRNA = things.rRNA(id=feat_id, parent=current_gene)
+                rRNA = things.rRNA(id=feat_id, parent=current_gene, annotation=annot)
                 rRNA.locate_on( target=current_assembly, fmin=fmin, fmax=fmax, strand=strand )
                 gene.add_rRNA(rRNA)
                 current_RNA = rRNA

@@ -1301,8 +1301,11 @@ class rRNA( ncRNA ):
     SO definition (2013-05-22): "RNA that comprises part of a ribosome, and that can provide both
     structural scaffolding and catalytic activity."
     '''
-    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None ):
+    def __init__( self, id=None, locations=None, parent=None, locus_tag=None, children=None, annotation=None ):
         super().__init__(id, locations, parent, locus_tag, children)
+
+        ## this should be an instance of FunctionalAnnotation from annotation.py
+        self.annotation = annotation
 
 class tRNA( ncRNA ):
     '''

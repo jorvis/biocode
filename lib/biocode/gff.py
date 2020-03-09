@@ -662,8 +662,8 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             if RNA.annotation.product_name:
                 rna_annot_atts['product_name'] = RNA.annotation.product_name
 
-            if hasattr(RNA, 'anticodon') and RNA.anticodon:
-                rna_annot_atts['anticodon'] = RNA.anticodon
+        if hasattr(RNA, 'anticodon') and RNA.anticodon:
+            rna_annot_atts['anticodon'] = RNA.anticodon
 
         columns[2] = RNA.__class__.__name__
         columns[3:5] = [str(RNA_loc.fmin + 1), str(RNA_loc.fmax)]
