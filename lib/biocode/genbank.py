@@ -146,6 +146,9 @@ def print_biogene( gene=None, fh=None, on=None, go_index=None ):
         if gene.locus_tag is not None:
             fh.write("                     /locus_tag=\"{0}\"\n".format(gene.locus_tag))
 
+        if hasattr(rna, 'anticodon') and rna.anticodon:
+            fh.write("                     /product=\"{0}\"\n".format(rna.anticodon))
+
         ###########################
         ## write the CDS feature (made up of CDS fragments)
         if rna_class == 'mRNA':
