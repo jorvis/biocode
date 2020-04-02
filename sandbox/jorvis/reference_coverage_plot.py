@@ -7,19 +7,21 @@ how well an assembled transcriptome (Trinity) produced contigs which covered a s
 reference transcripts.  Steps in her pipeline:
 
 export BASE=A8_muscle.trinity.standard
-export REF=toi_20191007.fasta
+export REF=toi_20200330.fasta
+export TITLE=PASA
+
 formatdb -p F -i $BASE.fasta
-blastall -a 4 -p blastn -i $REF -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
+blastall -p blastn -i $REF -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
 /home/jorvis/git/biocode/blast/calculate_query_coverage_by_blast.py -f $REF -b $BASE.blast.m9 -o $BASE
 sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
 sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
 # then to actually plot these:
-$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "Transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.both.png
+/usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "${TITLE} transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.both.png
 
-$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "Longest transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.longest.png
+/usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "${TITLE} - Longest transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.longest.png
 
-$ /usr/local/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "All transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.all.png
+/usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "${TITLE} - All transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.all.png
 
 --stacked option:
 Rather than just show coverage with the max Y value at 100, use of this option creates a
@@ -27,13 +29,30 @@ stacked bar chart which gives information about the contig matching the referenc
 relative lengths.  This allows us to see if a contig covers a reference transcript completely
 BUT is also far longer than the reference.
 
+If you're having errors in the image generation, you have to follow the complete cluster that is setting
+up local static image export in plotly:
+
+https://plotly.com/python/static-image-export/
+
+For me this involved:
+
+sudo /usr/bin/pip3 install plotly==4.5.4
+sudo /usr/bin/pip3 install psutil requestsipywidgets
+
+And renaming this to 'orca' and putting it in PATH:
+
+wget https://github.com/plotly/orca/releases/download/v1.3.1/orca-1.3.1.AppImage
+
 """
 
 import argparse
 import biocode.utils
 import os
-import plotly.plotly as py
+import plotly
+import plotly.offline as py
 import plotly.graph_objs as go
+
+plotly.io.orca.config.executable = '/opt/bin/orca'
 
 def main():
     parser = argparse.ArgumentParser( description='Generates a graphic showing how well reference transcripts are covered by a transcript assembly')
@@ -168,13 +187,14 @@ def main():
         height=800,
         margin = go.Margin(b = args.margin_bottom, pad=5)
     )
-    fig = go.Figure(data=traces, layout=layout)
+    fig = go.FigureWidget(data=traces, layout=layout)
 
     if args.output_image is None:
         plot_url = py.plot(fig, filename='angled-text-bar')
         print("Navigate to {0} for your image".format(plot_url))
     else:
-        py.image.save_as(fig, filename=args.output_image)
+        #py.image.save_as(fig, filename=args.output_image)
+        fig.write_image(args.output_image)
         print("Output written to file: {0}".format(args.output_image))
 
 
