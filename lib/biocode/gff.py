@@ -327,7 +327,12 @@ def get_gff3_features(gff3_file, assemblies=None):
             features[feat_id] = tmRNA
 
         elif cols[2] == 'tRNA':
-            tRNA = biocode.things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag)
+            anticodon = None
+
+            if 'anticodon' in atts:
+                anticodon = atts['anticodon']
+            
+            tRNA = biocode.things.tRNA(id=feat_id, parent=parent_feat, locus_tag=locus_tag, anticodon=anticodon)
             tRNA.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
             parent_feat.add_tRNA(tRNA)
             tRNA.annotation = parse_annotation_from_column_9(cols[8])
@@ -662,8 +667,8 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             if RNA.annotation.product_name:
                 rna_annot_atts['product_name'] = RNA.annotation.product_name
 
-            if hasattr(RNA, 'anticodon') and RNA.anticodon:
-                rna_annot_atts['anticodon'] = RNA.anticodon
+        if hasattr(RNA, 'anticodon') and RNA.anticodon:
+            rna_annot_atts['anticodon'] = RNA.anticodon
 
         columns[2] = RNA.__class__.__name__
         columns[3:5] = [str(RNA_loc.fmin + 1), str(RNA_loc.fmax)]
