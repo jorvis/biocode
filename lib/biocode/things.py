@@ -1,4 +1,5 @@
 
+import itertools
 import sys
 import uuid
 
@@ -1248,6 +1249,68 @@ class mRNA( RNA ):
         super().__init__(id, locations, parent, locus_tag, children)
         self.residues = residues
 
+    def longest_orf(self, require_start=False, frame=None):
+        '''
+        Searches all six frames (unless a specific frame is passed) and returns an 
+        open-reading frame (ORF) instance.
+
+        If you want to require a start codon pass require_start=True and the ORF will be 
+        checked for one of AUG/ATG, GUG/GTG or UUG/TTG.  
+
+        If the longest ORF is on the reverse strand the residues within the ORF object
+        are reverse complemented.
+        '''
+        if self.residues is None:
+            raise Exception("mRNA.longest_orf() called but mRNA.residues was empty")
+        
+        stops = ["TAG", "TGA", "TAA"]
+        starts = ["ATG", "GTG", "TTG"]
+        
+        if frame is None:
+            frames = [1,2,3,-1,-2,-3]
+        elif frame not in [1,2,3,-1,-2,-3]:
+            raise Exception("Invalid value for frames.  mRNA.longest_orf() only considers one of [1,2,3,-1,-2,-3]")
+        else:
+            frames = [frame,]
+
+        longest_residues = ''
+        longest_frame = None
+
+        working_seq = self.residues.upper()
+        working_seq.replace('U', 'T')
+        working_seq_revcomped = False
+
+        for frame in frames:
+            real_frame = frame
+            
+            if frame < 0:
+                if not working_seq_revcomped:
+                    working_seq = biocode.utils.reverse_complement(working_seq)
+                    working_seq_revcomped = True
+                frame = 0 - frame
+
+            current_residues = ''
+                
+            for i in range(frame - 1, len(working_seq), 3):
+                codon = working_seq[i:i+3]
+                ## if the current codon is a stop, record this if it's the longest and restart
+                if codon in stops:
+                    if len(current_residues) > len(longest_residues):
+                        longest_residues = current_residues
+                        longest_frame = real_frame
+
+                    current_residues = ''
+                else:
+                    current_residues += codon
+
+            # handle the last case
+            if len(current_residues) > len(longest_residues):
+                longest_residues = current_residues
+                longest_frame = real_frame
+
+        return ORF(parent=self, frame=longest_frame, residues=longest_residues)
+        
+
 class mRNASet( MoleculeSet ):
     '''
     This is a convenience class for when operations need to be performed on a set of mRNAs
@@ -1283,6 +1346,23 @@ class ncRNA( RNA ):
 
         ## this should be an instance of FunctionalAnnotation from annotation.py
         self.annotation = annotation
+
+class ORF( LocatableThing ):
+    '''
+    SO definition (2020-04-14): "The in-frame interval between the stop codons of a reading frame 
+    which when read as sequential triplets, has the potential of encoding a sequential string of 
+    amino acids. TER(NNN)nTER."
+
+    Note that this doesn't mean the sequence begins with a start codon.  It's simply devoid of 
+    stops.
+
+    The parent attribute should point to an mRNA instance.
+    '''
+    def __init__(self, id=None, locations=None, parent=None, frame=None, residues=None):
+        super().__init__(locations)
+        self.parent = parent
+        self.frame = frame
+        self.residues = residues
             
 class tmRNA( ncRNA ):
     '''
