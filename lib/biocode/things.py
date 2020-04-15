@@ -1296,8 +1296,13 @@ class mRNA( RNA ):
                 ## if the current codon is a stop, record this if it's the longest and restart
                 if codon in stops:
                     if len(current_residues) > len(longest_residues):
-                        longest_residues = current_residues
-                        longest_frame = real_frame
+                        if require_start:
+                            if current_residues[0:3] in starts:
+                                longest_residues = current_residues
+                                longest_frame = real_frame
+                        else:
+                            longest_residues = current_residues
+                            longest_frame = real_frame
 
                     current_residues = ''
                 else:
@@ -1305,11 +1310,15 @@ class mRNA( RNA ):
 
             # handle the last case
             if len(current_residues) > len(longest_residues):
-                longest_residues = current_residues
-                longest_frame = real_frame
+                if require_start:
+                    if current_residues[0:3] in starts:
+                        longest_residues = current_residues
+                        longest_frame = real_frame
+                else:
+                    longest_residues = current_residues
+                    longest_frame = real_frame
 
         return ORF(parent=self, frame=longest_frame, residues=longest_residues)
-        
 
 class mRNASet( MoleculeSet ):
     '''
