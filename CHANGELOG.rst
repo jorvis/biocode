@@ -1,5 +1,9 @@
 Hey, let's keep a change log.
 
+next:
+----
+- Added ORF class and mRNA.longest_orf() method
+
 0.9.0
 -----
 - Added ncRNA feature class and changed inheritance for all related types (rRNA, tRNA, etc.)
