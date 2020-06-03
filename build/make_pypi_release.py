@@ -240,7 +240,7 @@ def populate_setup_file(fh, version, script_paths):
         'email': 'jorvis@gmail.com',
         'version': version,
         'packages': ['biocode'],
-        'dependencies': ['python-igraph', 'jinja2', 'matplotlib', 'taxadb'],
+        'dependencies': ['python-igraph', 'jinja2', 'matplotlib', 'numpy', 'taxadb'],
         'scripts': script_paths
     }
 

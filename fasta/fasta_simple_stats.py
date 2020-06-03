@@ -23,6 +23,7 @@ Contact: jorvis@gmail.com
 import argparse
 import codecs
 import gzip
+import numpy
 import os
 import sys
 import re
@@ -51,7 +52,8 @@ def main():
         'smallest_length': None,
         'smallest_id': None,
         'largest_length': 0,
-        'largest_id': None
+        'largest_id': None,
+        'lengths': list()
     }
 
     for input_file in args.input_files:
@@ -70,7 +72,8 @@ def main():
                'smallest_length': None,
                'smallest_id': None,
                'largest_length': 0,
-               'largest_id': None
+               'largest_id': None,
+               'lengths': list()
            }
 
         line_number = 0
@@ -84,7 +87,7 @@ def main():
             line = line.rstrip()
 
             ## every line starting with > is the start of a sequence entry
-            if line[0] == '>':
+            if line and line[0] == '>':
                 data['entry_count'] += 1
 
                 if line_number != 1:
@@ -99,6 +102,8 @@ def main():
                     if this_seq_length > data['largest_length']:
                         data['largest_length'] = this_seq_length
                         data['largest_id'] = seq_id
+
+                    data['lengths'].append(this_seq_length)
 
                 m = re.match(">(\S+)", line)
                 seq_id = m.group(1)
@@ -122,11 +127,26 @@ def main():
 def report_stats(fout, input_file, data):
     avg_entry_length = data['total_bases'] / data['entry_count']
 
+    # calculate N50
+    data['lengths'] = sorted(data['lengths'], reverse=True)
+    length_sum = numpy.cumsum(data['lengths'])
+    n_2 = int(sum(data['lengths'])/2)
+    csum_n2 = min(length_sum[length_sum >= n_2])
+    n50_idx = numpy.where(length_sum == csum_n2)
+    n_50 = data['lengths'][int(n50_idx[0])]
+
+    val90 = int(sum(data['lengths']) * 0.90)
+    csum_n90 = min(length_sum[length_sum >= val90])
+    n90_idx = numpy.where(length_sum == csum_n90)
+    n_90 = data['lengths'][int(n90_idx[0])]
+
     fout.write("File: {0}\n".format(input_file))
     fout.write("\tTotal sequence entries: {0}\n".format(data['entry_count']))
     fout.write("\tTotal bases: {0}\n".format(data['total_bases']))
     fout.write("\tShortest sequence length: {0:.1f} ({1})\n".format(data['smallest_length'], data['smallest_id']))
     fout.write("\tAverage sequence length : {0:.1f}\n".format(avg_entry_length))
+    fout.write("\tN50 : {0}\n".format(n_50))
+    fout.write("\tN90 : {0}\n".format(n_90))
     fout.write("\tLongest sequence length : {0:.1f} ({1})\n".format(data['largest_length'], data['largest_id']))
     fout.write("\tGC percentage: {0:.1f}\n".format( (data['gc_count'] / data['total_bases']) * 100))
 
