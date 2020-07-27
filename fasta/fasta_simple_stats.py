@@ -83,6 +83,9 @@ def main():
             
             line = line.rstrip()
 
+            if len(line) == 0:
+                continue
+
             ## every line starting with > is the start of a sequence entry
             if line[0] == '>':
                 data['entry_count'] += 1
