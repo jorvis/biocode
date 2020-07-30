@@ -33,6 +33,7 @@ Assumes transdecoder output looks like this ('longest_orfs.cds'):
 import argparse
 import os
 import re
+import sys
 
 from biocode import utils
 
@@ -53,9 +54,6 @@ def main():
     orf_lengths = longest_orf_lengths(args.input_transdecoder)
     load_abundances(seqs, args.input_salmon)
 
-    ofh_longest = open(args.output_file_longest_orf, 'wt')
-    ofh_abund   = open(args.output_file_most_abundant, 'wt')
-
     pasa_cluster_count = len(pasa_clusters)
     pasa_transcript_count = len(seqs)
     size_filtered_pasa_transcript_count = 0
@@ -64,52 +62,105 @@ def main():
     tpm_filtered_pasa_transcript_count = 0
     tpm_filtered_pasa_cluster_count = 0
 
-    for cluster_id in pasa_clusters:
-        longest_asmbl_id = None
-        longest_asmbl_len = 0
-
-        best_tpm_id = None
-        best_tpm = 0
-
-        for asmbl_id in pasa_clusters[cluster_id]:
-            if asmbl_id in seqs and 'tpm' in seqs[asmbl_id] and seqs[asmbl_id]['tpm'] >= args.input_pasa_tpm_cutoff:
-                tpm_filtered_pasa_transcript_count += 1
-            
-            if len(seqs[asmbl_id]['s']) >= args.input_pasa_transcript_size_cutoff:
-                size_filtered_pasa_transcript_count += 1
-            
-                if asmbl_id in orf_lengths and orf_lengths[asmbl_id] > longest_asmbl_len:
-                    size_filtered_pasa_transcript_count_with_cds += 1
-                    longest_asmbl_id = asmbl_id
-                    longest_asmbl_len = orf_lengths[asmbl_id]
-
-                if asmbl_id in seqs and 'tpm' in seqs[asmbl_id] and seqs[asmbl_id]['tpm'] > best_tpm:
-                    best_tpm_id = asmbl_id
-                    best_tpm = seqs[asmbl_id]['tpm']
-
-        if longest_asmbl_id:
-            size_filtered_pasa_cluster_count += 1
-            ofh_longest.write(">{0} {1} longest_orf:{3}\n{2}\n".format(longest_asmbl_id, seqs[longest_asmbl_id]['h'],
-                                                                       utils.wrapped_fasta(''.join(seqs[longest_asmbl_id]['s'])),
-                                                                       longest_asmbl_len))
-        if best_tpm_id:
-            tpm_filtered_pasa_cluster_count += 1
-            ofh_abund.write(">{0} {1} tpm:{3}\n{2}\n".format(best_tpm_id, seqs[best_tpm_id]['h'],
-                                                             utils.wrapped_fasta(''.join(seqs[best_tpm_id]['s'])),
-                                                             best_tpm))
-            
-    ofh_longest.close()
-    ofh_abund.close()
-
     print("Stats:\n")
-    print("PASA cluster count: {0}".format(pasa_cluster_count))
-    print("PASA transcript count: {0}".format(pasa_transcript_count))
-    print("Size-filtered PASA cluster count: {0}".format(size_filtered_pasa_cluster_count))
-    print("Size-filtered PASA transcript count: {0}".format(size_filtered_pasa_transcript_count))
-    print("Size-filtered PASA transcript count with CDS: {0}".format(size_filtered_pasa_transcript_count_with_cds))
-    print("TPM-filtered PASA cluster count: {0}".format(tpm_filtered_pasa_cluster_count))
-    print("TPM-filtered PASA transcript count: {0}".format(tpm_filtered_pasa_transcript_count))
+    print("Initial PASA cluster count: {0}".format(pasa_cluster_count))
+    print("Initial PASA transcript count: {0}".format(pasa_transcript_count))
+    
+    seqs, pasa_clusters = apply_transcript_size_cutoff(seqs, pasa_clusters, args.input_pasa_transcript_size_cutoff)
+    seqs, pasa_clusters = apply_abundance_filter(seqs, pasa_clusters, args.input_pasa_tpm_cutoff)
+    seqs, pasa_clusters = apply_orf_filter(seqs, pasa_clusters, orf_lengths, 100)
 
+def write_transcripts(seqs, filename):
+    with open(filename, 'wt') as fh:
+        for asmbl_id in seqs:
+            fh.write(">{0} {1}\n{2}\n".format(asmbl_id, seqs[asmbl_id]['h'], 
+                                              utils.wrapped_fasta(''.join(seqs[asmbl_id]['s']))))
+            
+def apply_orf_filter(seqs, clusters, orf_lengths, orf_length_cutoff):
+    clusters_to_delete = list()
+    
+    for cluster_id in clusters:
+        asmbl_ids_to_delete = list()
+        
+        for asmbl_id in clusters[cluster_id]:
+            if asmbl_id not in orf_lengths or orf_lengths[asmbl_id] < orf_length_cutoff:
+                del seqs[asmbl_id]
+                asmbl_ids_to_delete.append(asmbl_id)
+
+        for id in asmbl_ids_to_delete:
+            del clusters[cluster_id][id]
+
+            if len(clusters[cluster_id]) == 0:
+                clusters_to_delete.append(cluster_id)
+
+    for id in clusters_to_delete:
+        del clusters[id]
+
+    print("After ORF length filtering:")
+    print("\tTranscripts: {0}".format(len(seqs)))
+    print("\tPASA clusters: {0}".format(len(clusters)))
+
+    write_transcripts(seqs, 'pasa.orf_filtered.fasta')
+    
+    return seqs, clusters
+    
+def apply_abundance_filter(seqs, clusters, tpm_cutoff):
+    clusters_to_delete = list()
+    
+    for cluster_id in clusters:
+        asmbl_ids_to_delete = list()
+        
+        for asmbl_id in clusters[cluster_id]:
+            if 'tpm' in seqs[asmbl_id]:
+                if seqs[asmbl_id]['tpm'] < tpm_cutoff:
+                    del seqs[asmbl_id]
+                    asmbl_ids_to_delete.append(asmbl_id)
+
+        for id in asmbl_ids_to_delete:
+            del clusters[cluster_id][id]
+
+            if len(clusters[cluster_id]) == 0:
+                clusters_to_delete.append(cluster_id)
+
+    for id in clusters_to_delete:
+        del clusters[id]
+
+    print("After TPM filtering:")
+    print("\tTranscripts: {0}".format(len(seqs)))
+    print("\tPASA clusters: {0}".format(len(clusters)))
+
+    write_transcripts(seqs, 'pasa.tpm_filtered.fasta')
+                    
+    return seqs, clusters
+
+def apply_transcript_size_cutoff(seqs, clusters, size_cutoff):
+    clusters_to_delete = list()
+    
+    for cluster_id in clusters:
+        asmbl_ids_to_delete = list()
+        
+        for asmbl_id in clusters[cluster_id]:
+            if len(seqs[asmbl_id]['s']) < size_cutoff:
+                del seqs[asmbl_id]
+                asmbl_ids_to_delete.append(asmbl_id)
+
+        for id in asmbl_ids_to_delete:
+            del clusters[cluster_id][id]
+
+            if len(clusters[cluster_id]) == 0:
+                clusters_to_delete.append(cluster_id)
+
+    for id in clusters_to_delete:
+        del clusters[id]
+
+    print("After size filtering:")
+    print("\tTranscripts: {0}".format(len(seqs)))
+    print("\tPASA clusters: {0}".format(len(clusters)))
+
+    write_transcripts(seqs, 'pasa.size_filtered.fasta')
+                    
+    return seqs, clusters
+    
 def load_abundances(seqs, salmon_file):
     line_num = 0
     for line in open(salmon_file):
@@ -129,9 +180,8 @@ def load_abundances(seqs, salmon_file):
         if seq_id not in seqs:
             raise Exception("ERROR: Got seq ID ({0}) in salmon input that wasn't in FASTA input".format(seq_id))
 
-        if tpm > 0.1:
-            seqs[seq_id]['tpm'] = tpm
-        
+        seqs[seq_id]['tpm'] = tpm
+
     
 def load_pasa_clusters(pasa_gtf):
     clusters = dict()
