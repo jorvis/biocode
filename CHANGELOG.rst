@@ -1,8 +1,21 @@
 Hey, let's keep a change log.
 
-next:
+next
 ----
+
+
+0.10.0
+------
+- Added things.Region class for generic genomic regions
+- Updated dependency information for latest Ubuntu
 - Added ORF class and mRNA.longest_orf() method
+- Added script to filter FASTA files from abundance estimation (Salmon) results
+- Added new script for classifying gene coverage in new assemblies
+- Exports to GFF3 updated: tRNAs include anticodon, rRNAs includ product name
+- mRNA.longest_orf() now has require_start option
+- fasta_simple_stats.py now exports N50 and N90 stats
+- fasta_simple_stats.py no longer errors on blank lines
+
 
 0.9.0
 -----
