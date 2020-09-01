@@ -33,5 +33,5 @@ RUN wget -O /usr/bin/visualize_go_slim_mapping.R https://raw.githubusercontent.c
 RUN chmod +x /usr/bin/visualize_go_slim_mapping.R
 
 RUN pip3 install jinja2
-RUN pip3 install biocode==0.9.0
+RUN pip3 install biocode==0.10.0
 RUN pip3 install numpy
