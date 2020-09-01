@@ -996,7 +996,16 @@ class PolypeptideSet( MoleculeSet ):
         for seq_id in seqs:
             polypeptide = Polypeptide(id=seq_id, residues=seqs[seq_id]['s'])
             self.add(polypeptide)
-        
+
+class Region( LocatableThing ):
+    '''
+    So definition (2020-08-31): "A sequence_feature with an extent greater than zero. A nucleotide 
+    region is composed of bases and a polypeptide region is composed of amino acids."
+    '''
+    def __init__( self, id=None, locations=None ):
+        super().__init__(locations)
+        self.id = id
+            
 class RNA( LocatableThing ):
     '''
     SO definition (2013-05-22): "An attribute describing a sequence consisting of nucleobases
