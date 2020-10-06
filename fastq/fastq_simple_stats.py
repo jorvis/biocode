@@ -85,14 +85,20 @@ def main():
         report_stats(fout, 'multiple', entry_count, total_bases, gc_count)
 
 def report_stats(fout, input_file, entry_count, total_bases, gc_count):
-    avg_entry_length = total_bases / entry_count
+    if entry_count:
+        avg_entry_length = total_bases / entry_count
+    else:
+        avg_entry_length = 0
 
     fout.write("File: {0}\n".format(input_file))
     fout.write("\tTotal sequence entries: {0}\n".format(entry_count))
     fout.write("\tTotal bases: {0}\n".format(total_bases))
     fout.write("\tAvg sequence length: {0:.1f}\n".format(avg_entry_length))
-    fout.write("\tGC percentage: {0:.1f}\n".format( (gc_count / total_bases) * 100))
-    
+
+    if total_bases:
+        fout.write("\tGC percentage: {0:.1f}\n".format((gc_count / total_bases) * 100))
+    else:
+        fout.write("\tGC percentage: N/A\n")
 
 if __name__ == '__main__':
     main()
