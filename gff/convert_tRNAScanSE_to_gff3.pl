@@ -95,6 +95,7 @@ my $i=1;
 
 ## parse the file
 foreach my $line (<$ifh>){
+        $line =~ s/ +//g;
 	my @cols = split /[\t]/, $line;
 	chomp @cols;
 	my $contig = $cols[0];
