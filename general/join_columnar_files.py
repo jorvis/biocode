@@ -68,7 +68,7 @@ def main():
         cols = line.split("\t")
 
         if not args.no_header and line_num == 1:
-            print("\t".join(f1_header + cols))
+            print("\t".join(f1_header + cols), file=ofh)
             continue
 
         f2_key = cols[args.file2_index - 1]
