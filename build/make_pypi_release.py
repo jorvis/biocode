@@ -115,7 +115,6 @@ def create_script_index_json(script_base, data_dir):
                 if m:
                     desc = m.group(1)
 
-            # TODO: Parse description lines from within each script
             json_data[category].append({'name': script, 'desc': desc})
 
     # Don't change the path of this JSON file without also changing it in the general/list_biocode utility
