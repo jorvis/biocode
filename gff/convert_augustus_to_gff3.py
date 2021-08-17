@@ -83,6 +83,10 @@ def main():
 
     for line in open(args.input):
         if line.startswith("#"):
+            ## Skip any header comments since we printed our own
+            if line.startswith("##gff-version"):
+                continue
+            
             current_gene_comment_lines.append(line)
             
             if line.startswith("# end gene "):
