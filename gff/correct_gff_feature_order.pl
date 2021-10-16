@@ -173,7 +173,23 @@ while (my $line = <$ifh>) {
               $feat_type eq 'tRNA' ||
               $feat_type eq 'rRNA' ||
               $feat_type eq 'non_canonical_five_prime_splice_site' ||
-              $feat_type eq 'non_canonical_three_prime_splice_site'
+              $feat_type eq 'non_canonical_three_prime_splice_site' ||
+              $feat_type eq 'expressed_sequence_match' ||
+              $feat_type eq 'repeat_region' ||
+              $feat_type eq 'tandem_repeat' ||
+              $feat_type eq 'inverted_repeat' ||
+              $feat_type eq 'assembly_component' ||
+              $feat_type eq 'protein_match' ||
+              $feat_type eq 'nucleotide_match' ||
+              $feat_type eq 'polypeptide_motif' ||
+              $feat_type eq 'intron' ||
+              $feat_type eq 'transcript_region' ||
+              $feat_type eq 'pseudogenic_transcript' ||
+              $feat_type eq 'SL1_acceptor_site' ||
+              $feat_type eq 'protein_coding_primary_transcript' ||
+              $feat_type eq 'translated_nucleotide_match' ||
+              $feat_type eq 'pre-miRNA' ||
+              $feat_type eq 'low_complexity_region'
         ) {
     
         ## nothing to see here, carry on
