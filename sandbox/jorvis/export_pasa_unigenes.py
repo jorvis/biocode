@@ -30,7 +30,11 @@ Assumes transdecoder output looks like this ('longest_orfs.cds'):
 
 Example command:
 
+# all PASA assemblies
 ./export_pasa_unigenes.py -if /usr/local/projects/aplysia/PASA/20200511_polca_triway/sample_mydb_pasa.sqlite.assemblies.fasta -ig /usr/local/projects/aplysia/PASA/20200511_polca_triway/sample_mydb_pasa.sqlite.pasa_assemblies.gtf -it /usr/local/projects/aplysia/transdecoder/longest_orfs.cds -is /usr/local/projects/aplysia/salmon/salmon_out/quant.sf
+
+# post-transrate
+./export_pasa_unigenes.py -if /usr/local/projects/aplysia/transrate/pasa/good.pasa.assemblies.fasta -ig /usr/local/projects/aplysia/PASA/20200511_polca_triway/sample_mydb_pasa.sqlite.pasa_assemblies.gtf -it /usr/local/projects/aplysia/transdecoder/longest_orfs.cds -is /usr/local/projects/aplysia/salmon/A1_pasa/quant.sf
 
 """
 
@@ -52,7 +56,7 @@ def main():
     args = parser.parse_args()
 
     seqs = utils.fasta_dict_from_file(args.input_pasa_fasta)
-    pasa_clusters = load_pasa_clusters(args.input_pasa_gtf)
+    pasa_clusters = load_pasa_clusters(seqs, args.input_pasa_gtf)
     orf_lengths = longest_orf_lengths(args.input_transdecoder)
     load_abundances(seqs, args.input_salmon)
 
@@ -67,8 +71,6 @@ def main():
     print("Stats:\n")
     print("Initial PASA cluster count: {0}".format(pasa_cluster_count))
     print("Initial PASA transcript count: {0}".format(pasa_transcript_count))
-    
-    #seqs, pasa_clusters = apply_transcript_size_cutoff(seqs, pasa_clusters, args.input_pasa_transcript_size_cutoff)
     
     seqs, pasa_clusters = apply_orf_filter(seqs, pasa_clusters, orf_lengths, 100)
     write_unigenes(seqs, pasa_clusters, 'pasa.orf_filtered', orf_lengths)
@@ -114,6 +116,7 @@ def write_unigenes(seqs, clusters, prefix, orf_lengths):
 def write_transcripts(seqs, filename):
     with open(filename, 'wt') as fh:
         for asmbl_id in seqs:
+
             fh.write(">{0} {1}\n{2}\n".format(asmbl_id, seqs[asmbl_id]['h'], 
                                               utils.wrapped_fasta(''.join(seqs[asmbl_id]['s']))))
 
@@ -218,13 +221,11 @@ def load_abundances(seqs, salmon_file):
         seq_id = cols[0]
         tpm = float(cols[3])
 
-        if seq_id not in seqs:
-            raise Exception("ERROR: Got seq ID ({0}) in salmon input that wasn't in FASTA input".format(seq_id))
-
-        seqs[seq_id]['tpm'] = tpm
+        if seq_id in seqs:
+            seqs[seq_id]['tpm'] = tpm
 
     
-def load_pasa_clusters(pasa_gtf):
+def load_pasa_clusters(seqs, pasa_gtf):
     clusters = dict()
     for line in open(pasa_gtf):
         line = line.rstrip()
@@ -242,11 +243,12 @@ def load_pasa_clusters(pasa_gtf):
             cluster_id = m.group(1)
             asmbl_id = m.group(2)
 
-            if cluster_id not in clusters:
-                clusters[cluster_id] = dict()
+            if asmbl_id in seqs:
+                if cluster_id not in clusters:
+                    clusters[cluster_id] = dict()
 
-            # initialize all their longest-ORF lengths to zero
-            clusters[cluster_id][asmbl_id] = 0
+                # initialize all their longest-ORF lengths to zero
+                clusters[cluster_id][asmbl_id] = 0
 
     return clusters
         
