@@ -15,6 +15,8 @@ If you pass multiple files via *.fastq or something similar this will report sta
 on these as an aggregate unless you pass the --individual flag, which will cause
 reporting on each file individually.
 
+Also handles files if they are GZIP compressed.
+
 Contact: jorvis@gmail.com
 """
 
