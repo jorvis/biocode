@@ -7,7 +7,7 @@ how well an assembled transcriptome (Trinity) produced contigs which covered a s
 reference transcripts.  Steps in her pipeline:
 
 export BASE=A8_muscle.trinity.standard
-export REF=toi_20200330.fasta
+export REF=toi_20200910.fasta
 export TITLE=PASA
 
 formatdb -p F -i $BASE.fasta
@@ -16,12 +16,22 @@ blastall -p blastn -i $REF -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
 sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
 sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
+# for protein alignment
+formatdb -p F -i $BASE.fasta
+blastall -p tblastn -i $REF -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
+/home/jorvis/git/biocode/blast/calculate_query_coverage_by_blast.py -f $REF -b $BASE.blast.m9 -o $BASE
+sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
+sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
+
+
 # then to actually plot these:
 /usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "${TITLE} transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.both.png
 
 /usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "${TITLE} - Longest transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.longest.png
 
 /usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "${TITLE} - All transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.all.png
+
+
 
 --stacked option:
 Rather than just show coverage with the max Y value at 100, use of this option creates a
@@ -42,6 +52,10 @@ sudo /usr/bin/pip3 install psutil requestsipywidgets
 And renaming this to 'orca' and putting it in PATH:
 
 wget https://github.com/plotly/orca/releases/download/v1.3.1/orca-1.3.1.AppImage
+
+Table
+Complete, fragmented, missing, total
+Assemblies, include PASA + de novo trinity
 
 """
 
@@ -71,14 +85,15 @@ def main():
 
     cov_files = args.input_files.split(",")
     labels = args.labels.split(",")
-    colors = ['rgb(49,130,189)',    #blue
-              'rgb(204,204,204)',   #light grey
-              'rgb(50, 171, 96)',   #green
+    colors = [
+              'rgb(49,130,189)',    #blue
+              #'rgb(204,204,204)',   #light grey
               'rgb(222,45,38)',     #red
-              'rgb(142, 124, 195)', #purple
-              'rgb(100,100,100)',   #darker grey
-              'rgb(255,255,61)',    #yellow
-              'rgb(255,169,58)'     #orange
+              'rgb(50, 171, 96)',   #green
+              #'rgb(142, 124, 195)', #purple
+              #'rgb(100,100,100)',   #darker grey
+              #'rgb(255,255,61)',    #yellow
+              #'rgb(255,169,58)'     #orange
              ]
 
     #print("Got {0} coverage files".format(len(cov_files)))
