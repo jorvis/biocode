@@ -37,7 +37,7 @@ def main():
     parser = argparse.ArgumentParser( description='Use BLAST to identify internal inverted repeats')
 
     ## output file to be written
-    parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
+    parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input FASTA file to be read' )
     parser.add_argument('-o', '--output_file', type=str, required=True, help='Path to an output file to be created' )
     parser.add_argument('-n', '--min_repeat_size', type=int, required=True, help='Minimum size of a repeat to consider' )
     parser.add_argument('-pid', '--percent_identity', type=float, required=False, default=98.0, help='Percent identity cutoff' )
