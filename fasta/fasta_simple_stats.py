@@ -118,6 +118,21 @@ def main():
                 data['gc_count'] += line.count('G')
                 data['gc_count'] += line.count('C')
 
+        # Handle the last one
+        if data['smallest_id'] is None:
+            # this is the first record, so it sets all records.
+            data['smallest_id'] = seq_id
+            data['smallest_length'] = this_seq_length
+        elif this_seq_length < data['smallest_length']:
+            data['smallest_id'] = seq_id
+            data['smallest_length'] = this_seq_length
+
+        if this_seq_length > data['largest_length']:
+            data['largest_length'] = this_seq_length
+            data['largest_id'] = seq_id
+
+        data['lengths'].append(this_seq_length)
+
         if args.individual:
             report_stats(fout, input_file, data)
 
@@ -131,17 +146,21 @@ def report_stats(fout, input_file, data):
     avg_entry_length = data['total_bases'] / data['entry_count']
 
     # calculate N50
-    data['lengths'] = sorted(data['lengths'], reverse=True)
-    length_sum = numpy.cumsum(data['lengths'])
-    n_2 = int(sum(data['lengths'])/2)
-    csum_n2 = min(length_sum[length_sum >= n_2])
-    n50_idx = numpy.where(length_sum == csum_n2)
-    n_50 = data['lengths'][int(n50_idx[0])]
+    if data['entry_count'] > 1:
+        data['lengths'] = sorted(data['lengths'], reverse=True)
+        length_sum = numpy.cumsum(data['lengths'])
+        n_2 = int(sum(data['lengths'])/2)
+        csum_n2 = min(length_sum[length_sum >= n_2])
+        n50_idx = numpy.where(length_sum == csum_n2)
+        n_50 = data['lengths'][int(n50_idx[0])]
 
-    val90 = int(sum(data['lengths']) * 0.90)
-    csum_n90 = min(length_sum[length_sum >= val90])
-    n90_idx = numpy.where(length_sum == csum_n90)
-    n_90 = data['lengths'][int(n90_idx[0])]
+        val90 = int(sum(data['lengths']) * 0.90)
+        csum_n90 = min(length_sum[length_sum >= val90])
+        n90_idx = numpy.where(length_sum == csum_n90)
+        n_90 = data['lengths'][int(n90_idx[0])]
+    else:
+        n_50 = avg_entry_length
+        n_90 = avg_entry_length
 
     fout.write("File: {0}\n".format(input_file))
     fout.write("\tTotal sequence entries: {0}\n".format(data['entry_count']))
