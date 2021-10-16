@@ -79,6 +79,8 @@ my ($seq_id_ref, $fasta_file, $output_file, $mode) = &check_parameters(%options)
 
 ## store IDs
 my %sequence_id = %$seq_id_ref;
+my @ids_exported = [];
+my $DEBUGGING = 0;
 
 ## read through fasta
 open(FILE, "$fasta_file");
@@ -95,6 +97,7 @@ while(<FILE>){
         if ($mode eq 'include') {
             if (exists $sequence_id{$id}) {
                 $keep_line = 1;
+                push(@ids_exported, $id);
             } else {
                 $keep_line = 0;
             }
@@ -103,6 +106,7 @@ while(<FILE>){
                 $keep_line = 0;
             } else {
                 $keep_line = 1;
+                push(@ids_exported, $id);
             }
         }
     }
@@ -112,6 +116,18 @@ while(<FILE>){
 
 close FILE;
 close OUTFILE;
+
+if ($DEBUGGING) {
+    foreach my $id (@ids_exported) {
+        delete $sequence_id{$id};
+    }
+
+    print "The following sequences were not found:\n";
+
+    foreach my $id (keys %sequence_id) {
+        print "$id\n";
+    }
+}
 
 sub check_parameters {
 	my (%options) = @_;
