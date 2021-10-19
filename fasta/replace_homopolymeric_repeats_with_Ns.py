@@ -27,7 +27,7 @@ these with Ns, which are usually better-tolerated.
 WARNINGS:
 
 I didn't go with a memory-efficient implementation here, so this version of the script loads the
-input genomes fully into memory during processing.
+input sequences fully into memory during processing.
 
 '''
 
