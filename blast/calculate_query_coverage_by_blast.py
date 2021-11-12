@@ -19,6 +19,7 @@ Coverage of the entries within query.fasta will be reported.
 """
 
 import argparse
+import sys
 
 from biocode import utils
 
@@ -106,7 +107,12 @@ def main():
 
     # handle last ones
     # first the 'all' coverage
-    all_cov_perc = (qsizes[current_query_id] - covs_all.count(0)) / qsizes[current_query_id]
+    try:
+        all_cov_perc = (qsizes[current_query_id] - covs_all.count(0)) / qsizes[current_query_id]
+    except:
+        print("ERROR: failed to get size for qry_id = {0}".format(current_query_id), file=sys.stderr)
+        sys.exit(1)
+        
     all_fh.write("{0}\t{1:.1f}\n".format(current_query_id, all_cov_perc * 100))
 
     # now the 'longest' coverage
