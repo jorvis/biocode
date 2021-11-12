@@ -7,8 +7,10 @@ how well an assembled transcriptome (Trinity) produced contigs which covered a s
 reference transcripts.  Steps in her pipeline:
 
 export BASE=A8_muscle.trinity.standard
-export REF=toi_20200910.fasta
 export TITLE=PASA
+export REF=toi_20211111.fasta
+export PREF=toi_20211111.faa
+
 
 formatdb -p F -i $BASE.fasta
 blastall -p blastn -i $REF -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
@@ -17,21 +19,22 @@ sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
 sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
 # for protein alignment
-formatdb -p F -i $BASE.fasta
-blastall -p tblastn -i $REF -m 9 -e 1 -d $BASE.fasta -o $BASE.blast.m9
-/home/jorvis/git/biocode/blast/calculate_query_coverage_by_blast.py -f $REF -b $BASE.blast.m9 -o $BASE
+formatdb -p T -i $BASE.faa
+blastall -p blastp -i $PREF -m 9 -e 1 -d $BASE.faa -o $BASE.blast.m9
+/home/jorvis/git/biocode/blast/calculate_query_coverage_by_blast.py -f $PREF -b $BASE.blast.m9 -o $BASE
 sort $BASE.cov.all.perc.txt > $BASE.cov.all.perc.sorted.txt
 sort $BASE.cov.longest.perc.txt > $BASE.cov.longest.perc.sorted.txt
 
 
-# then to actually plot these:
+# then to actually plot these (nucleotide):
 /usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "${TITLE} transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.both.png
-
 /usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "${TITLE} - Longest transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.longest.png
-
 /usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "${TITLE} - All transcript coverage" -rf $REF -qf $BASE.fasta -o $BASE.all.png
 
-
+# then to actually plot these (protein):
+/usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt,$BASE.cov.all.perc.sorted.txt -l "Longest,All" -t "${TITLE} transcript coverage" -rf $PREF -qf $BASE.faa -o $BASE.both.png
+/usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.longest.perc.sorted.txt -l "Longest" -t "${TITLE} - Longest transcript coverage" -rf $PREF -qf $BASE.faa -o $BASE.longest.png
+/usr/bin/python3 ~/git/biocode/sandbox/jorvis/reference_coverage_plot.py -i $BASE.cov.all.perc.sorted.txt -l "All" -t "${TITLE} - All transcript coverage" -rf $PREF -qf $BASE.faa -o $BASE.all.png
 
 --stacked option:
 Rather than just show coverage with the max Y value at 100, use of this option creates a
