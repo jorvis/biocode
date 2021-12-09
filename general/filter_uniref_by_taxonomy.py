@@ -31,7 +31,9 @@ Specifically, the TaxID=? part.  That ID is queried to get a taxonomy list like 
 
 You can pass a comma-separated string of clades from any of these levels, such as:
 
-   -c Viruses,Bacteria
+   -c 'Viruses,Bacteria'
+   -c 'Bacteria,Archaea'
+   -c Eukaryota
    
 The entire path with be searched for this, but only for exact matches (case-sensitive).
 Note - this currently won't work with any clade strings which contain a comma.
