@@ -76,6 +76,11 @@ entry_ec
 id = 001R_FRG3G
 ec_num = 6.3.4.3
 
+The entries are marked as "characterized" if any has a GO term assigned with
+any of the following evidence codes:
+
+['EXP', 'IDA', 'IMP', 'IGI', 'IPI', 'IEP']
+
 """
 
 
