@@ -538,9 +538,12 @@ def parse_gff3_by_relationship( gff3_file ):
     return fgraph
 
 
-def print_gff3_from_assemblies(assemblies=None, ofh=None, source=None):
+def print_gff3_from_assemblies(assemblies=None, ofh=None, source=None, split_genes=None):
     """
     Utility function to write a complete GFF3 file from a list() of biothings.Assembly objects
+
+    If the split_genes param is set to true, multiple genes will be created for any genes
+    with more than one mRNA.
     """
     if type(ofh).__name__ != 'TextIOWrapper':
         ofh = sys.stdout #TextIOWrapper
@@ -568,28 +571,29 @@ def print_gff3_from_assemblies(assemblies=None, ofh=None, source=None):
             ofh.write("{0}\t{1}\tregion\t1\t{2}\t.\t+\t.\tID={0};Name={0}{3}\n".format(assembly_id, source, current_assembly.length, circ_str))
         
         for gene in sorted(assemblies[assembly_id].genes()):
-            rnas_found = 0
-            mRNAs = gene.mRNAs()
+            if split_genes:
+                rnas_found = 0
+                mRNAs = gene.mRNAs()
             
-            for mRNA in sorted(mRNAs):
-                mRNA_loc = mRNA.location_on(current_assembly)
-                rnas_found += 1
+                for mRNA in sorted(mRNAs):
+                    mRNA_loc = mRNA.location_on(current_assembly)
+                    rnas_found += 1
 
-                if rnas_found > 1:
-                    gene.remove_mRNA(mRNA)
-                    
-                    print("INFO: splitting mRNA off gene {0}".format(gene.id))
-                    new_gene = biocode.things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
-                    new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
-                    new_gene.add_RNA(mRNA)
-                    new_gene.print_as(fh=ofh, format='gff3', source=source)
+                    if rnas_found > 1:
+                        gene.remove_mRNA(mRNA)
 
-            if len(mRNAs) > 1:
-                gene_loc = gene.location_on(current_assembly)
-                mRNA_loc = mRNAs[0].location_on(current_assembly)
-                gene_loc.fmin = mRNA_loc.fmin
-                gene_loc.fmax = mRNA_loc.fmax
-                gene_loc.strand = mRNA_loc.strand
+                        print("INFO: splitting mRNA off gene {0}".format(gene.id))
+                        new_gene = biocode.things.Gene(id="{0}_{1}".format(gene.id, rnas_found))
+                        new_gene.locate_on(target=current_assembly, fmin=mRNA_loc.fmin, fmax=mRNA_loc.fmax, strand=mRNA_loc.strand)
+                        new_gene.add_RNA(mRNA)
+                        new_gene.print_as(fh=ofh, format='gff3', source=source)
+
+                if len(mRNAs) > 1:
+                    gene_loc = gene.location_on(current_assembly)
+                    mRNA_loc = mRNAs[0].location_on(current_assembly)
+                    gene_loc.fmin = mRNA_loc.fmin
+                    gene_loc.fmax = mRNA_loc.fmax
+                    gene_loc.strand = mRNA_loc.strand
 
             gene.print_as(fh=ofh, format='gff3')
     
