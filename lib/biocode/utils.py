@@ -146,7 +146,7 @@ def interbase0_to_humancoords( fmin, fmax, strand ):
         raise Exception("Invalid strand specified ({0}).  Expected +, -, 1 or -1".format(strand))
 
 
-def fasta_dict_from_file( file ):
+def fasta_dict_from_file(file):
     """
     Reads a file of FASTA entries and returns a dict where each key is a sequence ID.
     The value is another dict with two keys 'h' for header and 's' for sequence.  The
@@ -187,6 +187,16 @@ def fasta_dict_from_file( file ):
 
     return seqs
 
+def fasta_file_from_dict(file, seqs):
+    """
+    If you've used fasta_dict_file() to parse FASTA and then applied some modifications you
+    can use this function to write the file back out.
+    """
+    ofh = open(file, 'wt')
+
+    for seq_id in seqs:
+        ofh.write(">{0} {1}\n".format(seq_id, seqs[seq_id]['h']))
+        ofh.write("{0}\n".format(wrapped_fasta(seqs[seq_id]['s'])))
 
 def fasta_sizes_from_file(file):
     """
