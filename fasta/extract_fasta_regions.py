@@ -13,7 +13,8 @@ Input:
 
 - A (multi-)FASTA file.  The IDs in the header (up to the first
 whitespace) must match the identifiers in the tab file.
-- A tab file of sequence ranges to extract.  The order can be  user
+
+- A tab file of sequence ranges to extract.  The order can be user
 specified, but these columns must be present:
     - molecule ID
     - start position
@@ -34,9 +35,6 @@ Output:
 Output will be multi-FASTA data printed to STDOUT or a file if you
 pass the -o option.
 
-Examples:
-
-
 '''
 
 import argparse
@@ -51,9 +49,9 @@ def main():
     ## output file to be written
     parser.add_argument('-f', '--fasta_file', type=str, required=True, help='Path to an input FASTA file' )
     parser.add_argument('-c', '--coords_file', type=str, required=True, help='Path to a tab-delimited file with coordinates' )
-    parser.add_argument('-m', '--mol_col', type=int, required=True, help='Tabdel file column with molecule identifiers' )
-    parser.add_argument('-x', '--start_coord_col', type=int, required=True, help='Tabdel file column with coordinate start positions' )
-    parser.add_argument('-y', '--stop_coord_col', type=int, required=True, help='Tabdel file column with coordinate stop positions' )
+    parser.add_argument('-m', '--mol_col', type=int, required=False, default=1, help='Tabdel file column with molecule identifiers' )
+    parser.add_argument('-x', '--start_coord_col', type=int, required=False, default=2, help='Tabdel file column with coordinate start positions' )
+    parser.add_argument('-y', '--stop_coord_col', type=int, required=False, default=3, help='Tabdel file column with coordinate stop positions' )
     parser.add_argument('-n', '--name_col', type=int, required=False, default=None, help='Optional tabdel file column with name for exported fragment' )
     parser.add_argument('-o', '--output_file', type=str, required=False, default=None, help='Optional Path to an output file to be created' )
     args = parser.parse_args()
