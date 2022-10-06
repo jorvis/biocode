@@ -11,6 +11,7 @@ USAGE:  filter_fasta_by_ids.pl
               --id_list=/path/to/some/file.list OR --id=some_id1,some_id2
 	          --fasta_file=/path/to/input/fasta.file
 	          --output_file=/path/to/output.file
+              --mode=include
 	      
 This script prints a subset of FASTA sequence based on input IDs.  The inputs are a 
 multi-FASTA file and one of the following:
