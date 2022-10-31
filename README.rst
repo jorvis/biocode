@@ -180,7 +180,7 @@ request new features or scripts please submit to the `Issue tracking
 system <https://github.com/jorvis/biocode/issues>`__.
 
 Contributing
-============
+-------
 
 If you'd like to contribute code to this collection have a look at the
 `Requirements And Convention
