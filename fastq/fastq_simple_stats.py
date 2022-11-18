@@ -84,7 +84,10 @@ def main():
             report_stats(fout, input_file, entry_count, total_bases, gc_count)
 
     if not args.individual:
-        report_stats(fout, 'multiple', entry_count, total_bases, gc_count)
+        if len(args.input_files) == 1:
+            report_stats(fout, args.input_files[0], entry_count, total_bases, gc_count)
+        else:
+            report_stats(fout, 'multiple', entry_count, total_bases, gc_count)
 
 def report_stats(fout, input_file, entry_count, total_bases, gc_count):
     if entry_count:
