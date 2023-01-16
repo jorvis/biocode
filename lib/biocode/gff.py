@@ -344,6 +344,12 @@ def get_gff3_features(gff3_file, assemblies=None):
             parent_feat.add_exon(exon)
             features[feat_id] = exon
 
+        elif cols[2] == 'intron':
+            intron = biocode.things.Intron(id=feat_id, parent=parent_feat)
+            intron.locate_on(target=current_assembly, fmin=rfmin, fmin_partial=fmin_partial, fmax=rfmax, fmax_partial=fmax_partial, strand=rstrand)
+            parent_feat.add_intron(intron)
+            features[feat_id] = intron
+
         elif cols[2] == 'CDS':
             if phase == '.':
                 phase = 0
@@ -727,6 +733,23 @@ def print_biogene( gene=None, fh=None, source=None, on=None ):
             columns[2] = 'exon'
             columns[3:5] = [str(exon_loc.fmin + 1), str(exon_loc.fmax)]
             columns[8] = build_column_9( id=exon.id, parent=RNA.id, other=exon_annot_atts )
+            fh.write( "\t".join(columns) + "\n" )
+
+        ## handle introns for this RNA
+        for intron in sorted(RNA.introns( on )):
+            intron_loc = intron.location_on( on )
+
+            if intron_loc is None:
+                raise Exception("ERROR: Expected intron {0} to be located on {1} but it wasn't".format(intron.id, on.id))
+
+            intron_partiality_string = _partiality_string(intron_loc)
+            intron_annot_atts = dict()
+            if intron_partiality_string is not None:
+                intron_annot_atts['Partial'] = intron_partiality_string
+
+            columns[2] = 'intron'
+            columns[3:5] = [str(intron_loc.fmin + 1), str(intron_loc.fmax)]
+            columns[8] = build_column_9( id=intron.id, parent=RNA.id, other=intron_annot_atts )
             fh.write( "\t".join(columns) + "\n" )
 
         # are there polypeptides?
