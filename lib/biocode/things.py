@@ -1,6 +1,7 @@
 
 import itertools
 import sys
+import re
 import uuid
 
 #from biocode import utils, gff, tbl
@@ -1213,35 +1214,36 @@ class RNA( LocatableThing ):
             return False
 
     def introns(self, on=None):
+        
+            '''
+            Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
+            generated introns depend on the object passed via the 'on' argument
+            '''
+            if on is None:
+                raise Exception("ERROR: the introns() method requires a passed molecule using the 'on' argument")
 
-        return self.children["intron"] ## This ports port all the introns straight from Augustus
+            mol_on = on
 
-            # '''
-            # Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
-            # generated introns depend on the object passed via the 'on' argument
-            # '''
-            # if on is None:
-            #     raise Exception("ERROR: the introns() method requires a passed molecule using the 'on' argument")
+            intron_objs = list()
+            last_exon = None
+            last_exon_loc = None
 
-            # mol_on = on
+            intron_count = 0
+            for exon in sorted(self.exons()):
+                exon_loc = exon.location_on( mol_on )
 
-            # intron_objs = list()
-            # last_exon = None
-            # last_exon_loc = None
+                if last_exon is not None:
+                    intron_count = intron_count + 1
+                    intron_count_id = str(intron_count)
+                    intron_id = str(re.sub('exon[0-9]', 'intron' + intron_count_id, exon.id)) ## ## This is generating random id, need format such as "g1.t1.intron1"
+                    intron = Intron( id=intron_id )
+                    intron.locate_on( target=mol_on, fmin=last_exon_loc.fmax, fmax=exon_loc.fmin, strand=exon_loc.strand )
+                    intron_objs.append( intron )
 
-            # for exon in sorted(self.exons()):
-            #     exon_loc = exon.location_on( mol_on )
+                last_exon = exon
+                last_exon_loc = exon_loc
 
-            #     if last_exon is not None:
-            #         intron_id = uuid.uuid4() ## ## This is generating random id, need format such as "g1.t1.intron1"
-            #         intron = Intron( id=intron_id )
-            #         intron.locate_on( target=mol_on, fmin=last_exon_loc.fmax, fmax=exon_loc.fmin, strand=exon_loc.strand )
-            #         intron_objs.append( intron )
-
-            #     last_exon = exon
-            #     last_exon_loc = exon_loc
-
-            # return intron_objs
+            return intron_objs
 
     def polypeptides(self):
         return self.children['polypeptide']
