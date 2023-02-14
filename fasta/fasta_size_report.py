@@ -22,16 +22,13 @@ Usage Options:
         -d /path/to/fa_files/
 
     --summary,-s    (Optional)
-        If passed, also exports summary lines (each begins with a # symbol)
-
-    --log,-l
-        Log file
+        If passed, also exports summary metrics
 
     --help,-h
         This help message
 
 Output:
-    Tab delimited list of fasta file info like following example. Optionally, if '-s' is set it also exports summary lines, each beginning with a comment.
+    Tab delimited list of fasta file info like following example. Optionally, if '-s' is set it also exports summary metrics.
 
     ID    SIZE    DEFLINE    FILE
     1     100     >1 blah    /path/to/A.fasta
@@ -54,11 +51,6 @@ import os
 
 def main(args):
 
-    # Enable logging if option set
-    # TODO if log, redirect print to file
-    if args.log:
-        log_file = open(args.log, "w")
-
     # Convert file argument into parsable list
     file_list = handle_file_input(args)
 
@@ -67,24 +59,56 @@ def main(args):
     for fa in file_list:
 
         # Check for valid file, but skip gracefully if missing
-        if not os.path.exists(fa):
-            print(f"The fasta file {fa} was not found! Skipping..")
+        file = f"{os.getcwd()}/{str(fa)}"
+        if not os.path.exists(file):
+            print(f"The fasta file {file} was not found! Skipping..")
             continue
 
-        records.append(parse_file(fa))
+        records.extend(parse_file(file))
 
     # Print metrics
+    print("\t".join(["ID", "SIZE", "DEFLINE", "FILE"]))
+    total_records = len(records)
+    total_residues = 0
     for record in records:
+        total_residues += int(record[1])
         print("\t".join(record))
 
+    if args.summary:
+        print(f"Summary:\n\tRecords:\t{total_records}\n\tResidues:\t{total_residues}")
 
+
+# Given a single file, parse and calculate metrics
 def parse_file(fasta):
 
     record = []
+    with open(fasta, "r") as fa_file:
+        short_file = fasta.split("/")[-1]
+        length = 0
+        defline = ""
+        id = ""
+
+        for line in fa_file:
+            line = line.strip()
+
+            if line.startswith(">"):
+
+                if length > 0:
+                    record.append([id, str(length), defline, short_file])
+                    length = 0
+
+                defline = str(line)
+
+                id = line.lstrip(">").split(" ")[0]
+            else:
+                length += len(line)
+
+        record.append([id, str(length), defline, short_file])
 
     return record
 
 
+# Based on input type, builds and returns list of file names
 def handle_file_input(args):
 
     file_list = []
@@ -94,7 +118,7 @@ def handle_file_input(args):
         assert os.path.exists(args.dir), f"Directory not found at location {args.dir}"
 
         for file in os.listdir(args.dir):
-            if file.endswith(".fa", ".fasta"):
+            if file.endswith((".fa", ".fasta")):
                 file_list.append(file)
 
     elif args.list:
@@ -106,7 +130,9 @@ def handle_file_input(args):
                 file_list.append(line.strip())
 
     else:
-        file_list.append(args.file.split(" "))
+        file_list.extend(args.file.split(" "))
+
+    assert len(file_list) > 0, "At least one input file is required!"
 
     return file_list
 
@@ -116,14 +142,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Prints a synopsis file containing the ID, the size of the sequence, the original defline, and the originating file')
 
     # Input file options
-    input_files = parser.add_mutually_exclusive_group()
-    input_files.add_argument('-f', '--file', type=str, required=True, help='Path to an input file to be read' )
-    input_files.add_argument('-l', '--list', type=str, required=True, help='Path to a file containing a list of fastas' )
-    input_files.add_argument('-d', '--dir', type=str, required=True, help='Path to a directory containing fasta files' )
+    input_files = parser.add_mutually_exclusive_group(required=True)
+    input_files.add_argument('-f', '--file', type=str, help='Path to an input file to be read' )
+    input_files.add_argument('-l', '--list', type=str, help='Path to a file containing a list of fastas' )
+    input_files.add_argument('-d', '--dir', type=str, help='Path to a directory containing fasta files' )
 
     # Optional flags
-    parser.add_argument('-l', '--log', required=False, help='Generate a log file if set')
     parser.add_argument('-s', '--summary', required=False, help='Generate summary lines in report', action="store_true")
-    args = parser.parse_args()
 
+    args = parser.parse_args()
     main(args)
