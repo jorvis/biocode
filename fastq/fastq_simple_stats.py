@@ -33,6 +33,7 @@ def main():
     parser.add_argument('input_files', metavar='N', type=str, nargs='+', help='Path to one or more input files, separated by spaces' )
     parser.add_argument('-o', '--output_file', type=str, required=False, help='Optional path to an output file to be created, else prints on STDOUT' )
     parser.add_argument('--individual', action='store_true', help='Report stats on each file individually' )
+    parser.add_argument('-p', '--progress_interval', type=int, required=False, help='Pass an integer to show progress ever N entries on STDERR' )
     args = parser.parse_args()
 
     ## open the output file
@@ -71,8 +72,12 @@ def main():
 
             ## every 4th line is the start of a sequence entry (check still)
             if line_number % 4 == 1:
-                if line.startswith('@'):
+                if line[0] == '@':
                     entry_count += 1
+
+                    if args.progress_interval:
+                        if not entry_count % args.progress_interval:
+                            print("{0} entries processed".format(entry_count), file=sys.stderr)
                 else:
                     raise Exception("Error, expected every 4th line to start with @ and this one didn't: {0}".format(line) )
             elif line_number % 4 == 2:
