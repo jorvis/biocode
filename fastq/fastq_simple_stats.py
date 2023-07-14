@@ -49,6 +49,7 @@ def main():
     gc_count    = 0
 
     for input_file in args.input_files:
+        print("Processing file: {0}".format(input_file), file=sys.stderr)
         line_number = 0
 
         if input_file.endswith('.gz'):
@@ -77,7 +78,7 @@ def main():
 
                     if args.progress_interval:
                         if not entry_count % args.progress_interval:
-                            print("{0} entries processed".format(entry_count), file=sys.stderr)
+                            print("{0} entries processed".format(entry_count), file=sys.stderr, end="\r")
                 else:
                     raise Exception("Error, expected every 4th line to start with @ and this one didn't: {0}".format(line) )
             elif line_number % 4 == 2:
@@ -100,7 +101,7 @@ def report_stats(fout, input_file, entry_count, total_bases, gc_count):
     else:
         avg_entry_length = 0
 
-    fout.write("File: {0}\n".format(input_file))
+    fout.write("\nFile: {0}\n".format(input_file))
     fout.write("\tTotal sequence entries: {0}\n".format(entry_count))
     fout.write("\tTotal bases: {0}\n".format(total_bases))
     fout.write("\tAvg sequence length: {0:.1f}\n".format(avg_entry_length))
