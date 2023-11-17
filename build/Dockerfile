@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 MAINTAINER Joshua Orvis <jorvis@gmail.com>
 LABEL Description="This image is used to run any bioinformatics utilities/scripts in the Biocode collection"
@@ -24,7 +24,9 @@ RUN Rscript -e "install.packages('ape', repos='http://cran.rstudio.com/')"
 RUN Rscript -e "install.packages('igraph', repos='http://cran.rstudio.com/')"
 RUN Rscript -e "install.packages('vegan', repos='http://cran.rstudio.com/')"
 RUN Rscript -e "install.packages('readr', repos='http://cran.rstudio.com/')"
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("phyloseq")'
+
+RUN R -e "install.packages('BiocManager', repos='http://cran.us.r-project.org')"
+RUN R -e "BiocManager::install('phyloseq')"
 
 RUN wget -O /usr/bin/report_top20_metaphlan_table.R https://raw.githubusercontent.com/jorvis/biocode/master/general/report_top20_metaphlan_table.R
 RUN chmod +x /usr/bin/report_top20_metaphlan_table.R
@@ -33,5 +35,5 @@ RUN wget -O /usr/bin/visualize_go_slim_mapping.R https://raw.githubusercontent.c
 RUN chmod +x /usr/bin/visualize_go_slim_mapping.R
 
 RUN pip3 install jinja2
-RUN pip3 install biocode==0.10.0
+RUN pip3 install biocode==0.11.0
 RUN pip3 install numpy
