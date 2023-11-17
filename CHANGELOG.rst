@@ -3,6 +3,28 @@ Hey, let's keep a change log.
 next
 ----
 
+0.11.0
+----
+- Documentation updates
+- New script: @RPINerd added fasta/fasta_size_report.py  
+- New script: fastq/validate_mate_pairing.py
+- New script: general/report_matrix_shape.py
+- New script: gff/remove_fasta_from_gff3.py
+- New script: gtf/convert_stringtie_gtf_to_gff3.py
+- fasta/fasta_simple_stats.py: Critical fix - Script was missing stats on last/only sequence.
+- general/filter_columnar_file.pl renamed to general/filter_columnar_file_by_column_values.pl
+- lib/biocode/utils.py: Added function fasta_file_from_dict()
+- lib/biocode/gff.py: gff.print_gff3_from_assemblies() no longer automatically splits genes with multiple mRNAs
+- lib/biocode/gff.py: Fixed error causing failure if print_gff3_from_assemblies() was called
+- fastq/randomly_subsample_fastq.py: Corrected shebang line which was causing failures
+- fastq/fastq_simple_stats.py: Added (optional) progress interval reporting
+- fastq/fastq_simple_stats.py: Added commas to integer outputs for better human readability
+- blast/calculate_query_coverage_by_blast.py: Added error handling so it reports/dies gracefully if an input seq isn't found
+- fasta/filter_fasta_by_ids.pl: minor: added additional info if in debugging mode
+- general/join_columnar_files.py: Corrected issue where header line was printing to STDOUT rather than output file
+- gff/convert_tRNAScanSE_to_gff3.pl: @pgonzale60 committed improvments to satisfy NCBI's table2asn_GFF requirements
+- fastq/fastq_simple_stats.py: Fixed issues where script would fail if file had no entries
+- Critical bugfix and general improvements to sandbox/export_pasa_unigenes.py
 
 0.10.0
 ------
