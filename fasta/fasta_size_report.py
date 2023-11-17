@@ -59,12 +59,11 @@ def main(args):
     for fa in file_list:
 
         # Check for valid file, but skip gracefully if missing
-        file = f"{os.getcwd()}/{str(fa)}"
-        if not os.path.exists(file):
-            print(f"The fasta file {file} was not found! Skipping..")
+        if not os.path.exists(fa):
+            print(f"The fasta file {fa} was not found! Skipping..")
             continue
 
-        records.extend(parse_file(file))
+        records.extend(parse_file(fa))
 
     # Print metrics
     print("\t".join(["ID", "SIZE", "DEFLINE", "FILE"]))
