@@ -24,6 +24,10 @@ Run it from within a GitHub checkout of Biocode, and it will:
 - Copies all .py scripts to biocode/bin/
 - Copy all data/* to biocode/data/
 
+Typical run example:
+
+  $ ./build/make_pypi_release.py -o /tmp/biocode -v 0.11.0
+
 """
 
 import argparse
