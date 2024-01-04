@@ -60,9 +60,9 @@ def main():
         ofh = open( args.output_file, 'wt' )
 
     for line in open(args.input_file):
-        line = line.rstrip()
-        
         if line.startswith('>'):
+            line = line.rstrip()
+            
             m = re.match("(.*)({0})(.*)".format(args.regex), line[1:])
             if m:
                 if args.include == 'yes':
