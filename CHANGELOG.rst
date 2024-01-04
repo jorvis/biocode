@@ -2,6 +2,7 @@ Hey, let's keep a change log.
 
 next
 ----
+- Added script: fasta/strip_fasta_headers_after_regex.py
 
 0.11.0
 ----
