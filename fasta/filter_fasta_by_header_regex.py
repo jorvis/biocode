@@ -35,7 +35,7 @@ import re
 import sys
 
 def main():
-    parser = argparse.ArgumentParser( description='Split multi-FASTA file into separate protein and nucleotide files')
+    parser = argparse.ArgumentParser( description='Filters a FASTA file by user-supplied regular expression to match the headers')
 
     ## output file to be written
     parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input FASTA file' )
