@@ -2,10 +2,16 @@ Hey, let's keep a change log.
 
 next
 ----
-- Added script: fasta/strip_fasta_headers_after_regex.py
+- 
+
+0.12.0
+------
+- New script: fasta/strip_fasta_headers_after_regex.py
+- New script: fasta/export_fasta_ids.py
+- New script: blast/add_blast_results_to_gff3_product.py
 
 0.11.0
-----
+------
 - Documentation updates
 - New script: @RPINerd added fasta/fasta_size_report.py  
 - New script: fastq/validate_mate_pairing.py
