@@ -50,7 +50,7 @@ def main():
         fh = gzip.open( args.input_file, 'rb')
         is_compressed = True
     else:
-        fh = open(args.input_file, 'rU')
+        fh = open(args.input_file, 'r')
         is_compressed = False
 
     for line in fh:
