@@ -9,6 +9,13 @@ INPUT example:
 gi|169887498|gb|CP000948.1|	Prodigal_v2.6.3	CDS	3	98	1.7	+	0	ID=1_1;partial=10;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.427;conf=59.47;score=1.67;cscore=-1.05;sscore=2.72;rscore=0.00;uscore=0.00;tscore=3.22;
 gi|169887498|gb|CP000948.1|	Prodigal_v2.6.3	CDS	337	2799	342.5	+	0	ID=1_2;partial=00;start_type=ATG;rbs_motif=GGAG/GAGG;rbs_spacer=5-10bp;gc_cont=0.531;conf=99.99;score=342.55;cscore=326.54;sscore=16.01;rscore=10.59;uscore=2.26;tscore=3.82;
 
+INPUT example 2 (sometimes ID isn't formed!)
+NCC1701D	Prodigal_v2.6.3	CDS	3	98	1.1	+	0	;gc_cont=0.427;tscore=3.22;
+NCC1701D	Prodigal_v2.6.3	CDS	337	2799	336.9	+	0	;gc_cont=0.531;tscore=3.93;
+NCC1701D	Prodigal_v2.6.3	CDS	2801	3733	118.1	+	0	;gc_cont=0.563;tscore=3.93;
+NCC1701D	Prodigal_v2.6.3	CDS	3734	5020	194.2	+	0	;gc_cont=0.528;tscore=3.93;
+NCC1701D	Prodigal_v2.6.3	CDS	5234	5530	8.0	+	0	;gc_cont=0.539;tscore=-6.58;
+
 OUTPUT example:
 
 gi|169887498|gb|CP000948.1|     Prodigal_v2.6.3 gene    3       98      1.7     +       0       ID=1_1;partial=10;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.427;conf=59.47;score=1.67;cscore=-1.05;sscore=2.72;rscore=0.00;uscore=0.00;tscore=3.22;
@@ -40,6 +47,9 @@ def main():
     ofh = open(args.output_file, 'wt')
     ofh.write("##gff-version 3\n")
 
+    # this is used if we need to generate IDs
+    gene_num = 1
+
     for line in open(args.input_file):
         if line.startswith('#'):
             m = re.search("gff-version", line)
@@ -49,8 +59,17 @@ def main():
         
         cols = line.split("\t")
         if len(cols) == 9:
-            m = re.match("ID=(.+?);(.+)", cols[8])
-            id, annotation = m.groups()
+            if cols[8].startswith('ID'):
+                m = re.match("ID=(.+?);(.+)", cols[8])
+                id, annotation = m.groups()
+            else:
+                id = "{0}_{1}".format(cols[0], gene_num)
+                gene_num += 1
+
+                if cols[8].startswith(';'):
+                    cols[8] = cols[8][1:]
+
+                annotation = cols[8]
 
             print_row(ofh, cols, 'gene', "ID={0};{1}".format(id, annotation))
             print_row(ofh, cols, 'mRNA', "ID={0}_mRNA;Parent={0}".format(id))
