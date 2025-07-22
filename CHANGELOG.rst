@@ -4,6 +4,11 @@ next
 ----
 - 
 
+0.12.1
+------
+- ‎gff/convert_prodigal_to_gff3.py: Script now handles prodigal input files which don't lead with 'ID=' (fixes issue #83)
+- ‎fasta/prepend_to_fasta_header.py: Updated to remove deprecated 'U' file open mode
+
 0.12.0
 ------
 - New script: fasta/strip_fasta_headers_after_regex.py
