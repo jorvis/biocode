@@ -2,7 +2,7 @@ Hey, let's keep a change log.
 
 next
 ----
-- 
+- Added info on DockerHub releases to README
 
 0.12.1
 ------

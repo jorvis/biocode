@@ -143,6 +143,15 @@ dependencies like this:
 
    apt-get install -y python3 python3-pip zlib1g-dev libblas-dev liblapack-dev libxml2-dev
 
+Getting the code (docker)
+=========================
+
+Each release is available on DockerHub here:
+
+::
+
+    https://hub.docker.com/repository/docker/jorvis/biocode
+   
 Getting the code (pip3, latest release)
 =======================================
 
