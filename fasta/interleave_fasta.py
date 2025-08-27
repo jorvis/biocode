@@ -1,34 +1,45 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-# encoding:utf8
-# author: Sébastien Boisvert
-# part of Ray distribution
 """This script takes two fasta files and interleaves them
 
 Usage:
     interleave-fasta.py fasta_file1 fasta_file2
+
+Author: Sébastien Boisvert
+Py3 conversion: RPINerd
 """
 
-# Importing modules
-import sys
+import argparse
+import os
 
-# Main
-if __name__ == '__main__':
-    try:
-        file1 = sys.argv[1]
-        file2 = sys.argv[2]
-    except:
-        print __doc__
-        sys.exit(1)
-    
-    with open(file1) as f1:
-        with open(file2) as f2:
-            while True:
-                line = f1.readline()
-                if line.strip() == "":
-                    break
-                
-                print line.strip()
-                print f1.readline().strip()
-                print f2.readline().strip()
-                print f2.readline().strip()
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Interleave two fasta files")
+    parser.add_argument("-1", "--fasta1", type=str, help="First fasta file")
+    parser.add_argument("-2", "--fasta2", type=str, help="Second fasta file")
+    return parser.parse_args()
+
+
+def main(args: argparse.Namespace) -> None:
+
+    # Verify the files exist
+    if not os.path.exists(args.fasta1):
+        raise FileNotFoundError(f"Error: file {args.fasta1} does not exist\n")
+    if not os.path.exists(args.fasta2):
+        raise FileNotFoundError(f"Error: file {args.fasta2} does not exist\n")
+
+    with open(args.fasta1, "r") as f1, open(args.fasta2, "r") as f2:
+        while True:
+            line = f1.readline()
+            if line.strip() == "":
+                break
+
+            print(line.strip())
+            print(f1.readline().strip())
+            print(f2.readline().strip())
+            print(f2.readline().strip())
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args)
