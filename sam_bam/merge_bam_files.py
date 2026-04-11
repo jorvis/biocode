@@ -50,7 +50,7 @@ def main():
     ofh = open("{0}.sam".format(args.output_base), 'wt')
     for line in open("{0}.firstline".format(first_file)):
         ## we expect: @HD     VN:1.0  SO:coordinate
-        m = re.match("^@HD\s+VN\:(\S+)\s+SO:", line)
+        m = re.match(r"^@HD\s+VN\:(\S+)\s+SO:", line)
         if m:
             ofh.write("@HD\tVN:{0}\tSO:unknown\n".format(m.group(1)))
     ofh.close()
