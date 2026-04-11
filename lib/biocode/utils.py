@@ -161,7 +161,7 @@ def fasta_dict_from_file(file):
     
     for line in open(file):
         line = line.rstrip()
-        m = re.search('>(\S+)\s*(.*)', line)
+        m = re.search(r'>(\S+)\s*(.*)', line)
         if m:
             ## new residue line matched, purge the existing one, if not the first
             if current_id is not None:
@@ -210,7 +210,7 @@ def fasta_sizes_from_file(file):
     
     for line in open(file):
         line = line.rstrip()
-        m = re.search('>(\S+)\s*(.*)', line)
+        m = re.search(r'>(\S+)\s*(.*)', line)
         if m:
             ## new residue line matched, set the new seq ID
             current_id = m.group(1)

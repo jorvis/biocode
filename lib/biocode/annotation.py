@@ -74,7 +74,7 @@ class FunctionalAnnotation:
         if type(dbxref).__name__ == 'Dbxref':
             self.dbxrefs.append(dbxref)
         elif type(dbxref).__name__ == 'str':
-            m = re.match("(.+)\:(.+)", dbxref)
+            m = re.match(r"(.+)\:(.+)", dbxref)
             if m:
                 self.dbxrefs.append(Dbxref(db=m.group(1), identifier=m.group(2)))
             else:
@@ -171,7 +171,7 @@ class FunctionalAnnotation:
         new_product = new_product.replace(' protein-like family protein', '-like family protein')
 
         # takes patterns like this off the end:  {ECO:0000313|EMBL:OOP19401.1}
-        m = re.match('(.+) \{.+\:.+\}', new_product)
+        m = re.match(r'(.+) \{.+\:.+\}', new_product)
         if m:
             new_product = m.group(1)
         
@@ -220,15 +220,15 @@ class FunctionalAnnotation:
             return default_product
 
         # Correct a class of short bogus names we've often encountered
-        m = re.match('^\w{1,2}\d{1,3}$', new_product)
+        m = re.match(r'^\w{1,2}\d{1,3}$', new_product)
         if m:
             return default_product
 
-        m = re.match('gene \d+ protein', new_product)
+        m = re.match(r'gene \d+ protein', new_product)
         if m:
             return default_product
 
-        m = re.match('(.*)\d*\s*[CN]\-terminus$', new_product)
+        m = re.match(r'(.*)\d*\s*[CN]\-terminus$', new_product)
         if m:
             new_product = m.groups(1)
 
@@ -240,14 +240,14 @@ class FunctionalAnnotation:
         #  phage major capsid protein, HK97 family  ->  HK97 family phage major capsid protein
         #  phage portal protein, lambda family  ->  lambda family phage portal protein
         if new_product.endswith(' family'):
-            m = re.match('(.+), (.+ family)', new_product)
+            m = re.match(r'(.+), (.+ family)', new_product)
             if m:
                 new_product = "{0} {1}".format(m.group(2), m.group(1))
 
         # If family still remains in the name twice, take out the first one
         #  Peptidase family S49 family protein  ->  Peptidase S49 family protein
         if new_product.count('family') > 1:
-            m = re.match('(.+?) family (.+)', new_product)
+            m = re.match(r'(.+?) family (.+)', new_product)
             if m:
                 new_product = "{0} {1}".format(m.group(1), m.group(2))
 
@@ -373,7 +373,7 @@ class GOAnnotation:
         self.with_from    = with_from
 
         ## process any GO ID passed to only contain the numeric portion
-        go_pattern = re.compile('(\d+)')
+        go_pattern = re.compile(r'(\d+)')
         m = go_pattern.search(self.go_id)
 
         if m:
@@ -412,7 +412,7 @@ class ECAnnotation:
         self.class2 = None
         self.class3 = None
 
-        re_pattern = re.compile('(((([0-9\-]+)\.[0-9\-]+)\.[0-9\-]+)\.[a-z0-9\-]+)')
+        re_pattern = re.compile(r'(((([0-9\-]+)\.[0-9\-]+)\.[0-9\-]+)\.[a-z0-9\-]+)')
         m = re_pattern.search(self.number)
 
         if m:

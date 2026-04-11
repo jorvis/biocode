@@ -255,7 +255,7 @@ def get_taxon_id_by_gi( gi, cursor ):
 def get_gi_by_accession( acc, cursor ):
     ## The table we query depends on the source
     #   Protein queries have a three-letter prefix, followed by five digits.
-    m = re.match( '^[A-Z]{3}[0-9]{5}\.\d', acc )
+    m = re.match( r'^[A-Z]{3}[0-9]{5}\.\d', acc )
 
     ## CURRENT HACK, because of a db index bug the version number was indexed with
     #   the period character removed.
@@ -281,7 +281,7 @@ def parse_gi( match_header, cursor ):
     """
     ## look for a GI first
     #print("DEBUG: looking for a gi in header: ({0})".format(match_header))
-    m = re.match( 'gi\|(\d+)', match_header  )
+    m = re.match( r'gi\|(\d+)', match_header  )
     gi = None
     accession = None
 
@@ -289,7 +289,7 @@ def parse_gi( match_header, cursor ):
         gi = m.group(1)
     else:
         ## a direct GI pull failed, so look for something that resembles an accession instead
-        m = re.match( '[a-z]+\|([A-Z]{2,}\d{5,}\.\d)', match_header )
+        m = re.match( r'[a-z]+\|([A-Z]{2,}\d{5,}\.\d)', match_header )
 
         if m:
             accession = m.group(1)
