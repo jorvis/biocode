@@ -52,7 +52,7 @@ def main():
 
     for line in open(args.input_file):
         if line.startswith('#'):
-            m = re.search(r"gff-version", line)
+            m = re.search("gff-version", line)
             if not m:
                 ofh.write(line)
             continue
