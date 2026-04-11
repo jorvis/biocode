@@ -124,9 +124,9 @@ def main():
             #   g1  ->  ID=g1
             #   g1.t1  ->  ID=g1.t1;Parent=g1
             #   transcript_id "g1.t1"; gene_id "g1";  ->  ID=g1.t1.cds;Parent=g1.t1
-            m_gene = re.match('(g\d+)', cols[8])
-            m_transcript = re.match('((g\d+).t\d+)', cols[8])
-            m_CDS = re.match('transcript_id "(g\d+.t\d+)"; gene_id "g\d+";', cols[8])
+            m_gene = re.match(r'(g\d+)', cols[8])
+            m_transcript = re.match(r'((g\d+).t\d+)', cols[8])
+            m_CDS = re.match(r'transcript_id "(g\d+.t\d+)"; gene_id "g\d+";', cols[8])
 
             # the input can be in GTF or GFF.  We need to reformat the 9th column for the GTF entries
             if not cols[8].startswith('ID') and not cols[8].startswith('Parent'):

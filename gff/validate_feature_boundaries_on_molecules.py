@@ -39,7 +39,7 @@ def main():
             continue
 
         if in_fasta_section:
-            m = re.search('>(\S+)\s*(.*)', line)
+            m = re.search(r'>(\S+)\s*(.*)', line)
             if m:
                 current_fasta_id = m.group(1)
             else:

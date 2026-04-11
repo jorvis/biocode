@@ -128,11 +128,11 @@ def parse_go_file(path):
             alt_ids = list()
             namespace = None
 
-        m = re.search('^id: (\S+)', line)
+        m = re.search(r'^id: (\S+)', line)
         if m:
             primary_id = m.group(1)
         else:
-            m = re.search('^namespace: (\S+)', line)
+            m = re.search(r'^namespace: (\S+)', line)
             if m:
                 if m.group(1) == 'biological_process':
                     namespace = 'P'
@@ -142,7 +142,7 @@ def parse_go_file(path):
                     namespace = 'C'
 
             else:
-                m = re.search('^alt_id: (\S+)', line)
+                m = re.search(r'^alt_id: (\S+)', line)
                 if m:
                     alt_ids.append(m.group(1))
 
