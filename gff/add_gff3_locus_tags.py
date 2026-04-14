@@ -93,7 +93,7 @@ def main():
             ## need to process the ID map to reformat IDs
             for id in id_mapping:
                 # TP05_0002 -> TpMuguga_05g00002
-                m = re.match('TP(\d\d)_(\d+)', id_mapping[id])
+                m = re.match(r'TP(\d\d)_(\d+)', id_mapping[id])
                 if m:
                     id_mapping[id] = "{0}_{1}g0{2}".format(args.prefix, m.group(1), m.group(2) )
                     
@@ -104,7 +104,7 @@ def main():
             raise Exception("ERROR: Expected --molecule_map and --id_file options when using --custom=bmicroti")
         else:
             for id in id_mapping:
-                m = re.match('BBM_(\D+)(\d+)', id_mapping[id])
+                m = re.match(r'BBM_(\D+)(\d+)', id_mapping[id])
                 if m:
                     print("Changing id from {0} to ".format(id))
                     id_mapping[id] = "{0}_{1}g{2}".format(args.prefix, microti_map[m.group(1)], m.group(2) )

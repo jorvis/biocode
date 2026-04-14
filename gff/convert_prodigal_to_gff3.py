@@ -60,7 +60,7 @@ def main():
         cols = line.split("\t")
         if len(cols) == 9:
             if cols[8].startswith('ID'):
-                m = re.match("ID=(.+?);(.+)", cols[8])
+                m = re.match(r"ID=(.+?);(.+)", cols[8])
                 id, annotation = m.groups()
             else:
                 id = "{0}_{1}".format(cols[0], gene_num)

@@ -85,7 +85,7 @@ def main():
     fun = dict()
     for line in open(args.fun):
         line = line.rstrip()
-        m = re.match("\s*\[(.+?)\] (.+)", line)
+        m = re.match(r"\s*\[(.+?)\] (.+)", line)
         if m:
             fun[m.group(1)] = m.group(2)
 
@@ -95,7 +95,7 @@ def main():
     cog_descriptions = dict()
     for line in open(args.cog_description):
         line = line.rstrip()
-        m = re.match("(.+?)\s+(.+)", line)
+        m = re.match(r"(.+?)\s+(.+)", line)
         if m:
             cog_descriptions[m.group(1)] = m.group(2)
 
@@ -117,7 +117,7 @@ def main():
     funccat_lines = 0
     for line in open(args.funccat):
         line = line.rstrip()
-        m = re.match("(.+?)\s+(.+)", line)
+        m = re.match(r"(.+?)\s+(.+)", line)
         if m:
             funccat_lines += 1
             cog_id = m.group(1)

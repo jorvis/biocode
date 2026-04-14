@@ -203,7 +203,7 @@ def get_gff3_features(gff3_file, assemblies=None):
         lnum = lnum + 1
 
         if in_fasta_section == True:
-            m = re.search('>(\S+)\s*(.*)', line)
+            m = re.search(r'>(\S+)\s*(.*)', line)
             if m:
                 current_fasta_id = m.group(1)
 

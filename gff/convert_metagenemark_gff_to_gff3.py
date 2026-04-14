@@ -114,7 +114,7 @@ def main():
                 continue
 
             mol_id = cols[0]
-            mol_id_m = re.match('^(\S+) ', mol_id)
+            mol_id_m = re.match(r'^(\S+) ', mol_id)
 
             if mol_id_m:
                 print("MATCH!")
@@ -126,7 +126,7 @@ def main():
             if feat_type not in ['gene', 'CDS']:
                 raise Exception("ERROR: expected only 'gene' or 'CDS' feature types as input (depending on metagenemark version).")
 
-            m_gene = re.match('gene_id[ =](\d+)', cols[8])
+            m_gene = re.match(r'gene_id[ =](\d+)', cols[8])
 
             if m_gene:
                 gene_num = m_gene.group(1)

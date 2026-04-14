@@ -124,13 +124,13 @@ def main():
         ## aat product fields are a bit of mess, so lets tease a few parts out:
         #   | organism=Neospora_caninum_Liverpool | product=Iron regulatory protein-like protein, related | location=FR823391:1231501-1237765(-) | length=986 | sequence_SO=chromosome | SO=protein_coding
         #   | organism=Toxoplasma_gondii_ME49 | product=aconitate hydratase ACN/IRP | location=TGME49_chrX:1400716-1407887(-) | length=1055 | sequence_SO=chromosome | SO=protein_coding
-        m = re.search("product=(.+?) \|", segment['product'])
+        m = re.search(r"product=(.+?) \|", segment['product'])
         if m:
             hit_product = m.group(1)
         else:
             ## now try this convention (but strip off everything after the GN=):
             #  DNA-directed RNA polymerase subunit beta OS=Plasmodium falciparum (isolate 3D7) GN=rpoB PE=3 SV=2
-            m = re.search("(.+) OS=(.+?) GN=", segment['product'])
+            m = re.search(r"(.+) OS=(.+?) GN=", segment['product'])
             if m:
                 hit_product = "{0} [{1}]".format(m.group(1), m.group(2))
             else:

@@ -58,7 +58,7 @@ def add_aragorn_features(assemblies, features, aragorn_file):
         line = line.rstrip()
 
         if line.startswith('>'):
-            m = re.match('>(\S+)', line)
+            m = re.match(r'>(\S+)', line)
             current_assembly_id = m.group(1)
 
             if current_assembly_id not in assemblies:
@@ -82,7 +82,7 @@ def add_aragorn_features(assemblies, features, aragorn_file):
                 gene_id = "{0}_gene".format(feat_base)
                 RNA_id = "{0}_{1}".format(feat_base, feat_type)
 
-                m = re.match('(c*)\[(\d+),(\d+)\]', cols[2])
+                m = re.match(r'(c*)\[(\d+),(\d+)\]', cols[2])
                 if m:
                     rfmin = int(m.group(2)) - 1
                     rfmax = int(m.group(3))

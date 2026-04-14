@@ -136,7 +136,7 @@ def main():
         line = line.rstrip()
         
         # is this the end of an entry?
-        if re.match( "^//", line ):
+        if re.match( r"^//", line ):
             curs.execute("INSERT INTO entry (id, full_name, organism, symbol) values (?,?,?,?)", (id, full_name, organism, symbol))
 
             # nothing with hypothetical in the name can be characterized
@@ -171,7 +171,7 @@ def main():
                 conn.commit()
 
         elif line.startswith("ID"):
-            m = re.match("ID\s+(\S+).+?(\d+) AA\.", line)
+            m = re.match(r"ID\s+(\S+).+?(\d+) AA\.", line)
             if m:
                 id = m.group(1)
                 res_length = m.group(2)
@@ -187,20 +187,20 @@ def main():
                     accs.append(part)
             
         elif line.startswith("DE"):
-            m = re.match("DE\s+SubName: Full=(.+)", line.rstrip(';'))
+            m = re.match(r"DE\s+SubName: Full=(.+)", line.rstrip(';'))
             if m and full_name is None:
                 full_name = m.group(1)
             else:
-                m = re.match("DE\s+RecName: Full=(.+)", line.rstrip(';'))
+                m = re.match(r"DE\s+RecName: Full=(.+)", line.rstrip(';'))
                 if m and full_name is None:
                     full_name = m.group(1)
                 else:
-                    m = re.search("EC=(\S+)", line.rstrip(';'))
+                    m = re.search(r"EC=(\S+)", line.rstrip(';'))
                     if m:
                         ec_nums.append(m.group(1))
 
         elif line.startswith("DR"):
-            m = re.search("GO:(\d+)\; .+?\; ([A-Z]+):\S+\.$", line)
+            m = re.search(r"GO:(\d+)\; .+?\; ([A-Z]+):\S+\.$", line)
             if m:
                 go_ids.append(m.group(1))
 
@@ -209,12 +209,12 @@ def main():
                 
 
         elif line.startswith("OS"):
-            m = re.match("OS\s+(.+)\.$", line)
+            m = re.match(r"OS\s+(.+)\.$", line)
             if m:
                 organism = m.group(1)
                 
         elif line.startswith("GN"):
-            m = re.search("^GN\s+Name=(.+?)\;", line)
+            m = re.search(r"^GN\s+Name=(.+?)\;", line)
             if m:
                 symbol = m.group(1)
         

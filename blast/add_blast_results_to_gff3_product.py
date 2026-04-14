@@ -49,12 +49,12 @@ def main():
         #   RecName: Full=Threonine synthase; Short=TS [Escherichia coli K-12]
         #   RecName: Full=Trp operon repressor [Escherichia coli O139:H28 str. E24377A]
         products = product.split(';')
-        m = re.match("RecName: Full=(.+)", products[0])
+        m = re.match(r"RecName: Full=(.+)", products[0])
         if m:
             product = m.group(1)
 
             # if it has a bracketed genus/species, remove it.
-            m = re.match("(.+)\[.*", product)
+            m = re.match(r"(.+)\[.*", product)
             if m:
                 product = m.group(1)
 

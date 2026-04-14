@@ -109,7 +109,7 @@ def parse_full_go(file):
             namespace = line.split(' ')[1]
 
         elif line.startswith('name:'):
-            m = re.match('name: (.+)', line)
+            m = re.match(r'name: (.+)', line)
             if m:
                 name = m.group(1).rstrip()
             else:
