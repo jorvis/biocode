@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import division
-
 """
 A memory-efficient script for subsampling single or paired-end FASTQ files
 randomly (rather than taking the first N, or some other non-random approach)
@@ -22,10 +20,10 @@ storage of an array of index positions.  I wrote this script to subsample 200
 million reads out of a fileset of 2.5 billion, and this took too much memory.
 
 Referenced C version:
-  http://homes.cs.washington.edu/~dcjones/fastq-tools/fastq-sample.html
+    http://homes.cs.washington.edu/~dcjones/fastq-tools/fastq-sample.html
 
 Python implementation which has the same issue:
-  http://pythonforbiologists.com/index.php/randomly-sampling-reads-from-a-fastq-file/
+    http://pythonforbiologists.com/index.php/randomly-sampling-reads-from-a-fastq-file/
 
 Overview of steps:
 
@@ -35,7 +33,7 @@ Overview of steps:
 
 So, in practice, if you know the read count beforehand, the complexity will most often
 be around O(n)
-    
+
 Probability multiplier:
 
 Why is this needed?  If you have a set of 100 reads and ask for 10 to be selected,
@@ -57,12 +55,12 @@ The files created are defined using the --output_base option.  If processing a s
 file, this will just append .fastq to the value passed.  If processing paired-end
 files, the following will be created:
 
-   {output_base}.R1.fastq
-   {output_base}.R2.fastq
+    {output_base}.R1.fastq
+    {output_base}.R2.fastq
 
 This is true regardless of how many input (comma-delimited) files are passed, only
 one output file will be written per direction.
-  
+
 Assumptions:
 
 Input reads can be in raw FASTQ format or compressed with a .gz extension.  If
@@ -75,45 +73,108 @@ Joshua Orvis
 
 import argparse
 import gzip
-import os
 import random
 
 
-def main():
-    parser = argparse.ArgumentParser( description='Randomized subsampling of single or paired-end FASTQ files')
+def arg_parser() -> argparse.Namespace:
 
-    ## output file to be written
-    parser.add_argument('-l', '--left', type=str, required=False, help='Comma-separated list of left reads in an paired set' )
-    parser.add_argument('-r', '--right', type=str, required=False, help='Comma-separated list of right reads in an paired set' )
-    parser.add_argument('-s', '--single', type=str, required=False, help='Use this if you have only one file of unpaired reads' )
-    parser.add_argument('-irc', '--input_read_count', type=int, required=False,
-                        help='If passed, skips a step of reading over the file(s) once just to get the read count. ' +
-                        'Should be just the count of reads in either the --single or --left file(s)')
-    parser.add_argument('-orc', '--output_read_count', type=int, required=True, help='Subsample size - number of reads (if single) or read pairs (if passing -l and -r) to export')
-    parser.add_argument('-ob', '--output_base', type=str, required=True, help='Base name of output files to be created')
-    parser.add_argument('-pm', '--probability_multiplier', type=float, required=False, default=1.05, help='Increase the likelihood of a given read being selected, to prevent insufficient reads from being pulled' )
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(description="Randomized subsampling of single or paired-end FASTQ files")
+
+    parser.add_argument(
+        "-l", "--left", type=str, required=False, help="Comma-separated list of left reads in an paired set"
+    )
+    parser.add_argument(
+        "-r", "--right", type=str, required=False, help="Comma-separated list of right reads in an paired set"
+    )
+    parser.add_argument(
+        "-s", "--single", type=str, required=False, help="Use this if you have only one file of unpaired reads"
+    )
+    parser.add_argument(
+        "-irc",
+        "--input_read_count",
+        type=int,
+        required=False,
+        help="If passed, skips a step of reading over the file(s) once just to get the read count. "
+        + "Should be just the count of reads in either the --single or --left file(s)",
+    )
+    parser.add_argument(
+        "-orc",
+        "--output_read_count",
+        type=int,
+        required=True,
+        help="Subsample size - number of reads (if single) or read pairs (if passing -l and -r) to export",
+    )
+    parser.add_argument("-ob", "--output_base", type=str, required=True, help="Base name of output files to be created")
+    parser.add_argument(
+        "-pm",
+        "--probability_multiplier",
+        type=float,
+        required=False,
+        default=1.05,
+        help="Increase the likelihood of a given read being selected, to prevent insufficient reads from being pulled",
+    )
+
+    return parser.parse_args()
+
+
+def get_read_count(files: list[str]) -> int:
+    line_count = 0
+
+    for path in files:
+        if path.endswith(".gz"):
+            fh = gzip.open(path, "rb")
+        else:
+            fh = open(path, "rU")
+
+        for _ in fh:
+            line_count += 1
+
+    return int(line_count / 4)
+
+
+def check_input_options(args: argparse.Namespace) -> None:
+    """Ensure that the user passed either singleton option, or right AND left options, but not both"""
+
+    if args.single is not None:
+        if args.left is not None or args.right is not None:
+            raise Exception("ERROR: Cannot use --left or --right options if --single is passed")
+    elif args.left is not None:
+        if args.right is None:
+            raise Exception("ERROR: Must pass --right option if --left option is used")
+
+        left_files = args.left.split(",")
+        right_files = args.right.split(",")
+
+        if len(left_files) != len(right_files):
+            raise Exception(
+                f"ERROR: Count of left files ({len(left_files)}) must be the same as right files ({len(right_files)})"
+            )
+    else:
+        raise Exception("ERROR: Must pass either --single or --left AND --right to define input")
+
+
+def main(args: argparse.Namespace) -> None:
 
     ######################
     ## Validate, then gather files and get read counts
     ######################
-    
+
     check_input_options(args)
     input_read_count = args.input_read_count
-    left_files = list()
-    right_files = list()
+    left_files: list[str] = list()
+    right_files: list[str] = list()
 
     if args.single is not None:
-        left_files = args.single.split(',')
+        left_files = args.single.split(",")
     elif args.left is not None:
-        left_files = args.left.split(',')
-        right_files = args.right.split(',')
+        left_files = args.left.split(",")
+        right_files = args.right.split(",")
 
     if input_read_count is None:
         input_read_count = get_read_count(left_files)
-        print("INFO: parsed input read count is: {0}".format(input_read_count))
+        print(f"INFO: parsed input read count is: {input_read_count}")
     else:
-        print("INFO: user-passed input read count is: {0}".format(input_read_count))
+        print(f"INFO: user-passed input read count is: {input_read_count}")
 
     #######################
     ## Do a first random selection pass
@@ -123,33 +184,34 @@ def main():
     #  the proportion we want to select.
     individual_read_prob = args.output_read_count / input_read_count
     individual_read_prob_adj = individual_read_prob * args.probability_multiplier
-    
-    print("INFO: The probability of any individual read being selected is: {0} (raw), {1} (multiplier-adjusted)".format(
-        individual_read_prob, individual_read_prob_adj))
+
+    print(
+        f"INFO: The probability of any individual read being selected is: {individual_read_prob} (raw), {individual_read_prob_adj} (multiplier-adjusted)"
+    )
 
     output_reads_written = 0
-    
+
     if args.single is not None:
-        ofh = open("{0}.fastq".format(args.output_base), 'wt')
+        ofh = open(f"{args.output_base}.fastq", "wt")
         ofh_right = None
     else:
-        ofh = open("{0}.R1.fastq".format(args.output_base), 'wt')
-        ofh_right = open("{0}.R2.fastq".format(args.output_base), 'wt')
+        ofh = open(f"{args.output_base}.R1.fastq", "wt")
+        ofh_right = open(f"{args.output_base}.R2.fastq", "wt")
 
     print("INFO: Performing a pass through the files for random read selection")
     lindex = 0
     for lpath in left_files:
-        if lpath.endswith('.gz'):
-            ifh = gzip.open(lpath, 'rb')
+        if lpath.endswith(".gz"):
+            ifh = gzip.open(lpath, "rb")
             left_is_compressed = True
 
             if args.right is not None:
-                ifh_right = gzip.open(right_files[lindex], 'rb')
+                ifh_right = gzip.open(right_files[lindex], "rb")
         else:
-            ifh = open(lpath, 'rU')
+            ifh = open(lpath, "rU")
             left_is_compressed = False
             if args.right is not None:
-                ifh_right = open(right_files[lindex], 'rU')
+                ifh_right = open(right_files[lindex], "rU")
 
         while True:
             line1 = ifh.readline()
@@ -200,50 +262,15 @@ def main():
             break
 
     if output_reads_written < args.output_read_count:
-        raise Exception("ERROR: Unfortunately only {0} of the requested {1} reads were randomly selected.  " + \
-                        "You can either try again with the same options or increase the --probability_multiplier".format(
-                            output_reads_written, args.output_read_count))
-            
-
-def check_input_options(args):
-    # user must pass either singleton option, right AND left options, but not both
-    if args.single is not None:
-        if args.left is not None or args.right is not None:
-            raise Exception("ERROR: Cannot use --left or --right options if --single is passed")
-    elif args.left is not None:
-        if args.right is None:
-            raise Exception("ERROR: Must pass --right option if --left option is used")
-
-        left_files = args.left.split(',')
-        right_files = args.right.split(',')
-        
-        if len(left_files) != len(right_files):
-            raise Exception("ERROR: Count of left files ({0}) must be the same as right files ({1})".format(
-                len(left_files), len(right_files)))
-    else:
-        raise Exception("ERROR: You must pass either --single or --left AND --right to define input")
-        
-def get_read_count(files):
-    line_count = 0
-
-    for path in files:
-        if path.endswith('.gz'):
-            fh = gzip.open(path, 'rb')
-        else:
-            fh = open(path, 'rU')
-
-        for line in fh:
-            line_count += 1
-
-    return int(line_count / 4)
-    
-
-if __name__ == '__main__':
-    main()
+        raise Exception(
+            f"""
+            ERROR: Unfortunately only {output_reads_written} of the requested {args.output_read_count}
+            reads were randomly selected.\n You can either try again with the same options or increase
+            the --probability_multiplier"""
+        )
 
 
+if __name__ == "__main__":
 
-
-
-
-
+    args = arg_parser()
+    main(args)

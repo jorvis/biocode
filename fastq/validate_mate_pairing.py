@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import division
+#!/usr/bin/env python3
 
 """
 A memory-efficient script for validating mates in paired-end FASTQ files.
@@ -15,7 +14,7 @@ Tested against headers conventions like this:
 
 @61JCNAAXX100503:5:100:10001:18267/1
 @61JCNAAXX100503:5:100:10001:18267/2
-  
+
 Assumptions:
 
 Input reads can be in raw FASTQ format or compressed with a .gz extension.  If
@@ -28,108 +27,120 @@ Joshua Orvis
 
 import argparse
 import gzip
-import os
-import re
 
-def main():
-    parser = argparse.ArgumentParser( description='Mate validation in paired-end FASTQ files')
 
-    ## output file to be written
-    parser.add_argument('-l', '--left', type=str, required=True, help='Comma-separated list of left reads in an paired set' )
-    parser.add_argument('-r', '--right', type=str, required=True, help='Comma-separated list of right reads in an paired set' )
-    args = parser.parse_args()
+def parse_args() -> argparse.Namespace:
+    """
+    Simple argument parser for this script.
 
-    check_input_options(args)
-    left_files = args.left.split(',')
-    right_files = args.right.split(',')
+    :return: argparse.Namespace object containing the input options
+    """
 
-    lindex = 0
-    
-    for lpath in left_files:
-        if lpath.endswith('.gz'):
-            ifh = gzip.open(lpath, 'rb')
-            left_is_compressed = True
+    parser = argparse.ArgumentParser(description="Mate validation in paired-end FASTQ files")
+    parser.add_argument(
+        "-l", "--left", type=str, required=True, help="Comma-separated list of left reads in a paired set"
+    )
+    parser.add_argument(
+        "-r", "--right", type=str, required=True, help="Comma-separated list of right reads in a paired set"
+    )
 
-            if args.right is not None:
-                ifh_right = gzip.open(right_files[lindex], 'rb')
-        else:
-            ifh = open(lpath, 'rU')
-            left_is_compressed = False
-            if args.right is not None:
-                ifh_right = open(right_files[lindex], 'rU')
+    return parser.parse_args()
 
-        while True:
-            line1 = ifh.readline().replace("\n", '')
-            print("line1: ({0})".format(line1))
-            rline1 = ifh_right.readline()
 
-            # Check if either file ended early
-            if not line1:
-                if not rline1:
-                    # expected, matching end of both files
-                    break
+def compare_reads(ifh, ifh_right) -> None:
+    """
+    Parse through two read files and compare the read headers.
+
+    :param ifh: file handle for read 1
+    :param ifh_right: file handle for read 2
+
+    :return: None
+    """
+
+    # Step through each file and compare the read headers
+    try:
+
+        line_type = 1
+        first_line = True
+        read_style = None
+
+        for r1, r2 in zip(ifh, ifh_right, strict=True):
+
+            # For the first entry, determine the read pair style (i.e. /1 or 1:N:0:TTAGGCA)
+            if first_line:
+                r1 = r1.decode().strip()
+                r2 = r2.decode().strip()
+                if r1[-2] == "/" and r2[-2] == "/":
+                    read_style = 1
+                elif r1.split(" ")[1].startswith("1") and r2.split(" ")[1].startswith("2"):
+                    read_style = 2
                 else:
-                    raise Exception("ERROR: Left file ended before right file")
+                    raise Exception(f"ERROR: Read style not recognized! ({r1}, {r2})")
+                first_line = False
 
-            if not rline1:
-                raise Exception("ERROR: Right file ended before left file")
+            # We are only interested in the ID lines
+            if line_type == 1:
+                r1 = r1.decode().strip()
+                r2 = r2.decode().strip()
 
-            # We don't actually need these for now.  Could just read to advance the cursor
-            line2 = ifh.readline()
-            line3 = ifh.readline()
-            line4 = ifh.readline()
-            rline2 = ifh_right.readline()
-            rline3 = ifh_right.readline()
-            rline4 = ifh_right.readline()
+                # Compare the read headers
+                if read_style == 1:
+                    if r1[:-2] != r2[:-2]:
+                        raise Exception(f"ERROR: Headers do not match! ({r1}, {r2})")
+                elif read_style == 2:
+                    if r1.split(" ")[0] != r2.split(" ")[0]:
+                        raise Exception(f"ERROR: Headers do not match! ({r1}, {r2})")
 
-            print(line1)
+            # Reset the line type if we reach the end of the read
+            if line_type == 4:
+                line_type = 1
 
-            if len(line1):
-                print("line1 is ({0})".format(line1))
-                lread_base = line1.split()[0]
-            else:
-                lread_base = False
-            
-            if len(rline1):
-                rread_base = rline1.split()[0]
-            else:
-                rread_base = False
+            line_type += 1
 
-            ## did we reach the natural ending?
-            if not lread_base and not rread_base:
-                break
-            
-            ## Let's first check the easy case that they match:
-            if lread_base == rread_base:
-                pass
-            else:
-                if lread_base[-2:] == '/1' and rread_base[-2:] == '/2':
-                    # compare without the mate info then
-                    if lread_base[:-2] != rread_base[:-2]:
-                        raise Exception("Mismatch found: left:{0} right:{1}".format(lread_base, rread_base))
-                else:
-                    raise Exception("Mismatch found: left:{0} right:{1}".format(lread_base, rread_base))
-
-            ## Now those with file names with ids ending like /1 and /2 to denote mate pairs
-            print("Comparing {0} with {1}".format(lread_base, rread_base))
-
-    lindex += 1
+    except ValueError:
+        # If the files are not the same length, we will get a ValueError
+        raise Exception("ERROR: Files are not the same length!")
 
 
-def check_input_options(args):
-    left_files = args.left.split(',')
-    right_files = args.right.split(',')
-        
+def main(args: argparse.Namespace) -> None:
+    """
+    Main function for the script.
+
+    :param args: argparse.Namespace object containing the input options
+    :return: None
+    """
+
+    left_files = args.left.split(",")
+    right_files = args.right.split(",")
+
+    # Validate that there are equal numbers of R1 and R2 files
     if len(left_files) != len(right_files):
-        raise Exception("ERROR: Count of left files ({0}) must be the same as right files ({1})".format(
-            len(left_files), len(right_files)))
-        
-if __name__ == '__main__':
-    main()
+        raise Exception(
+            f"ERROR: Count of left files ({len(left_files)}) must be the same as right files ({len(right_files)})"
+        )
+
+    # Build a list of tuples with the read pairs and their gzip status
+    pairs = []
+    for lfile, rfile in zip(left_files, right_files):
+        if lfile.endswith(".gz") and rfile.endswith(".gz"):
+            gz_status = True
+        elif not lfile.endswith(".gz") and not rfile.endswith(".gz"):
+            gz_status = False
+        else:
+            raise Exception(f"ERROR: gzip status must be the same for both files! ({lfile}, {rfile})")
+
+        pairs.append((lfile, rfile, gz_status))
+
+    # Iterate over the files and compare the reads
+    for lfile, rfile, gz_status in pairs:
+        if gz_status:
+            with gzip.open(lfile, "rb") as ifh, gzip.open(rfile, "rb") as ifh_right:
+                compare_reads(ifh, ifh_right)
+        else:
+            with open(lfile, "r") as ifh, open(rfile, "r") as ifh_right:
+                compare_reads(ifh, ifh_right)
 
 
-
-
-
-
-
+if __name__ == "__main__":
+    args = parse_args()
+    main(args)
