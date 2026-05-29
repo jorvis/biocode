@@ -70,7 +70,7 @@ def main():
                 
                 m = re.match(">\S+ (.*)", line)
                 if m:
-                    fout.write(">{0} {1}\n".format(next_id, m.groups(1)))
+                    fout.write(">{0} {1}\n".format(next_id, m.group(1)))
                 else:
                     fout.write(">{0}\n".format(next_id))
             else:
