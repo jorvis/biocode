@@ -3,6 +3,7 @@ Hey, let's keep a change log.
 next
 ----
 - Added info on DockerHub releases to README
+- New script: gff/convert_gapmm2_gff_to_models.py
 
 0.12.1
 ------
