@@ -12,7 +12,7 @@ Example timing information on a 5.4GB input file (with 21.7 million records)**:
     - 2 minutes,  8 seconds when run with the --width=60 option
     - 3 minutes, 17 seconds when run with both --detect_direction and --width=60 options
 
-** Timing was run on a laptop with an Intel(R) Core(TM) i7-3740QM CPU @ 2.70GHz, 
+** Timing was run on a laptop with an Intel(R) Core(TM) i7-3740QM CPU @ 2.70GHz,
 utilizing only one core.
 
 OUTPUT
@@ -20,22 +20,22 @@ OUTPUT
 
 Running with no options other than -i and -o, this script will transform headers like these:
 
-   @SN7001163:78:C0YG5ACXX:6:1101:1129:2043 1:N:0:CCTAGGT
-   @61JCNAAXX100503:5:100:10001:18267/2
+    @SN7001163:78:C0YG5ACXX:6:1101:1129:2043 1:N:0:CCTAGGT
+    @61JCNAAXX100503:5:100:10001:18267/2
 
-to this in the FASTA output:   
-   
-   >SN7001163:78:C0YG5ACXX:6:1101:1129:2043 1:N:0:CCTAGGT
-   >61JCNAAXX100503:5:100:10001:18267/2
+to this in the FASTA output:
+
+    >SN7001163:78:C0YG5ACXX:6:1101:1129:2043 1:N:0:CCTAGGT
+    >61JCNAAXX100503:5:100:10001:18267/2
 
 If you have have headers like this:
 
-   @SN7001163:78:C0YG5ACXX:6:1101:1129:2043 1:N:0:CCTAGGT
+    @SN7001163:78:C0YG5ACXX:6:1101:1129:2043 1:N:0:CCTAGGT
 
 The optional --detect_direction option will see the '1' or '2' after the whitespace and transform
 the header to this instead (in FASTA):
 
-   >SN7001163:78:C0YG5ACXX:6:1101:1129:2043/1
+    >SN7001163:78:C0YG5ACXX:6:1101:1129:2043/1
 
 Note that this can increase the runtime up to 3x (from my testing), since a regex is used.
 
@@ -51,67 +51,82 @@ Author: Joshua Orvis (jorvis AT gmail)
 """
 
 import argparse
+import os
 import re
 import sys
 
-def main():
-    parser = argparse.ArgumentParser( description='Convert FASTQ to FASTA format')
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Convert FASTQ to FASTA format")
 
     ## output file to be written
-    parser.add_argument('-i', '--input_file', type=str, required=True, help='Path to an input file to be read' )
-    parser.add_argument('-o', '--output_file', type=str, required=False, help='Path to an output file to be created' )
-    parser.add_argument('-d', '--detect_direction', action='store_true', help='Pass this flag to auto-detect the mate pair direction.  See full documentation for more info' )
-    parser.add_argument('-w', '--width', type=int, required=False, help='Defines the width (or number of bases) on each FASTA sequence line' )
-    args = parser.parse_args()
+    parser.add_argument("-i", "--input_file", type=str, required=True, help="Path to an input file to be read")
+    parser.add_argument("-o", "--output_file", type=str, required=False, help="Path to an output file to be created")
+    parser.add_argument(
+        "-d",
+        "--detect_direction",
+        action="store_true",
+        help="Pass this flag to auto-detect the mate pair direction.  See full documentation for more info",
+    )
+    parser.add_argument(
+        "-w",
+        "--width",
+        type=int,
+        required=False,
+        help="Defines the width (or number of bases) on each FASTA sequence line",
+    )
+
+    return parser.parse_args()
+
+
+def main(args: argparse.Namespace) -> None:
 
     if args.output_file is None:
         ofh = sys.stdout
     else:
-        ofh = open( args.output_file, 'wt' )
-    
+        ofh = open(args.output_file, "w")
+
     line_count = 0
     record_count = 0
     last_header = None
 
-    for line in open(args.input_file, 'rU'):
-        line_count += 1
+    with open(args.input_file, "r") as fh:
+        for line in fh:
+            line_count += 1
 
-        if line_count % 4 == 1:
-            record_count += 1
+            if line_count % 4 == 1:
+                record_count += 1
 
-            if args.detect_direction:
-                m = re.search('^\@(.+?) (\d)', line)
-                if m:
-                    last_header = "{0}/{1}\n".format(m.group(1), m.group(2))
+                if args.detect_direction:
+                    m = re.search(r"^@(.+?) (\d)", line)
+                    if m:
+                        last_header = f"{m.group(1)}/{m.group(2)}\n"
+                    else:
+                        raise Exception(f"ERROR: FASTQ header line found that didn't match expected format: {line}")
                 else:
-                    raise Exception("ERROR: FASTQ header line found that didn't match expected format: {0}".format(line))
-            else:
-                line = line.lstrip('@')
-                last_header = line
-                
-        elif line_count % 4 == 2:
-            if args.width:
-                ofh.write(">{0}{1}\n".format(last_header, wrapped(line, args.width)))
-            else:
-                ofh.write(">{0}{1}".format(last_header, line))
-        
-    ofh.close()
+                    line = line.lstrip("@")
+                    last_header = line
 
-    print("{0} records written to the output FASTA file".format(record_count))
+            elif line_count % 4 == 2:
+                if args.width:
+                    ofh.write(f">{last_header}{wrapped(line, args.width)}\n")
+                else:
+                    ofh.write(f">{last_header}{line}")
+
+    print(f"{record_count} records written to the output FASTA file")
 
 
 def wrapped(string, every=60):
     string = string.rstrip()
-    ''' this runs orders of magnitude faster than using the textwrap module '''
-    return '\n'.join(string[i:i+every] for i in range(0, len(string), every))
+    """ this runs orders of magnitude faster than using the textwrap module """
+    return "\n".join(string[i : i + every] for i in range(0, len(string), every))
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    args = parse_args()
 
+    # Verify input file exists
+    if not os.path.exists(args.input_file):
+        raise FileNotFoundError(f"ERROR: Input file '{args.input_file}' not found\n")
 
-
-
-
-
-
+    main(args)
