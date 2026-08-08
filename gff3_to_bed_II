@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+
+"""
+This script can be used to transform a GFF3 file into a BED file.  
+
+LIMITATIONS:
+
+- The only currently-tested input GFF3 consists of coding gene models.
+- Its encoding is meant to include prokaryotes and eukaryotes, though it was
+  written/tested first for eukaryotes.
+
+The options:
+
+--input_file:  Must follow the GFF3 specification
+--output_file: Output BED file to be created
+
+"""
+#!/usr/bin/env python3
+
+import argparse
+import os
+
+def main():
+        parser = argparse.ArgumentParser( description= 'Put a description of your script here')
+
+        parser.add_argument('-s', '--input_file', type=str, required=True, help='Path to an input file to be read' )
+        args = parser.parse_args()
+        #type_input = args.type
+        #id_input = args.attribute
+        cds_count=0
+        lines = list()
+        found_feature = False
+        feature_counter=0
+        #cols = []
+        for line in open(args.input_file):
+                        line = line.rstrip()
+                        if line.startswith('##'):
+                                print (line )
+                        else:
+                                sop = line.split('\t')
+                                if len(sop) != 9:
+                                         continue
+
+                                cols = dict()
+                                cols['type'] = sop[2]
+                                if cols['type'] == 'gene':
+                                       # print ("SOP: ",sop[2])
+                                        cols['seqid'] = sop[0]
+                                        cols['source'] = sop[1]
+                                        cols['start'] = int(sop[3])
+                                        cols['end'] = int(sop[4])
+                                        cols['score'] = sop[5]
+                                        cols['strand'] = sop[6]
+                                        cols['phase'] = sop[7]
+                                        cols['attributes'] = sop[8]
+                                        leaf = dict()
+                                        count = 0
+                                        trees = map(lambda s: s.split('='), cols['attributes'].split(';'))
+                                        for tree in trees:
+                                                 count = count+1
+                                                 if count == 2 :
+                                                          cols[tree[0]] = tree[1]
+#                                                          print ("tree[0]:" + tree[0])
+#                                                          print ("tree[1]:" + tree[1])
+                                                          try :
+                                                                           cols['Name'] = tree[1]
+                                                                          # print ("Cols:" + cols['Name'])
+                                                          except KeyError:
+                                                                          cols['Name'] = '.'
+
+                                        print ('\t'.join([cols['seqid'], str(cols['start']), str(cols['end']),  cols['Name'], cols['score'], cols['strand'], cols['type'], cols['phase']])
+
+if __name__== "__main__":
+        main()
+''' This code was referenced and edited from the Final of Practical concepts of bioinformatics GFF exercise  and gff2bed.py (https://github.com/JinfengChen/Scripts/blob/master/bin/gff2bed.py)'''
