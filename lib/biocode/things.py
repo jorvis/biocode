@@ -1,6 +1,7 @@
 
 import itertools
 import sys
+import re
 import uuid
 
 #from biocode import utils, gff, tbl
@@ -842,9 +843,10 @@ class Intron( LocatableThing ):
     removed from within the transcript by splicing together the sequences (exons) on either
     side of it."
     '''
-    def __init__( self, id=None, locations=None, length=None ):
+    def __init__( self, id=None, locations=None, parent=None, length=None ):
         super().__init__(locations)
         self.id = id
+        self.parent = parent
         self.length = length
 
 
@@ -1029,6 +1031,7 @@ class RNA( LocatableThing ):
 
         ## initialize any types needed
         self.children = _initialize_type_list(self.children, 'exon')
+        self.children = _initialize_type_list(self.children, 'intron')
         self.children = _initialize_type_list(self.children, 'CDS')
         self.children = _initialize_type_list(self.children, 'polypeptide')
         self.children = _initialize_type_list(self.children, 'UTR')
@@ -1043,6 +1046,10 @@ class RNA( LocatableThing ):
     def add_exon(self, exon):
         exon.parent = self
         self.children['exon'].append(exon)
+
+    def add_intron(self, intron):
+        intron.parent = self
+        self.children['intron'].append(intron)
 
     def add_five_prime_UTR(self, utr):
         utr.parent = self
@@ -1207,32 +1214,36 @@ class RNA( LocatableThing ):
             return False
 
     def introns(self, on=None):
-        '''
-        Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
-        generated introns depend on the object passed via the 'on' argument
-        '''
-        if on is None:
-            raise Exception("ERROR: the introns() method requires a passed molecule using the 'on' argument")
+        
+            '''
+            Dynamically generates Intron objects in order for the current RNA.  The coordinates of the
+            generated introns depend on the object passed via the 'on' argument
+            '''
+            if on is None:
+                raise Exception("ERROR: the introns() method requires a passed molecule using the 'on' argument")
 
-        mol_on = on
+            mol_on = on
 
-        intron_objs = list()
-        last_exon = None
-        last_exon_loc = None
+            intron_objs = list()
+            last_exon = None
+            last_exon_loc = None
 
-        for exon in sorted(self.exons()):
-            exon_loc = exon.location_on( mol_on )
+            intron_count = 0
+            for exon in sorted(self.exons()):
+                exon_loc = exon.location_on( mol_on )
 
-            if last_exon is not None:
-                intron_id = uuid.uuid4()
-                intron = Intron( id=intron_id )
-                intron.locate_on( target=mol_on, fmin=last_exon_loc.fmax, fmax=exon_loc.fmin, strand=exon_loc.strand )
-                intron_objs.append( intron )
+                if last_exon is not None:
+                    intron_count = intron_count + 1
+                    intron_count_id = str(intron_count)
+                    intron_id = str(re.sub('exon[0-9]', 'intron' + intron_count_id, exon.id)) ## ## This is generating random id, need format such as "g1.t1.intron1"
+                    intron = Intron( id=intron_id )
+                    intron.locate_on( target=mol_on, fmin=last_exon_loc.fmax, fmax=exon_loc.fmin, strand=exon_loc.strand )
+                    intron_objs.append( intron )
 
-            last_exon = exon
-            last_exon_loc = exon_loc
+                last_exon = exon
+                last_exon_loc = exon_loc
 
-        return intron_objs
+            return intron_objs
 
     def polypeptides(self):
         return self.children['polypeptide']
